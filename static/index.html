@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Synapse — Multi-Agent AI</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:       #09090b;
+  --surface:  #111113;
+  --card:     #18181b;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #fafafa;
+  --muted:    #71717a;
+  --muted2:   #52525b;
+  --accent:   #8b5cf6;
+  --accent2:  #06b6d4;
+  --green:    #10b981;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --pink:     #f472b6;
+}
+html, body { height:100%; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius:3px; }
+
+/* ── Top Bar ──────────────────────────────────────────────────────────── */
+#topbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(9,9,11,0.9);
+  backdrop-filter: blur(20px);
+  flex-shrink: 0;
+  z-index: 100;
+  position: relative;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.logo-text { color: var(--text); }
+.logo-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 6px;
+  border-radius: 4px; background: rgba(139,92,246,0.15);
+  color: var(--accent); border: 1px solid rgba(139,92,246,0.25);
+  letter-spacing: 0;
+}
+.topbar-center {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.tag {
+  font-size: 10px; font-weight: 600; padding: 3px 8px;
+  border-radius: 20px; border: 1px solid;
+  letter-spacing: 0.2px; white-space: nowrap;
+}
+.tag-purple { color: #a78bfa; border-color: rgba(167,139,250,0.25); background: rgba(139,92,246,0.06); }
+.tag-cyan   { color: #22d3ee; border-color: rgba(34,211,238,0.25);  background: rgba(6,182,212,0.06); }
+.tag-green  { color: #34d399; border-color: rgba(52,211,153,0.25);  background: rgba(16,185,129,0.06); }
+.tag-amber  { color: #fbbf24; border-color: rgba(251,191,36,0.25);  background: rgba(245,158,11,0.06); }
+.tag-pink   { color: #f9a8d4; border-color: rgba(249,168,212,0.25); background: rgba(244,114,182,0.06); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 34px; height: 34px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  color: var(--muted);
+  transition: all 0.15s;
+  position: relative;
+}
+.icon-btn:hover { border-color: var(--border2); color: var(--text); background: rgba(255,255,255,0.04); }
+.icon-btn.active { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.08); color: var(--accent); }
+.badge-count {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 16px; height: 16px; padding: 0 3px;
+  background: var(--accent); color: #fff;
+  font-size: 9px; font-weight: 700;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg);
+}
+
+/* ── Main Layout ──────────────────────────────────────────────────────── */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Chat Area ────────────────────────────────────────────────────────── */
+#chatWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+#chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.msg-container {
+  width: 100%;
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* User message */
+.msg-user {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0;
+  animation: fadeUp 0.2s ease;
+}
+.msg-user-bubble {
+  max-width: 72%;
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+  color: #fff;
+  padding: 11px 16px;
+  border-radius: 18px 4px 18px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* AI message */
+.msg-ai {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 8px 0;
+  animation: fadeUp 0.2s ease;
+}
+.msg-ai-avatar {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg-ai-body { flex: 1; min-width: 0; }
+.msg-ai-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.msg-ai-bubble {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px 16px 16px 16px;
+  padding: 13px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: break-word;
+}
+.msg-ai-bubble.streaming { border-color: rgba(139,92,246,0.3); }
+.msg-ai-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.tool-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(16,185,129,0.1); color: var(--green);
+  border: 1px solid rgba(16,185,129,0.2);
+}
+.quality-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(139,92,246,0.1); color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.2);
+}
+.mem-ref-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(244,114,182,0.1); color: var(--pink);
+  border: 1px solid rgba(244,114,182,0.2);
+}
+
+/* Streaming cursor */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.cursor { display:inline-block; width:2px; height:14px; background:var(--accent); margin-left:1px; vertical-align:middle; animation:blink 0.7s infinite; }
+
+/* Typing dots */
+.typing-dots { display:flex; gap:4px; align-items:center; padding:4px 0; }
+.typing-dots span {
+  width:6px; height:6px; border-radius:50%;
+  background: var(--muted2);
+  animation: bounce 1.2s ease infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-5px);opacity:1} }
+
+/* Workflow trace (inline, collapsible) */
+.trace-wrap {
+  margin: 4px 0;
+  animation: fadeUp 0.2s ease;
+}
+.trace-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--muted);
+  width: auto;
+  display: inline-flex;
+  transition: all 0.15s;
+}
+.trace-toggle:hover { border-color: var(--border2); color: var(--text); }
+.trace-toggle svg { width:12px; height:12px; transition: transform 0.2s; }
+.trace-toggle.open svg { transform: rotate(90deg); }
+.trace-body {
+  margin-top: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: none;
+}
+.trace-body.show { display: block; }
+.trace-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 11.5px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.trace-row:last-child { border-bottom: none; }
+.trace-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.trace-dot.done   { background: var(--green); }
+.trace-dot.active { background: var(--amber); animation: pulseDot 1s ease infinite; }
+.trace-dot.idle   { background: var(--muted2); }
+@keyframes pulseDot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.trace-label { color: var(--muted); }
+.trace-label.done { color: var(--text); }
+
+/* Plan card */
+.plan-card {
+  background: var(--surface);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 8px 0;
+  animation: fadeUp 0.2s ease;
+}
+.plan-title {
+  font-size: 12px; font-weight: 700; color: var(--green);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.plan-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.plan-step:last-child { border-bottom: none; }
+.plan-num {
+  width: 20px; height: 20px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800;
+  flex-shrink: 0; margin-top: 1px;
+  transition: all 0.2s;
+}
+.plan-num.idle   { background: rgba(255,255,255,0.06); color: var(--muted); }
+.plan-num.active { background: rgba(245,158,11,0.2);  color: var(--amber); animation: pulseDot 1s infinite; }
+.plan-num.done   { background: rgba(16,185,129,0.2);  color: var(--green); }
+.plan-step-info { flex:1; }
+.plan-step-agent { font-size: 12px; font-weight: 700; }
+.plan-step-task  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* HITL card */
+.hitl-card {
+  background: rgba(239,68,68,0.04);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  animation: fadeUp 0.2s ease;
+}
+.hitl-header { font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.hitl-sub { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+.hitl-draft {
+  font-size: 12.5px; line-height: 1.65;
+  background: rgba(0,0,0,0.25); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 12px;
+  max-height: 200px; overflow-y: auto;
+  color: rgba(255,255,255,0.75);
+}
+.hitl-actions { display: flex; gap: 8px; }
+.hitl-btn {
+  flex: 1; padding: 9px 16px; border-radius: 9px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; transition: opacity 0.15s;
+}
+.hitl-btn:hover { opacity: 0.85; }
+.hitl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hitl-btn-approve { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
+.hitl-btn-reject  { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+
+/* Memory recall card */
+.mem-recall {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: rgba(244,114,182,0.04);
+  border: 1px solid rgba(244,114,182,0.15);
+  border-radius: 8px;
+  font-size: 11px;
+  color: rgba(244,114,182,0.7);
+  margin: 4px 0;
+  animation: fadeUp 0.2s ease;
+}
+
+/* Screenshots */
+.screenshot-wrap { margin: 8px 0; }
+.screenshot-img { max-width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+.screenshot-cap { font-size: 10px; color: var(--muted); margin-top: 5px; }
+
+/* Markdown */
+.msg-ai-bubble h2 { font-size: 15px; font-weight: 700; margin: 12px 0 6px; color: #c4b5fd; }
+.msg-ai-bubble h3 { font-size: 13px; font-weight: 700; margin: 10px 0 4px; color: #a78bfa; }
+.msg-ai-bubble p  { margin: 5px 0; }
+.msg-ai-bubble pre { background: rgba(0,0,0,0.5); border-radius: 8px; padding: 12px; margin: 8px 0; overflow-x: auto; }
+.msg-ai-bubble code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12.5px; }
+.msg-ai-bubble p code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; }
+.msg-ai-bubble ul, .msg-ai-bubble ol { padding-left: 18px; margin: 6px 0; }
+.msg-ai-bubble li { margin: 3px 0; }
+.msg-ai-bubble strong { font-weight: 700; }
+.msg-ai-bubble table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 12.5px; }
+.msg-ai-bubble th, .msg-ai-bubble td { border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px; text-align: left; }
+.msg-ai-bubble th { background: rgba(255,255,255,0.05); font-weight: 700; }
+.msg-ai-bubble img { max-width: 100%; border-radius: 8px; margin: 6px 0; border: 1px solid var(--border); display: block; }
+.msg-ai-bubble hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.msg-ai-bubble a { color: #a78bfa; text-decoration: underline; }
+
+/* ── Input Area ───────────────────────────────────────────────────────── */
+#inputArea {
+  padding: 12px 24px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  max-width: 740px;
+  width: 100%;
+  margin: 0 auto;
+  /* remove centering via margin trick – apply to inner */
+}
+#inputAreaOuter {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.quick-chips {
+  display: flex;
+  gap: 6px;
+  padding: 10px 24px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 740px;
+  margin: 0 auto;
+}
+.quick-chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 6px 13px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.chip:hover { border-color: var(--border2); color: var(--text); background: rgba(255,255,255,0.06); }
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 10px 24px 12px;
+  max-width: 740px;
+  margin: 0 auto;
+}
+#chatInput {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.55;
+  min-height: 48px;
+  max-height: 140px;
+  transition: border-color 0.15s;
+}
+#chatInput:focus { border-color: rgba(139,92,246,0.4); }
+#chatInput::placeholder { color: var(--muted2); }
+#sendBtn {
+  width: 48px; height: 48px;
+  border-radius: 13px;
+  border: none;
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.15s, transform 0.1s;
+}
+#sendBtn:hover { opacity: 0.88; }
+#sendBtn:active { transform: scale(0.95); }
+#sendBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Right Drawer ─────────────────────────────────────────────────────── */
+#drawer {
+  width: 320px;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s;
+}
+#drawer.closed { width: 0; opacity: 0; pointer-events: none; }
+.drawer-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.dtab {
+  flex: 1;
+  padding: 11px 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.dtab:hover { color: var(--text); }
+.dtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 14px; }
+.drawer-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 10px;
+}
+
+/* Agent cards in drawer */
+.dagent {
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 7px;
+  transition: all 0.15s;
+  background: var(--bg);
+}
+.dagent.busy { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.04); }
+.dagent.done { border-color: rgba(16,185,129,0.25); }
+.dagent-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.dagent-name { font-size: 13px; font-weight: 700; }
+.dagent-status {
+  font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px;
+}
+.dagent-status.idle  { background: rgba(255,255,255,0.05); color: var(--muted); }
+.dagent-status.busy  { background: rgba(245,158,11,0.12); color: var(--amber); animation: pulseDot 1s infinite; }
+.dagent-status.hitl  { background: rgba(239,68,68,0.12); color: var(--red); }
+.dagent-desc { font-size: 11px; color: var(--muted); margin-bottom: 7px; }
+.tool-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.dtool {
+  font-size: 9.5px; padding: 2px 6px; border-radius: 4px;
+  background: rgba(6,182,212,0.07); color: var(--accent2);
+  border: 1px solid rgba(6,182,212,0.18);
+  transition: all 0.15s;
+}
+.dtool.real { background: rgba(16,185,129,0.1); color: var(--green); border-color: rgba(16,185,129,0.3); }
+.dtool.calling { animation: pulseDot 0.7s infinite; }
+
+/* Memory in drawer */
+.mem-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 6px;
+  transition: border-color 0.15s;
+}
+.mem-item:hover { border-color: rgba(244,114,182,0.25); }
+.mem-score {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: rgba(244,114,182,0.12);
+  color: var(--pink);
+  font-size: 9px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.mem-text { flex: 1; font-size: 11.5px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+.mem-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted2); font-size: 12px;
+  padding: 0 2px; opacity: 0; transition: opacity 0.15s;
+}
+.mem-item:hover .mem-del { opacity: 1; }
+.mem-del:hover { color: var(--red); }
+.mem-empty { font-size: 11px; color: var(--muted2); text-align: center; padding: 20px 0; line-height: 1.6; }
+.mem-search {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.mem-search:focus { border-color: rgba(244,114,182,0.3); }
+.mem-search::placeholder { color: var(--muted2); }
+
+/* Stats in drawer */
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.stat-item:last-child { border-bottom: none; }
+.stat-name { font-size: 12px; color: var(--muted); }
+.stat-value { font-size: 14px; font-weight: 700; }
+
+/* HITL history */
+.hitl-hist-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 11px;
+}
+.hitl-hist-item.approved { border-left: 3px solid var(--green); }
+.hitl-hist-item.rejected { border-left: 3px solid var(--red); }
+
+/* ── Status bar (above input, shows current activity) ─────────────────── */
+#statusBar {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 0 24px 4px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(139,92,246,0.2);
+  background: rgba(139,92,246,0.06);
+  animation: fadeUp 0.2s ease;
+}
+.status-pill .sp-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  animation: pulseDot 1s ease infinite;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Scrollbar in drawer ──────────────────────────────────────────────── */
+.drawer-body::-webkit-scrollbar { width: 4px; }
+.drawer-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
+<div id="topbar">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    <span class="logo-text">Synapse</span>
+    <span class="logo-badge">v2</span>
+  </div>
+
+  <div class="topbar-center">
+    <span class="tag tag-purple">Routing</span>
+    <span class="tag tag-cyan">MCP</span>
+    <span class="tag tag-amber">HITL</span>
+    <span class="tag tag-green">Agentic</span>
+    <span class="tag tag-pink">Memory</span>
+  </div>
+
+  <div class="topbar-right">
+    <span id="cost-display" style="font-size:11px;color:var(--muted);opacity:0;transition:opacity .3s;cursor:default;margin-right:4px;" title="このセッションのAPIコスト"></span>
+    <button class="icon-btn" id="btnMem" onclick="toggleDrawer('memory')" title="長期記憶">
+      🧠
+      <span class="badge-count" id="memCount" style="display:none">0</span>
+    </button>
+    <button class="icon-btn" id="btnAgents" onclick="toggleDrawer('agents')" title="エージェント">
+      ⚡
+    </button>
+    <button class="icon-btn" id="btnStats" onclick="toggleDrawer('stats')" title="統計・メトリクス">
+      📊
+    </button>
+  </div>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- Chat -->
+  <div id="chatWrap">
+    <div id="chatMessages">
+      <!-- welcome -->
+      <div class="msg-container">
+        <div class="msg-ai" style="margin-top:8px;">
+          <div class="msg-ai-avatar" style="background:rgba(139,92,246,0.12);">◈</div>
+          <div class="msg-ai-body">
+            <div class="msg-ai-name">Synapse System</div>
+            <div class="msg-ai-bubble">
+              <strong>Synapse — Multi-Agent AI Platform</strong> へようこそ。<br><br>
+              複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br>
+              <span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;
+              <span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;
+              <span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;
+              <span style="color:#f9a8d4">🧠 長期記憶</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div id="statusBar"></div>
+
+    <!-- Input -->
+    <div id="inputAreaOuter">
+      <div class="quick-chips" id="quickChips">
+        <span class="chip" onclick="useChip(this)">🔍 Synapseとは何か教えて</span>
+        <span class="chip" onclick="useChip(this)">⚙️ Rustで非同期HTTPサーバーを書いて</span>
+        <span class="chip" onclick="useChip(this)">🌐 https://example.com をテストして</span>
+        <span class="chip" onclick="useChip(this)">📨 田中さんにSlackで進捗報告を送って</span>
+        <span class="chip" onclick="useChip(this)">💹 NVDAの財務分析してメールで送って</span>
+        <span class="chip" onclick="useChip(this)">⚖️ NDA契約の法的リスクを確認して</span>
+        <span class="chip" onclick="useChip(this)">🌐 https://chatweb.ai をスクリーンショットして品質チェック</span>
+        <span class="chip" onclick="useChip(this)">🚀 synapse-demoをFly.ioにデプロイして</span>
+        <span class="chip" onclick="useChip(this)">🚀 Fly.ioのステータスを確認して</span>
+        <span class="chip" onclick="useChip(this)">🛠️ gitステータスを確認して</span>
+        <span class="chip" onclick="useChip(this)">🛠️ 変更をGitHubにプッシュして メッセージ: feat: update Synapse</span>
+        <span class="chip" onclick="useChip(this)">🌐 A2Aプロトコルテスト</span>
+        <span class="chip" onclick="useChip(this)">📊 メトリクスを見せて</span>
+        <span class="chip" onclick="sendFeedback()">💬 ペルソナFB</span>
+      </div>
+      <div class="input-row">
+        <textarea id="chatInput" rows="1"
+          placeholder="メッセージを入力…  Shift+Enter で改行、Enter で送信"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"></textarea>
+        <button id="sendBtn" onclick="sendMessage()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div id="drawer" class="closed">
+    <div class="drawer-tabs">
+      <div class="dtab active" id="dtab-agents" onclick="switchTab('agents')">エージェント</div>
+      <div class="dtab" id="dtab-memory" onclick="switchTab('memory')">記憶</div>
+      <div class="dtab" id="dtab-stats"  onclick="switchTab('stats')">統計</div>
+      <div class="dtab" id="dtab-metrics" onclick="switchTab('metrics')">📊</div>
+    </div>
+    <div class="drawer-body">
+      <!-- Agents tab -->
+      <div id="tab-agents">
+        <div class="drawer-section-title">AIエージェントフリート</div>
+        <div id="agentList"></div>
+      </div>
+      <!-- Memory tab -->
+      <div id="tab-memory" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="drawer-section-title" style="margin:0">長期記憶</div>
+          <button onclick="clearAllMemories()" style="background:none;border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--red);cursor:pointer;">全削除</button>
+        </div>
+        <input class="mem-search" id="memSearch" type="text" placeholder="記憶を検索…" oninput="searchMemories(this.value)">
+        <div id="memoryList">
+          <div class="mem-empty">記憶なし<br>会話すると自動的に保存されます</div>
+        </div>
+      </div>
+      <!-- Stats tab -->
+      <div id="tab-stats" style="display:none">
+        <div class="drawer-section-title">セッション統計</div>
+        <div class="stat-item"><span class="stat-name">送信メッセージ</span><span class="stat-value" id="s-msg">0</span></div>
+        <div class="stat-item"><span class="stat-name">A2A委譲</span><span class="stat-value" style="color:var(--green)" id="s-a2a">0</span></div>
+        <div class="stat-item"><span class="stat-name">MCP呼び出し</span><span class="stat-value" style="color:var(--accent2)" id="s-mcp">0</span></div>
+        <div class="stat-item"><span class="stat-name">HITL発動</span><span class="stat-value" style="color:var(--red)" id="s-hitl">0</span></div>
+        <div class="stat-item"><span class="stat-name">平均品質スコア</span><span class="stat-value" style="color:var(--accent)" id="s-quality">—</span></div>
+        <div class="stat-item"><span class="stat-name">最後のエージェント</span><span class="stat-value" style="font-size:12px;color:#a78bfa" id="s-agent">—</span></div>
+        <div class="stat-item" style="border:none"><span class="stat-name">保存済み記憶</span><span class="stat-value" style="color:var(--pink)" id="s-memory">0</span></div>
+        <div style="margin-top:16px;">
+          <div class="drawer-section-title">HITL 承認履歴</div>
+          <div id="historyList">
+            <div class="mem-empty">履歴なし</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="drawer-section-title">🌐 A2Aエンドポイント</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.8;">
+            <div>Agent Card: <a href="/.well-known/agent.json" target="_blank" style="color:#a78bfa;">/.well-known/agent.json</a></div>
+            <div style="margin-top:4px;">Task API: <span style="color:var(--accent2);font-family:monospace;">POST /a2a/tasks/send</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- Metrics tab -->
+      <div id="tab-metrics" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div class="drawer-section-title" style="margin:0">📊 メトリクス</div>
+          <button onclick="loadMetrics()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--muted);cursor:pointer;">更新</button>
+        </div>
+        <div id="metricsContent">
+          <div class="mem-empty">読み込み中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2,9);
+let agents = {};
+let drawerOpen = false;
+let activeTab  = 'agents';
+let stats = { msg:0, a2a:0, mcp:0, hitl:0, quality:[], agent:'—' };
+
+let isStreaming = false;
+let currentStreamEl   = null;
+let currentStreamText = '';
+let currentAgentId    = null;
+let planCardId        = null;
+let traceCardId       = null;
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function toggleDrawer(tab) {
+  const drawer = document.getElementById('drawer');
+  if (!drawerOpen || activeTab !== tab) {
+    drawerOpen = true;
+    drawer.classList.remove('closed');
+    switchTab(tab);
+    ['btnMem','btnAgents','btnStats'].forEach(id => {
+      document.getElementById(id)?.classList.remove('active');
+    });
+    const btnMap = { memory:'btnMem', agents:'btnAgents', stats:'btnStats' };
+    document.getElementById(btnMap[tab])?.classList.add('active');
+  } else {
+    drawerOpen = false;
+    drawer.classList.add('closed');
+    ['btnMem','btnAgents','btnStats'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  }
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  ['agents','memory','stats','metrics'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+    document.getElementById('dtab-' + t)?.classList.toggle('active', t === tab);
+  });
+  if (tab === 'metrics') loadMetrics();
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+async function loadAgents() {
+  const r = await fetch('/agents');
+  agents = await r.json();
+  renderAgents();
+}
+
+function renderAgents() {
+  const list = document.getElementById('agentList');
+  list.innerHTML = '';
+  Object.entries(agents).forEach(([id, ag]) => {
+    const div = document.createElement('div');
+    div.className = 'dagent';
+    div.id = 'dagent_' + id;
+    div.innerHTML = `
+      <div class="dagent-top">
+        <div class="dagent-name" style="color:${ag.color}">${ag.name}</div>
+        <div class="dagent-status ${ag.hitl_required ? 'hitl' : 'idle'}" id="dstatus_${id}">
+          ${ag.hitl_required ? '⚠️ HITL' : '待機中'}
+        </div>
+      </div>
+      <div class="dagent-desc">${ag.description}</div>
+      <div class="tool-chips" id="dtools_${id}">
+        ${ag.mcp_tools.map(t => `<span class="dtool" id="dtool_${id}_${t}">⬡ ${t}</span>`).join('')}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function setAgentBusy(agentId, busy) {
+  const card   = document.getElementById('dagent_' + agentId);
+  const status = document.getElementById('dstatus_' + agentId);
+  if (!card || !status) return;
+  if (busy) {
+    card.classList.add('busy');
+    status.className = 'dagent-status busy';
+    status.textContent = '⚡ 実行中';
+  } else {
+    card.classList.remove('busy');
+    const ag = agents[agentId];
+    status.className = 'dagent-status ' + (ag?.hitl_required ? 'hitl' : 'idle');
+    status.textContent = ag?.hitl_required ? '⚠️ HITL' : '待機中';
+  }
+}
+
+function flashTool(agentId, tool, isReal) {
+  const el = document.getElementById(`dtool_${agentId}_${tool}`);
+  if (!el) return;
+  el.classList.add('calling');
+  if (isReal) {
+    el.classList.add('real');
+    el.textContent = '✅ ' + tool;
+  }
+  setTimeout(() => {
+    el.classList.remove('calling');
+    if (!isReal) { el.style.background = ''; }
+  }, isReal ? 99999 : 1200);
+  stats.mcp++;
+  document.getElementById('s-mcp').textContent = stats.mcp;
+}
+
+// ── Status bar ────────────────────────────────────────────────────────────────
+function setStatus(text, color) {
+  const bar = document.getElementById('statusBar');
+  if (!text) { bar.innerHTML = ''; return; }
+  const dotStyle = color === 'amber' ? 'background:var(--amber)' : '';
+  const pillStyle = color === 'amber' ? 'border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);' : '';
+  bar.innerHTML = `<div class="status-pill" style="${pillStyle}"><span class="sp-dot" style="${dotStyle}"></span>${text}</div>`;
+}
+
+// ── Chat helpers ──────────────────────────────────────────────────────────────
+function getMessages() { return document.getElementById('chatMessages'); }
+function scrollToBottom() {
+  const el = getMessages();
+  requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+}
+
+function wrap(el) {
+  const c = document.createElement('div');
+  c.className = 'msg-container';
+  c.appendChild(el);
+  return c;
+}
+
+function appendUserMsg(text) {
+  const div = document.createElement('div');
+  div.className = 'msg-user';
+  div.innerHTML = `<div class="msg-user-bubble">${escHtml(text)}</div>`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+function appendAiMsg(text, agentId = 'research', agentName = 'AI', realTools = [], qualityScore = null) {
+  const div = document.createElement('div');
+  div.className = 'msg-ai';
+  const badge = (realTools||[]).length > 0
+    ? `<span class="tool-chip">✅ ${realTools.join(', ')}</span>` : '';
+  const qbadge = qualityScore !== null
+    ? `<span class="quality-chip">★ ${qualityScore}/10</span>` : '';
+  div.innerHTML = `
+    <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
+    <div class="msg-ai-body">
+      <div class="msg-ai-name">${agentName}</div>
+      <div class="msg-ai-bubble">${renderMarkdown(text)}</div>
+      <div class="msg-ai-footer">${badge}${qbadge}</div>
+    </div>`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+function appendTyping(id) {
+  const div = document.createElement('div');
+  div.className = 'msg-ai'; div.id = id;
+  div.innerHTML = `
+    <div class="msg-ai-avatar" style="background:rgba(139,92,246,0.1)">✦</div>
+    <div class="msg-ai-body">
+      <div class="msg-ai-name">処理中…</div>
+      <div class="msg-ai-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+    </div>`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+function startStreamBubble(agentId, agentName) {
+  // Remove typing
+  document.getElementById('typing_active')?.closest('.msg-container')?.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg-ai';
+  div.id = 'stream_bubble';
+  div.innerHTML = `
+    <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
+    <div class="msg-ai-body">
+      <div class="msg-ai-name" id="stream_name">${agentName}</div>
+      <div class="msg-ai-bubble streaming" id="stream_content"><span class="cursor"></span></div>
+      <div class="msg-ai-footer" id="stream_footer"></div>
+    </div>`;
+  getMessages().appendChild(wrap(div));
+  currentStreamEl   = document.getElementById('stream_content');
+  currentStreamText = '';
+  scrollToBottom();
+}
+
+function finalizeStreamBubble(response, realTools, qualityScore) {
+  const bubble = document.getElementById('stream_bubble');
+  if (bubble) {
+    const content = document.getElementById('stream_content');
+    const footer  = document.getElementById('stream_footer');
+    if (content) {
+      content.classList.remove('streaming');
+      content.innerHTML = renderMarkdown(response);
+    }
+    if (footer) {
+      const badge = (realTools||[]).length > 0
+        ? `<span class="tool-chip">✅ ${realTools.join(', ')}</span>` : '';
+      const qbadge = qualityScore !== null && qualityScore !== undefined
+        ? `<span class="quality-chip">★ ${qualityScore}/10</span>` : '';
+      footer.innerHTML = badge + qbadge;
+    }
+    bubble.removeAttribute('id');
+  }
+  currentStreamEl   = null;
+  currentStreamText = '';
+}
+
+function appendScreenshots(urls) {
+  urls.forEach(url => {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="screenshot-wrap">
+        <img src="${url}" class="screenshot-img" alt="screenshot" loading="lazy">
+        <div class="screenshot-cap">📸 ${url.split('/').pop()}</div>
+      </div>`;
+    getMessages().appendChild(wrap(div));
+  });
+  scrollToBottom();
+}
+
+function appendPlanCard(id, steps) {
+  const div = document.createElement('div');
+  div.className = 'plan-card'; div.id = id;
+  div.innerHTML = `
+    <div class="plan-title">🔗 A2A委譲プラン — ${steps.length}エージェントで処理</div>
+    ${steps.map((s, i) => `
+      <div class="plan-step">
+        <div class="plan-num idle" id="${id}_n${i}">${i+1}</div>
+        <div class="plan-step-info">
+          <div class="plan-step-agent" style="color:${agents[s.agent_id]?.color||'#fff'}">${s.agent_name}</div>
+          <div class="plan-step-task">${escHtml(s.task.slice(0,80))}</div>
+        </div>
+      </div>`).join('')}`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+function updatePlanStep(cardId, index, state) {
+  const el = document.getElementById(`${cardId}_n${index}`);
+  if (el) el.className = 'plan-num ' + state;
+}
+
+// Trace (collapsible)
+function ensureTraceCard(id) {
+  let card = document.getElementById('tc_' + id);
+  if (!card) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'trace-wrap';
+    wrapper.id = 'tcw_' + id;
+    wrapper.innerHTML = `
+      <button class="trace-toggle" onclick="toggleTrace('${id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span id="tc_toggle_label_${id}">ワークフロー詳細</span>
+      </button>
+      <div class="trace-body" id="tc_${id}"></div>`;
+    getMessages().appendChild(wrap(wrapper));
+    card = document.getElementById('tc_' + id);
+  }
+  return card;
+}
+
+function addTraceRow(traceId, label, state = 'idle') {
+  const card = ensureTraceCard(traceId);
+  const row = document.createElement('div');
+  row.className = 'trace-row';
+  row.innerHTML = `<div class="trace-dot ${state}"></div><span class="trace-label ${state}">${escHtml(label)}</span>`;
+  card.appendChild(row);
+  // Update toggle label count
+  const count = card.children.length;
+  const lbl = document.getElementById('tc_toggle_label_' + traceId);
+  if (lbl) lbl.textContent = `ワークフロー詳細 (${count}ステップ)`;
+  scrollToBottom();
+}
+
+function toggleTrace(id) {
+  const body = document.getElementById('tc_' + id);
+  const btn  = body?.previousElementSibling;
+  if (!body) return;
+  body.classList.toggle('show');
+  btn?.classList.toggle('open');
+}
+
+function appendHITLCard(taskId, agentName, draft, agentId) {
+  const div = document.createElement('div');
+  div.id = 'hitl_' + taskId;
+  div.className = 'hitl-card';
+  div.innerHTML = `
+    <div class="hitl-header">⚠️ 承認が必要 — ${agentName}</div>
+    <div class="hitl-sub">以下の内容を実行します。確認してください。</div>
+    <div class="hitl-draft">${renderMarkdown(draft)}</div>
+    <div class="hitl-actions">
+      <button class="hitl-btn hitl-btn-approve" onclick="hitlDecide('${taskId}',true)">✅ 承認して実行</button>
+      <button class="hitl-btn hitl-btn-reject"  onclick="hitlDecide('${taskId}',false)">✕ 却下</button>
+    </div>`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+async function hitlDecide(taskId, approved) {
+  const card = document.getElementById('hitl_' + taskId);
+  card.querySelectorAll('button').forEach(b => b.disabled = true);
+  const res = await fetch(`/hitl/${taskId}/decide`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approved }),
+  }).then(r => r.json());
+  const c = approved ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+  card.style.borderColor = c;
+  const resultDiv = document.createElement('div');
+  resultDiv.style.cssText = `margin-top:10px;padding:9px 12px;border-radius:8px;background:${approved?'rgba(16,185,129,0.07)':'rgba(239,68,68,0.07)'};border:1px solid ${c};font-size:12px;`;
+  if (approved && res.send_result) {
+    const sr = res.send_result;
+    const color = sr.ok ? 'var(--green)' : 'var(--amber)';
+    resultDiv.innerHTML = `<span style="color:${color};font-weight:700;">${sr.ok?'✅ 送信完了':'⚠️ 送信試行'} — ${sr.channel||''}</span><br><span style="color:var(--muted);">${sr.to||''}${sr.error||''}${sr.id?' · ID:'+sr.id:''}</span>`;
+  } else {
+    resultDiv.innerHTML = `<span style="color:var(--red);font-weight:700;">✕ 却下しました</span>`;
+  }
+  card.appendChild(resultDiv);
+  scrollToBottom();
+  setTimeout(loadHistory, 500);
+}
+
+function appendMemRecall(count, mems) {
+  const div = document.createElement('div');
+  div.className = 'mem-recall';
+  const preview = mems.slice(0,2).map(m => escHtml(m.content.slice(0,30))).join(' · ');
+  div.innerHTML = `🧠 <strong>${count}件の記憶</strong>を参照中 — <span style="opacity:0.6">${preview}${count>2?'…':''}</span>`;
+  getMessages().appendChild(wrap(div));
+  scrollToBottom();
+}
+
+function removeEl(id) {
+  const el = document.getElementById(id);
+  if (el) { el.closest('.msg-container')?.remove() || el.remove(); }
+}
+
+// ── Send ──────────────────────────────────────────────────────────────────────
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
+}
+function useChip(el) {
+  const text = el.textContent.replace(/^[^\s]+\s/,'');
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  if (isStreaming) return;
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  isStreaming = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = ''; input.style.height = 'auto';
+  stats.msg++; document.getElementById('s-msg').textContent = stats.msg;
+
+  appendUserMsg(msg);
+  const typingId = 'typing_active';
+  appendTyping(typingId);
+  setStatus('処理中…');
+
+  currentStreamEl = null; currentStreamText = '';
+  currentAgentId = null; planCardId = null; traceCardId = 'tr_' + Date.now();
+
+  try {
+    const resp = await fetch(`/chat/stream/${SESSION_ID}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, session_id: SESSION_ID }),
+    });
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        handleEvent(JSON.parse(line.slice(5).trim()), typingId);
+      }
+    }
+  } catch(e) {
+    removeEl(typingId);
+    appendAiMsg('⚠️ エラー: ' + e.message);
+  }
+  setStatus('');
+  isStreaming = false;
+  document.getElementById('sendBtn').disabled = false;
+
+  function handleEvent(data, typingId) {
+    switch (data.type) {
+
+      case 'step':
+        setStatus(data.label);
+        addTraceRow(traceCardId, data.label, data.label.startsWith('✅') ? 'done' : 'active');
+        break;
+
+      case 'routed':
+        currentAgentId = data.agent_id;
+        setAgentBusy(data.agent_id, true);
+        stats.agent = data.agent_name;
+        document.getElementById('s-agent').textContent = data.agent_name;
+        setStatus(`${data.agent_name} へルーティング中 (${Math.round(data.confidence*100)}%)`);
+        addTraceRow(traceCardId, `→ ${data.agent_name} (信頼度 ${Math.round(data.confidence*100)}%)`, 'done');
+        break;
+
+      case 'mcp_tools':
+        if (currentAgentId) data.tools.forEach(t => flashTool(currentAgentId, t, false));
+        break;
+
+      case 'tool':
+        if (currentAgentId) flashTool(currentAgentId, data.tool, data.real);
+        break;
+
+      case 'eval': {
+        const s = data.score;
+        if (s != null) {
+          stats.quality.push(s);
+          const avg = (stats.quality.reduce((a,b)=>a+b,0)/stats.quality.length).toFixed(1);
+          document.getElementById('s-quality').textContent = avg + '/10';
+          document.getElementById('s-quality').style.color = s>=8?'var(--green)':s>=6?'var(--amber)':'var(--red)';
+        }
+        break;
+      }
+
+      // ── Streaming ──────────────────────────────────────────────────────────
+      case 'stream_start': {
+        document.getElementById(typingId)?.closest('.msg-container')?.remove();
+        const agName = agents[currentAgentId]?.name || 'AI';
+        startStreamBubble(currentAgentId || 'research', agName);
+        setStatus(agName + ' が生成中…');
+        break;
+      }
+
+      case 'token':
+        if (currentStreamEl) {
+          currentStreamText += data.text;
+          currentStreamEl.innerHTML = escHtml(currentStreamText) + '<span class="cursor"></span>';
+          scrollToBottom();
+        }
+        break;
+
+      case 'done':
+        if (currentAgentId) setAgentBusy(currentAgentId, false);
+        finalizeStreamBubble(data.response, data.used_real_tools, null);
+        if (data.screenshots?.length) appendScreenshots(data.screenshots);
+        break;
+
+      // ── Multi-agent plan ────────────────────────────────────────────────────
+      case 'plan_created':
+        stats.a2a++;
+        document.getElementById('s-a2a').textContent = stats.a2a;
+        document.getElementById(typingId)?.closest('.msg-container')?.remove();
+        planCardId = 'plan_' + Date.now();
+        appendPlanCard(planCardId, data.steps);
+        setStatus(`A2A委譲プラン作成 — ${data.steps.length}ステップ`);
+        break;
+
+      case 'agent_start':
+        currentAgentId = data.agent_id;
+        setAgentBusy(data.agent_id, true);
+        document.getElementById('s-agent').textContent = data.agent_name;
+        updatePlanStep(planCardId, data.index, 'active');
+        setStatus(`${data.agent_name} が処理中…`);
+        break;
+
+      case 'agent_done':
+        if (data.agent_id) setAgentBusy(data.agent_id, false);
+        updatePlanStep(planCardId, data.index, 'done');
+        if (!data.hitl) {
+          finalizeStreamBubble(data.response, data.used_real_tools, data.quality_score ?? null);
+          if (data.screenshots?.length) appendScreenshots(data.screenshots);
+        }
+        break;
+
+      case 'plan_done':
+        if (data.screenshots?.length) appendScreenshots(data.screenshots);
+        break;
+
+      // ── Memory ─────────────────────────────────────────────────────────────
+      case 'memories_loaded':
+        if (data.count > 0) {
+          appendMemRecall(data.count, data.memories);
+          document.getElementById(typingId)?.closest('.msg-container')?.remove();
+          appendTyping(typingId);
+        }
+        break;
+
+      case 'memories_stored':
+        if (data.count > 0) setTimeout(loadMemories, 600);
+        break;
+
+      // ── HITL ───────────────────────────────────────────────────────────────
+      case 'hitl':
+        stats.hitl++;
+        document.getElementById('s-hitl').textContent = stats.hitl;
+        if (currentAgentId) setAgentBusy(currentAgentId, false);
+        document.getElementById(typingId)?.closest('.msg-container')?.remove();
+        const sb2 = document.getElementById('stream_bubble');
+        if (sb2) sb2.removeAttribute('id');
+        appendHITLCard(data.task_id, data.agent_name, data.draft, data.agent_id);
+        break;
+
+      case 'low_confidence':
+        setStatus(`⚠️ ルーティング確信度低 (${Math.round(data.confidence*100)}%) — ${data.message}`, 'amber');
+        break;
+
+      case 'cost':
+        _sessionCost += data.cost_usd || 0;
+        _sessionInputTokens  += data.input_tokens  || 0;
+        _sessionOutputTokens += data.output_tokens || 0;
+        updateCostDisplay();
+        break;
+
+      case 'error':
+        document.getElementById(typingId)?.closest('.msg-container')?.remove();
+        if (currentAgentId) setAgentBusy(currentAgentId, false);
+        appendAiMsg('⚠️ ' + data.message);
+        break;
+    }
+  }
+}
+
+// ── Memory ────────────────────────────────────────────────────────────────────
+// ── Cost tracking ──────────────────────────────────────────────────────────
+let _sessionCost = 0, _sessionInputTokens = 0, _sessionOutputTokens = 0;
+
+function updateCostDisplay() {
+  const el = document.getElementById('cost-display');
+  if (!el) return;
+  const c = _sessionCost;
+  const txt = c < 0.001
+    ? `$${(c * 1000).toFixed(3)}m`   // sub-cent: show millidollars
+    : `$${c.toFixed(4)}`;
+  el.textContent = `💰 ${txt}`;
+  el.title = `入力: ${_sessionInputTokens.toLocaleString()} tok / 出力: ${_sessionOutputTokens.toLocaleString()} tok`;
+  el.style.opacity = '1';
+}
+
+let _memTimer = null;
+
+async function loadMemories() {
+  try {
+    const r = await fetch('/memory/list?limit=60');
+    const d = await r.json();
+    renderMemories(d.memories || []);
+  } catch(e) {}
+}
+
+async function searchMemories(q) {
+  clearTimeout(_memTimer);
+  _memTimer = setTimeout(async () => {
+    try {
+      const url = q ? `/memory/search?q=${encodeURIComponent(q)}&limit=30` : '/memory/list?limit=60';
+      const r = await fetch(url);
+      const d = await r.json();
+      renderMemories(d.memories || []);
+    } catch(e) {}
+  }, 280);
+}
+
+function renderMemories(mems) {
+  const el = document.getElementById('memoryList');
+  const cnt = mems.length;
+  // Update badges
+  const badge = document.getElementById('memCount');
+  badge.textContent = cnt;
+  badge.style.display = cnt > 0 ? 'flex' : 'none';
+  document.getElementById('s-memory').textContent = cnt;
+
+  if (!cnt) {
+    el.innerHTML = '<div class="mem-empty">記憶なし<br>会話すると自動的に保存されます</div>';
+    return;
+  }
+  el.innerHTML = mems.map(m => `
+    <div class="mem-item">
+      <div class="mem-score">${m.importance}</div>
+      <div class="mem-text">${escHtml(m.content)}</div>
+      <button class="mem-del" onclick="delMem('${m.id}')">✕</button>
+    </div>`).join('');
+}
+
+async function delMem(id) {
+  await fetch('/memory/' + id, { method: 'DELETE' });
+  loadMemories();
+}
+
+async function clearAllMemories() {
+  if (!confirm('すべての記憶を削除しますか？')) return;
+  const r = await fetch('/memory/list?limit=500');
+  const d = await r.json();
+  await Promise.all((d.memories || []).map(m => fetch('/memory/' + m.id, { method: 'DELETE' })));
+  loadMemories();
+}
+
+// ── HITL History ──────────────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const r = await fetch('/hitl/history/list?limit=20');
+    const d = await r.json();
+    const el = document.getElementById('historyList');
+    if (!d.tasks?.length) { el.innerHTML = '<div class="mem-empty">履歴なし</div>'; return; }
+    el.innerHTML = d.tasks.map(t => {
+      const s = t.resolved ? (t.approved ? '✅ 承認' : '✕ 却下') : '⏳ 待機';
+      const cls = t.resolved ? (t.approved ? 'approved' : 'rejected') : '';
+      const msg = (t.message||'').slice(0,35);
+      return `<div class="hitl-hist-item ${cls}">
+        <div style="display:flex;justify-content:space-between;font-weight:600;font-size:11px;margin-bottom:2px;">
+          <span>${t.agent_name}</span><span style="color:var(--muted)">${s}</span>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted)">${escHtml(msg)}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// ── Markdown ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderMarkdown(text) {
+  let t = escHtml(text);
+  t = t.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  t = t.replace(/^#{3}\s(.+)$/gm, '<h3>$1</h3>');
+  t = t.replace(/^#{2}\s(.+)$/gm, '<h2>$1</h2>');
+  t = t.replace(/^#{1}\s(.+)$/gm, '<h2>$1</h2>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  t = t.replace(/^---$/gm, '<hr>');
+  // Tables
+  t = t.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)*)/g, (_m, h, rows) => {
+    const ths = h.split('|').filter(c=>c.trim()).map(c=>`<th>${c.trim()}</th>`).join('');
+    const trs = rows.trim().split('\n').map(row => {
+      const tds = row.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
+      return `<tr>${tds}</tr>`;
+    }).join('');
+    return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+  });
+  // Images
+  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+  // Lists
+  t = t.replace(/^[\*\-]\s(.+)$/gm, '<li>$1</li>');
+  t = t.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  t = t.replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>');
+  // Line breaks (outside of block elements)
+  t = t.replace(/\n{2,}/g, '<br><br>');
+  t = t.replace(/(?<!>)\n(?!<)/g, '<br>');
+  return t;
+}
+
+function getAgentEmoji(id) {
+  return { research:'🔍', code:'⚙️', qa:'🌐', schedule:'📅', notify:'📨', analyst:'📊', legal:'⚖️', finance:'💹', critic:'🎯', synthesizer:'🔮', deployer:'🚀', devops:'🛠️' }[id] || '◈';
+}
+function getAgentBg(id) {
+  const c = agents[id]?.color || '#8b5cf6';
+  return c + '18';
+}
+
+// ── Persona Feedback ──────────────────────────────────────────────────────────
+const PERSONAS = [
+  { id:'exec',     label:'👔 経営者・CTO',    prompt:'あなたは経営者またはCTOです。このSynapseデモを投資・導入検討の視点で使ってみて、率直なフィードバックを3点挙げてください。良い点・改善点・「これがあれば使う」条件を含めてください。' },
+  { id:'dev',      label:'⚙️ エンジニア',      prompt:'あなたはバックエンドエンジニアです。このSynapseデモの技術的な実装を評価してください。アーキテクチャ・スケーラビリティ・セキュリティ上の懸念、「実際に使えるか」の観点でフィードバックをください。' },
+  { id:'marketer', label:'📣 マーケター',      prompt:'あなたはBtoB SaaSのマーケターです。このSynapseデモを評価してください。訴求力・改善すべきUX・「刺さる」ユーザー像を教えてください。' },
+  { id:'investor', label:'💰 投資家',          prompt:'あなたはAIスタートアップ専門の投資家です。このデモのビジネスポテンシャルを評価してください。市場規模・差別化・リスク・投資判断を率直に教えてください。' },
+  { id:'enduser',  label:'👤 一般ユーザー',    prompt:'あなたはITに詳しくない一般のビジネスユーザーです。このA2Aチャットを初めて使った感想を率直に教えてください。わかりにくい点・怖いと感じた点・日常業務で使えるかを教えてください。' },
+];
+
+function sendFeedback() {
+  const overlay = document.createElement('div');
+  overlay.id = 'fbOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeUp 0.15s ease';
+  overlay.innerHTML = `
+    <div style="background:#131316;border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:28px 30px;width:460px;max-width:90vw;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">💬 ペルソナフィードバック</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">選んだペルソナのAIがこのデモを評価します</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        ${PERSONAS.map(p => `
+          <button onclick="runPersonaFB('${p.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:left;cursor:pointer;color:var(--text);font-size:13px;font-weight:600;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(139,92,246,0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">${p.label}</button>
+        `).join('')}
+      </div>
+      <button onclick="document.getElementById('fbOverlay').remove()" style="width:100%;margin-top:14px;background:transparent;border:1px solid var(--border);border-radius:9px;padding:9px;color:var(--muted);font-size:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">キャンセル</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function runPersonaFB(id) {
+  document.getElementById('fbOverlay')?.remove();
+  const p = PERSONAS.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('chatInput').value = p.prompt + '\n\n【デモ概要】Synapse: FastAPI+Claude API製マルチエージェントチャット。トークンストリーミング・Playwrightブラウザ・A2A委譲・長期記憶・HITL・Agentループ実装済み。';
+  sendMessage();
+}
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+async function loadMetrics() {
+  const el = document.getElementById('metricsContent');
+  if (!el) return;
+  try {
+    const r = await fetch('/metrics');
+    const d = await r.json();
+    const dist = d.routing_distribution || {};
+    const distHtml = Object.entries(dist).map(([id, cnt]) =>
+      `<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;">
+        <span style="color:var(--muted)">${id}</span>
+        <span style="font-weight:700">${cnt}</span>
+      </div>`
+    ).join('') || '<div style="font-size:11px;color:var(--muted2)">データなし</div>';
+
+    const costUsd = d.total_cost_usd || 0;
+    const costStr = costUsd < 0.01 ? `$${(costUsd*1000).toFixed(3)}m` : `$${costUsd.toFixed(4)}`;
+    const inTok  = (d.total_input_tokens  || 0).toLocaleString();
+    const outTok = (d.total_output_tokens || 0).toLocaleString();
+
+    el.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(6,182,212,.1));border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">累計APIコスト</div>
+        <div style="font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;">${costStr}</div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:2px;">入力: ${inTok} tok &nbsp;|&nbsp; 出力: ${outTok} tok</div>
+      </div>
+      <div class="stat-item"><span class="stat-name">総実行回数</span><span class="stat-value" style="color:var(--accent)">${d.total_runs ?? 0}</span></div>
+      <div class="stat-item"><span class="stat-name">平均品質スコア</span><span class="stat-value" style="color:var(--green)">${d.avg_quality_score != null ? d.avg_quality_score + '/10' : '—'}</span></div>
+      <div class="stat-item"><span class="stat-name">平均ツール遅延</span><span class="stat-value" style="color:var(--accent2)">${d.avg_tool_latency_ms != null ? d.avg_tool_latency_ms + 'ms' : '—'}</span></div>
+      <div class="stat-item"><span class="stat-name">HITL件数</span><span class="stat-value" style="color:var(--red)">${d.hitl_total ?? 0}</span></div>
+      <div class="stat-item"><span class="stat-name">HITL承認率</span><span class="stat-value">${d.hitl_approval_rate_pct != null ? d.hitl_approval_rate_pct + '%' : '—'}</span></div>
+      <div class="stat-item" style="border:none"><span class="stat-name">保存済み記憶</span><span class="stat-value" style="color:var(--pink)">${d.memory_count ?? 0}</span></div>
+      <div style="margin-top:12px;">
+        <div class="drawer-section-title">エージェント分布</div>
+        ${distHtml}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="mem-empty">読み込みエラー</div>';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadAgents();
+loadHistory();
+loadMemories();
+setInterval(loadHistory,  30000);
+setInterval(loadMemories, 15000);
+</script>
+</body>
+</html>

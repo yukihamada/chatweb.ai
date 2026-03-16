@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.db
+*.db-shm
+*.db-wal
+static/screenshots/*.png
+.env
+.env.*
+!.env.example

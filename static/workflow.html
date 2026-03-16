@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A2A ワークフロー図解</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090b;--s1:#111113;--s2:#18181b;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#fafafa;--muted:#71717a;
+  --v:#8b5cf6;--c:#06b6d4;--g:#10b981;--a:#f59e0b;--r:#ef4444;--p:#f472b6;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+
+/* ── Header ── */
+header{
+  text-align:center;padding:60px 24px 40px;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(139,92,246,0.15),transparent);
+  border-bottom:1px solid var(--border);
+}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+h1{font-size:28px;font-weight:800;letter-spacing:-0.5px}
+h1 span{color:var(--v)}
+.subtitle{font-size:15px;color:var(--muted);margin-top:6px;max-width:560px;margin-inline:auto;line-height:1.6}
+.back-link{display:inline-flex;align-items:center;gap:6px;margin-top:20px;font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:1px solid var(--border);border-radius:8px;transition:all 0.15s}
+.back-link:hover{color:var(--text);border-color:var(--border2)}
+
+/* ── Section ── */
+.section{max-width:1100px;margin:0 auto;padding:48px 24px 0}
+.section-label{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.section-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.section-desc{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:640px}
+
+/* ── Main flow diagram ── */
+.flow{display:flex;flex-direction:column;gap:0;position:relative}
+
+/* Step card */
+.step{
+  display:grid;grid-template-columns:56px 1fr;gap:0;
+  position:relative;cursor:default;
+}
+.step:not(:last-child)::after{
+  content:'';position:absolute;left:27px;top:68px;width:2px;
+  height:calc(100% - 44px);
+  background:linear-gradient(to bottom,var(--step-color,#444),rgba(68,68,68,0.1));
+  opacity:0.4;
+}
+.step-left{display:flex;flex-direction:column;align-items:center;padding-top:16px;z-index:1}
+.step-num{
+  width:34px;height:34px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;
+  background:color-mix(in srgb,var(--step-color,#666) 20%,transparent);
+  color:var(--step-color,#666);
+  border:1.5px solid color-mix(in srgb,var(--step-color,#666) 40%,transparent);
+  flex-shrink:0;
+}
+.step-body{
+  padding:16px 0 36px 20px;
+}
+.step-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+  padding:3px 9px;border-radius:20px;margin-bottom:8px;
+  background:color-mix(in srgb,var(--step-color,#666) 12%,transparent);
+  color:var(--step-color,#666);
+  border:1px solid color-mix(in srgb,var(--step-color,#666) 30%,transparent);
+}
+.step-name{font-size:18px;font-weight:800;margin-bottom:6px}
+.step-desc{font-size:13.5px;color:rgba(255,255,255,0.65);line-height:1.7;max-width:580px;margin-bottom:14px}
+.step-detail{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;display:inline-block;max-width:100%;
+}
+.detail-row{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.6;color:var(--muted);margin-bottom:4px}
+.detail-row:last-child{margin-bottom:0}
+.detail-icon{flex-shrink:0;margin-top:1px}
+.detail-hl{color:var(--text);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{
+  font-size:11px;padding:3px 9px;border-radius:6px;font-weight:600;
+  background:var(--s1);border:1px solid var(--border2);color:var(--muted);
+}
+.chip.v{background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.25);color:#a78bfa}
+.chip.c{background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.25);color:#22d3ee}
+.chip.g{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399}
+.chip.a{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.25);color:#fbbf24}
+.chip.r{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.25);color:#f87171}
+.chip.p{background:rgba(244,114,182,0.1);border-color:rgba(244,114,182,0.25);color:#f9a8d4}
+
+/* ── Agent grid ── */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:8px}
+.agent-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  transition:border-color 0.2s,transform 0.2s;cursor:default;
+}
+.agent-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.ac-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ac-emoji{font-size:20px}
+.ac-name{font-size:14px;font-weight:700}
+.ac-desc{font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.ac-tools{display:flex;flex-wrap:wrap;gap:4px}
+.ac-tool{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(6,182,212,0.07);color:var(--c);border:1px solid rgba(6,182,212,0.18)}
+
+/* ── Flow example ── */
+.example-flow{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:24px;margin-top:12px;overflow:hidden;
+}
+.ex-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:16px;letter-spacing:0.5px}
+.ex-steps{display:flex;flex-direction:column;gap:8px}
+.ex-step{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:10px;
+  background:var(--s2);border:1px solid var(--border);
+  font-size:13px;opacity:0;transform:translateX(-12px);
+  animation:slideIn 0.4s ease forwards;
+}
+.ex-step:nth-child(1){animation-delay:0.1s}
+.ex-step:nth-child(2){animation-delay:0.3s}
+.ex-step:nth-child(3){animation-delay:0.5s}
+.ex-step:nth-child(4){animation-delay:0.7s}
+.ex-step:nth-child(5){animation-delay:0.9s}
+.ex-step:nth-child(6){animation-delay:1.1s}
+.ex-step:nth-child(7){animation-delay:1.3s}
+@keyframes slideIn{to{opacity:1;transform:none}}
+.ex-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ex-label{flex:1}
+.ex-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+
+/* ── Concepts ── */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:8px}
+.concept-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:20px;
+  transition:border-color 0.2s;
+}
+.concept-card:hover{border-color:var(--border2)}
+.cc-icon{font-size:24px;margin-bottom:10px}
+.cc-name{font-size:15px;font-weight:800;margin-bottom:6px}
+.cc-desc{font-size:13px;color:var(--muted);line-height:1.7}
+.cc-why{
+  margin-top:10px;padding:8px 11px;border-radius:8px;
+  background:rgba(255,255,255,0.03);border-left:2px solid;
+  font-size:12px;color:rgba(255,255,255,0.55);line-height:1.6;
+}
+
+/* ── Stack ── */
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.stack-item{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;background:var(--s2);border:1px solid var(--border);border-radius:10px;
+}
+.stack-icon{font-size:20px;flex-shrink:0}
+.stack-name{font-size:13px;font-weight:700}
+.stack-role{font-size:11px;color:var(--muted)}
+
+/* ── Footer ── */
+footer{text-align:center;padding:48px 24px;color:var(--muted);font-size:13px;margin-top:64px;border-top:1px solid var(--border)}
+footer a{color:var(--v);text-decoration:none}
+
+/* ── Pulse animation for live indicator ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g);margin-right:5px;animation:pulse 1.5s ease infinite;vertical-align:middle}
+
+/* ── Diagram SVG area ── */
+.diagram-wrap{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:32px 24px;margin-bottom:32px;overflow-x:auto;
+}
+.diagram-inner{min-width:700px;position:relative}
+
+/* Node styles */
+.node{
+  position:absolute;display:flex;flex-direction:column;align-items:center;
+  cursor:default;transition:transform 0.2s;
+}
+.node:hover{transform:scale(1.05)}
+.node-box{
+  padding:10px 16px;border-radius:12px;border:1.5px solid;
+  display:flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:700;white-space:nowrap;
+}
+.node-sub{font-size:10px;color:var(--muted);margin-top:4px;text-align:center;max-width:120px;line-height:1.4}
+
+/* ── Interactive section ── */
+.interactive-demo{
+  background:var(--s1);border:1px solid var(--border);border-radius:16px;
+  padding:0;overflow:hidden;margin-top:8px;
+}
+.demo-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;
+}
+.demo-body{padding:20px}
+.scenario-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.stab{
+  padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;
+  background:var(--s2);border:1px solid var(--border);color:var(--muted);transition:all 0.15s;
+}
+.stab.active{background:rgba(139,92,246,0.12);border-color:rgba(139,92,246,0.35);color:#a78bfa}
+.scenario-content{display:none}
+.scenario-content.active{display:block}
+.flow-visual{display:flex;align-items:center;gap:0;flex-wrap:wrap;row-gap:10px}
+.fv-node{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.fv-box{
+  padding:8px 12px;border-radius:10px;border:1.5px solid;
+  font-size:12px;font-weight:700;white-space:nowrap;text-align:center;
+}
+.fv-label{font-size:10px;color:var(--muted);text-align:center;max-width:90px;line-height:1.3}
+.fv-arrow{font-size:16px;color:var(--muted);padding:0 4px;margin-top:-8px}
+.fv-group{
+  display:flex;flex-direction:column;gap:6px;
+  padding:10px 12px;border:1px dashed rgba(255,255,255,0.1);border-radius:10px;
+}
+.fv-group-label{font-size:10px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:4px;letter-spacing:0.5px;text-transform:uppercase}
+.scenario-desc{
+  margin-top:16px;padding:12px 16px;
+  background:var(--s2);border-radius:10px;border:1px solid var(--border);
+  font-size:13px;color:var(--muted);line-height:1.7;
+}
+.scenario-desc strong{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">✦</div>
+    <h1>A2A <span>ワークフロー</span> 図解</h1>
+  </div>
+  <p class="subtitle">ユーザーのメッセージが、どのように複数のAIエージェントへと流れ、最終的な回答として届くまでの全プロセス</p>
+  <a href="/" class="back-link">← デモに戻る</a>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 1: シナリオ別インタラクティブ図
+════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">シナリオ別フロー</div>
+  <div class="section-title">メッセージはどう処理されるか</div>
+  <div class="section-desc">送信内容によって3つの異なるパスを辿る。タブを切り替えて比較してみよう。</div>
+
+  <div class="interactive-demo">
+    <div class="demo-header">
+      <span class="live-dot"></span>
+      インタラクティブ フロー可視化
+    </div>
+    <div class="demo-body">
+      <div class="scenario-tabs">
+        <div class="stab active" onclick="showScenario('single')">🔍 シングルエージェント</div>
+        <div class="stab" onclick="showScenario('multi')">🔗 A2A委譲（マルチ）</div>
+        <div class="stab" onclick="showScenario('hitl')">⚠️ HITL（人間承認）</div>
+        <div class="stab" onclick="showScenario('memory')">🧠 長期記憶</div>
+      </div>
+
+      <!-- Single Agent -->
+      <div class="scenario-content active" id="sc-single">
+        <div class="flow-visual">
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)">👤 ユーザー入力</div>
+            <div class="fv-label">「Rustで非同期サーバー書いて」</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(139,92,246,0.4);background:rgba(139,92,246,0.08);color:#a78bfa">🧭 Planner</div>
+            <div class="fv-label">シングルタスク判定</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(139,92,246,0.4);background:rgba(139,92,246,0.08);color:#a78bfa">🗺️ Router</div>
+            <div class="fv-label">code エージェントへ (95%)</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(6,182,212,0.4);background:rgba(6,182,212,0.08);color:#22d3ee">⚙️ コードAI</div>
+            <div class="fv-label">GitHub検索 + 生成</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:#fbbf24">🔄 評価ループ</div>
+            <div class="fv-label">品質スコア 8/10 → OK</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.08);color:#34d399">✅ 回答</div>
+            <div class="fv-label">コード + 実行確認</div>
+          </div>
+        </div>
+        <div class="scenario-desc">
+          <strong>シングルエージェントパス：</strong>最もシンプルなルート。Plannerが「単一タスク」と判断 → Routerがキーワード解析で最適エージェントを選定 → MCPツールで情報収集 → Claude がストリーミング生成 → Agentic Loopで品質評価 → スコア7未満なら自動改善して完了。
+        </div>
+      </div>
+
+      <!-- Multi Agent -->
+      <div class="scenario-content" id="sc-multi">
+        <div class="flow-visual" style="flex-direction:column;align-items:flex-start;gap:12px">
+          <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;row-gap:8px">
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)">👤 複合指示</div><div class="fv-label">「調査して → メール送信」</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(139,92,246,0.4);background:rgba(139,92,246,0.08);color:#a78bfa">🧭 Planner</div><div class="fv-label">multi:true 判定</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.08);color:#34d399">📋 プラン生成</div><div class="fv-label">3ステップ分解</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;padding-left:40px;flex-wrap:wrap">
+            <div class="fv-group">
+              <div class="fv-group-label">Step 1</div>
+              <div class="fv-node"><div class="fv-box" style="border-color:rgba(6,182,212,0.4);background:rgba(6,182,212,0.08);color:#22d3ee">🔍 リサーチAI</div></div>
+              <div style="font-size:11px;color:var(--muted);text-align:center">Web + Wiki</div>
+            </div>
+            <div class="fv-arrow" style="margin-top:24px">→</div>
+            <div class="fv-group">
+              <div class="fv-group-label">Step 2</div>
+              <div class="fv-node"><div class="fv-box" style="border-color:rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);color:#fbbf24">📊 アナリストAI</div></div>
+              <div style="font-size:11px;color:var(--muted);text-align:center">前結果を引き継ぎ</div>
+            </div>
+            <div class="fv-arrow" style="margin-top:24px">→</div>
+            <div class="fv-group">
+              <div class="fv-group-label">Step 3</div>
+              <div class="fv-node"><div class="fv-box" style="border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171">📨 通知AI</div></div>
+              <div style="font-size:11px;color:var(--muted);text-align:center">→ HITL 発動</div>
+            </div>
+          </div>
+        </div>
+        <div class="scenario-desc">
+          <strong>A2A委譲パス：</strong>Plannerが「複数エージェントが必要」と判断するとプランを自動生成。各ステップは前のステップの出力を文脈として受け取りながら順次実行（コンテキスト引き継ぎ）。最後のステップに通知系エージェントが含まれる場合は自動的にHITL待機状態になる。
+        </div>
+      </div>
+
+      <!-- HITL -->
+      <div class="scenario-content" id="sc-hitl">
+        <div class="flow-visual">
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171">📨 通知AI</div>
+            <div class="fv-label">メール/Slack/LINE</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#f87171">⚠️ HITL</div>
+            <div class="fv-label">自動送信を一時停止</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)">👤 人間が確認</div>
+            <div class="fv-label">ドラフト + 宛先表示</div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="fv-node">
+              <div class="fv-box" style="border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.08);color:#34d399">✅ 承認 → 実行</div>
+              <div class="fv-label">Resend で即時送信</div>
+            </div>
+            <div class="fv-node">
+              <div class="fv-box" style="border-color:rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);color:#f87171">✕ 却下 → 中止</div>
+              <div class="fv-label">SQLite に記録</div>
+            </div>
+          </div>
+          <div class="fv-arrow">→</div>
+          <div class="fv-node">
+            <div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">🧠 記憶抽出</div>
+            <div class="fv-label">バックグラウンド保存</div>
+          </div>
+        </div>
+        <div class="scenario-desc">
+          <strong>HITLパス：</strong>通知・送信系エージェント（メール・Slack・LINE）は必ず人間の承認が必要。AIが生成したドラフト・宛先・件名を画面に表示し、「承認」または「却下」を待機。承認後は Resend API で実際に送信し、結果を SQLite に永続化する。すべての判断履歴は監査証跡として保存。
+        </div>
+      </div>
+
+      <!-- Memory -->
+      <div class="scenario-content" id="sc-memory">
+        <div class="flow-visual" style="flex-direction:column;align-items:flex-start;gap:16px">
+          <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap">
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04)">👤 新しい質問</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">🧠 記憶検索</div><div class="fv-label">SQLite LIKE 全文検索</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">📌 記憶注入</div><div class="fv-label">重要度順 TOP6 を文脈追加</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(6,182,212,0.4);background:rgba(6,182,212,0.08);color:#22d3ee">🤖 エージェント</div><div class="fv-label">文脈付きで回答</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;padding-left:0">
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(6,182,212,0.4);background:rgba(6,182,212,0.08);color:#22d3ee">🤖 回答完了</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">🔬 Haiku 抽出</div><div class="fv-label">BG: 重要情報を抽出</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">💾 SQLite 保存</div><div class="fv-label">重複チェック後に永続化</div></div>
+            <div class="fv-arrow">→</div>
+            <div class="fv-node"><div class="fv-box" style="border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.08);color:#f9a8d4">次回以降に活用</div></div>
+          </div>
+        </div>
+        <div class="scenario-desc">
+          <strong>長期記憶パス：</strong>会話前に SQLite でキーワード検索 → 関連記憶 TOP6 をプロンプトに注入 → エージェントが文脈付きで回答。回答後はバックグラウンドで Claude Haiku が会話から重要事項を抽出・保存（重複防止付き）。セッションをまたいで記憶が蓄積される Mem0 インスパイアなパターン。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 2: ステップ詳細
+════════════════════════════════════════════════════════ -->
+<div class="section" style="padding-top:56px">
+  <div class="section-label">詳細フロー</div>
+  <div class="section-title">7ステップの処理パイプライン</div>
+  <div class="section-desc">ユーザーの一言が最終レスポンスに変わるまでの全ステップ。</div>
+
+  <div class="flow">
+
+    <!-- Step 0: Memory Recall -->
+    <div class="step" style="--step-color:#f472b6">
+      <div class="step-left"><div class="step-num">0</div></div>
+      <div class="step-body">
+        <div class="step-tag">🧠 Memory Recall</div>
+        <div class="step-name">長期記憶の参照</div>
+        <div class="step-desc">リクエスト処理の最初に実行。過去の会話から抽出・保存した記憶を SQLite で検索し、ユーザー固有の文脈（名前・プロジェクト・好み・制約）を取得してプロンプトに注入する。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">🔍</span><span>キーワード抽出（正規表現）→ LIKE 検索 → 重要度 + 最終アクセス日時でソート</span></div>
+          <div class="detail-row"><span class="detail-icon">📌</span><span>TOP6 件を <span class="detail-hl">「【長期記憶】」</span> ブロックとしてプロンプト先頭に追加</span></div>
+          <div class="detail-row"><span class="detail-icon">📤</span><span>SSE イベント <span class="detail-hl">memories_loaded</span> でフロントに通知（ピンクバーで表示）</span></div>
+          <div class="chips">
+            <span class="chip p">SQLite LIKE</span>
+            <span class="chip p">重要度1-10</span>
+            <span class="chip p">アクセス履歴</span>
+            <span class="chip p">セッション横断</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Planner -->
+    <div class="step" style="--step-color:#8b5cf6">
+      <div class="step-left"><div class="step-num">1</div></div>
+      <div class="step-body">
+        <div class="step-tag">🧭 Planner</div>
+        <div class="step-name">マルチエージェント判定</div>
+        <div class="step-desc">Claude Haiku がタスクを解析し「シングルエージェントで済むか」「複数エージェントの協調が必要か」を判断。複合タスクの場合はエージェント列とサブタスクへの分解プランを返す。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">✅</span><span><span class="detail-hl">single</span>：「Rustで関数を書いて」→ code エージェント1本に直行</span></div>
+          <div class="detail-row"><span class="detail-icon">🔗</span><span><span class="detail-hl">multi</span>：「調査してメールで送って」→ [research → analyst → notify] の3ステッププランを生成</span></div>
+          <div class="detail-row"><span class="detail-icon">⚡</span><span>モデル：Claude Haiku（高速・低コスト）。最大3ステップ制限</span></div>
+          <div class="chips">
+            <span class="chip v">Claude Haiku</span>
+            <span class="chip v">JSON出力</span>
+            <span class="chip v">最大3ステップ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Router (single path) -->
+    <div class="step" style="--step-color:#06b6d4">
+      <div class="step-left"><div class="step-num">2</div></div>
+      <div class="step-body">
+        <div class="step-tag">🗺️ Semantic Router</div>
+        <div class="step-name">エージェント選択</div>
+        <div class="step-desc">シングルパスの場合のみ実行。Claude Haiku が8種類のエージェントの中から最適な1つを選択。信頼度スコア（0〜1）も出力し、UI の統計に反映。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">📋</span><span>選択肢：<span class="detail-hl">research / code / qa / analyst / legal / finance / schedule / notify</span></span></div>
+          <div class="detail-row"><span class="detail-icon">📊</span><span>出力例：<code style="font-size:11px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px">{"agent":"code","reason":"Rust言語名が含まれる","confidence":0.97}</code></span></div>
+          <div class="chips">
+            <span class="chip c">Claude Haiku</span>
+            <span class="chip c">信頼度スコア</span>
+            <span class="chip c">8エージェント</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: MCP Tools -->
+    <div class="step" style="--step-color:#06b6d4">
+      <div class="step-left"><div class="step-num">3</div></div>
+      <div class="step-body">
+        <div class="step-tag">🔌 MCP Tools</div>
+        <div class="step-name">外部ツール実行</div>
+        <div class="step-desc">エージェントに応じた実ツールを並列実行してデータを収集。結果は「強化メッセージ」としてプロンプトに追記されてから LLM に渡される。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">🔍</span><span><span class="detail-hl">research</span>：DuckDuckGo Web検索 + Wikipedia</span></div>
+          <div class="detail-row"><span class="detail-icon">⚙️</span><span><span class="detail-hl">code</span>：GitHub リポジトリ検索</span></div>
+          <div class="detail-row"><span class="detail-icon">🌐</span><span><span class="detail-hl">qa</span>：Playwright ヘッドレスブラウザ → スクリーンショット + テキスト抽出</span></div>
+          <div class="detail-row"><span class="detail-icon">💹</span><span><span class="detail-hl">finance</span>：yFinance 株価・財務データ + DCFモデル</span></div>
+          <div class="detail-row"><span class="detail-icon">⚖️</span><span><span class="detail-hl">legal</span>：法令検索 + コンプライアンスチェッカー</span></div>
+          <div class="chips">
+            <span class="chip c">DuckDuckGo</span>
+            <span class="chip c">Wikipedia</span>
+            <span class="chip c">Playwright</span>
+            <span class="chip c">yFinance</span>
+            <span class="chip c">GitHub</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: LLM Streaming -->
+    <div class="step" style="--step-color:#8b5cf6">
+      <div class="step-left"><div class="step-num">4</div></div>
+      <div class="step-body">
+        <div class="step-tag">⚡ Streaming LLM</div>
+        <div class="step-name">リアルタイム生成</div>
+        <div class="step-desc">Claude Sonnet がトークン単位でストリーミング生成。SSE（Server-Sent Events）経由でフロントに1文字ずつ届き、ユーザーは生成が完了する前からリアルタイムで読める。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">🔄</span><span>AsyncAnthropic <span class="detail-hl">messages.stream()</span> → テキストチャンクを SSE に変換</span></div>
+          <div class="detail-row"><span class="detail-icon">📜</span><span>会話履歴（直近8ターン）+ 長期記憶 + ツール結果 + システムプロンプトを連結</span></div>
+          <div class="detail-row"><span class="detail-icon">🔡</span><span>SSE イベント：<span class="detail-hl">stream_start</span> → <span class="detail-hl">token</span>×N → <span class="detail-hl">done</span></span></div>
+          <div class="chips">
+            <span class="chip v">Claude Sonnet 4.6</span>
+            <span class="chip v">SSE Streaming</span>
+            <span class="chip v">会話履歴 8turns</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Agentic Loop -->
+    <div class="step" style="--step-color:#f59e0b">
+      <div class="step-left"><div class="step-num">5</div></div>
+      <div class="step-body">
+        <div class="step-tag">🔄 Agentic Loop</div>
+        <div class="step-name">自己評価 → 改善</div>
+        <div class="step-desc">生成完了後、別の Claude Haiku インスタンスが回答を 0〜10 点で採点。7点未満なら問題点リストを付けて同じエージェントに再生成を依頼し、品質を担保する。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">📊</span><span>評価プロンプト → JSON出力 <span class="detail-hl">{"score": 8, "issues": ["具体性不足"]}</span></span></div>
+          <div class="detail-row"><span class="detail-icon">🔁</span><span>スコア &lt; 7 → self_reflect() → 改善版で上書き（最大1回）</span></div>
+          <div class="detail-row"><span class="detail-icon">✅</span><span>スコア ≥ 7 → そのまま確定。スコアを UI の品質チップに表示</span></div>
+          <div class="chips">
+            <span class="chip a">Claude Haiku 評価</span>
+            <span class="chip a">0-10スコア</span>
+            <span class="chip a">自動改善</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: HITL -->
+    <div class="step" style="--step-color:#ef4444">
+      <div class="step-left"><div class="step-num">6</div></div>
+      <div class="step-body">
+        <div class="step-tag">⚠️ HITL</div>
+        <div class="step-name">人間承認（危険アクション）</div>
+        <div class="step-desc">通知エージェント（メール・Slack・LINE）は外部への実際の送信を伴うため、AIが自動実行せず必ず人間の確認を求める。承認・却下の結果は SQLite に永続化される。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">📋</span><span>UI にドラフト・宛先・件名を表示 → ユーザーが「承認」or「却下」</span></div>
+          <div class="detail-row"><span class="detail-icon">✅</span><span>承認時：<span class="detail-hl">Resend API</span>（メール）または <span class="detail-hl">Slack Webhook</span> で実際に送信</span></div>
+          <div class="detail-row"><span class="detail-icon">💾</span><span>全判断履歴を SQLite に保存 → 監査証跡として参照可能</span></div>
+          <div class="chips">
+            <span class="chip r">Resend Email</span>
+            <span class="chip r">Slack Webhook</span>
+            <span class="chip r">SQLite 永続化</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 7: Memory Extract -->
+    <div class="step" style="--step-color:#f472b6">
+      <div class="step-left"><div class="step-num">7</div></div>
+      <div class="step-body">
+        <div class="step-tag">🧠 Memory Extract</div>
+        <div class="step-name">長期記憶の蓄積</div>
+        <div class="step-desc">回答確定後、バックグラウンドで Claude Haiku が会話ターンを解析し、長期的に有用な情報（名前・プロジェクト・好み・制約）を抽出して SQLite に保存。次回以降の全会話で自動参照される。</div>
+        <div class="step-detail">
+          <div class="detail-row"><span class="detail-icon">🔬</span><span>Haiku に「この会話から記憶すべき情報を抽出」→ JSON配列で受取</span></div>
+          <div class="detail-row"><span class="detail-icon">🚫</span><span>重複チェック：先頭40文字で LIKE 検索 → 既存なら追加しない</span></div>
+          <div class="detail-row"><span class="detail-icon">📤</span><span>SSE <span class="detail-hl">memories_stored</span> → フロントのメモリパネルが自動更新</span></div>
+          <div class="chips">
+            <span class="chip p">Claude Haiku</span>
+            <span class="chip p">asyncio.create_task</span>
+            <span class="chip p">重複防止</span>
+            <span class="chip p">重要度1-10</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 3: エージェント一覧
+════════════════════════════════════════════════════════ -->
+<div class="section" style="padding-top:56px">
+  <div class="section-label">エージェントフリート</div>
+  <div class="section-title">8種の専門AIエージェント</div>
+  <div class="section-desc">各エージェントは専用のシステムプロンプト・ツールセット・色を持つ。ルーターが自動で最適な1つ（またはN個）を選択。</div>
+
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">🔍</span><span class="ac-name" style="color:#8b5cf6">リサーチAI</span></div>
+      <div class="ac-desc">Web検索・Wikipedia・最新情報収集。「〜について教えて」系の質問全般を担当。</div>
+      <div class="ac-tools"><span class="ac-tool">web_search</span><span class="ac-tool">wikipedia</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">⚙️</span><span class="ac-name" style="color:#06b6d4">コードAI</span></div>
+      <div class="ac-desc">コード生成・デバッグ・リファクタ。生成後に自動実行してエラーがあれば自動修正（Agentループ）。</div>
+      <div class="ac-tools"><span class="ac-tool">github_search</span><span class="ac-tool">code_executor</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">🌐</span><span class="ac-name" style="color:#22d3ee">QA/ブラウザAI</span></div>
+      <div class="ac-desc">URLのスクリーンショット・テスト自動化。Playwright でヘッドレスブラウザを操作。</div>
+      <div class="ac-tools"><span class="ac-tool">browser_screenshot</span><span class="ac-tool">browser_navigate</span><span class="ac-tool">browser_test</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">📊</span><span class="ac-name" style="color:#a78bfa">アナリストAI</span></div>
+      <div class="ac-desc">データ分析・KPI・グラフ・レポート作成。市場データを取得して視覚的にまとめる。</div>
+      <div class="ac-tools"><span class="ac-tool">web_search</span><span class="ac-tool">chart_builder</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">💹</span><span class="ac-name" style="color:#fbbf24">フィナンスAI</span></div>
+      <div class="ac-desc">株価・財務分析・DCFモデル・バリュエーション。yFinance でリアルタイムデータを取得。</div>
+      <div class="ac-tools"><span class="ac-tool">bloomberg_api</span><span class="ac-tool">dcf_model</span><span class="ac-tool">risk_calc</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">⚖️</span><span class="ac-name" style="color:#f87171">リーガルAI</span></div>
+      <div class="ac-desc">契約書・NDA・法的リスク・コンプライアンス。法令DB検索とリスク評価を組み合わせ。</div>
+      <div class="ac-tools"><span class="ac-tool">legal_db</span><span class="ac-tool">compliance_check</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">📅</span><span class="ac-name" style="color:#34d399">スケジュールAI</span></div>
+      <div class="ac-desc">タスク整理・スケジュール管理・優先順位付け。カレンダー統合対応。</div>
+      <div class="ac-tools"><span class="ac-tool">calendar</span><span class="ac-tool">task_manager</span></div>
+    </div>
+    <div class="agent-card">
+      <div class="ac-top"><span class="ac-emoji">📨</span><span class="ac-name" style="color:#ef4444">通知AI ⚠️HITL</span></div>
+      <div class="ac-desc">メール・Slack・LINE送信。外部送信を伴うため必ず人間承認（HITL）が発動。</div>
+      <div class="ac-tools"><span class="ac-tool">resend_email</span><span class="ac-tool">slack_webhook</span><span class="ac-tool">line_api</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 4: コアコンセプト
+════════════════════════════════════════════════════════ -->
+<div class="section" style="padding-top:56px">
+  <div class="section-label">コアコンセプト</div>
+  <div class="section-title">実装した7つの技術要素</div>
+  <div class="section-desc">このシステムが体現している、現代の AI エージェントシステムの主要パターン。</div>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <div class="cc-icon">🗺️</div>
+      <div class="cc-name">Semantic Routing</div>
+      <div class="cc-desc">LLM自身が「どのエージェントが最適か」を判断して振り分ける。ルールベースのif-elseではなく、意味的な理解で動的にルーティング。</div>
+      <div class="cc-why" style="border-color:rgba(139,92,246,0.4)">なぜ重要か：タスクが多様になるほどルールベースは破綻する。LLMに任せれば「株価を調べてグラフ化して」のような複合意図も正確に処理できる。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">🔌</div>
+      <div class="cc-name">MCP (Model Context Protocol)</div>
+      <div class="cc-desc">エージェントが外部ツール・DBに接続するための標準プロトコル。ブラウザ・検索・株価API・コード実行などを統一的に呼び出す。</div>
+      <div class="cc-why" style="border-color:rgba(6,182,212,0.4)">なぜ重要か：AIが「知識」だけでなく「行動」できるようになる。リアルタイム情報の取得・外部システムとの連携が可能になる。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">⚠️</div>
+      <div class="cc-name">HITL (Human in the Loop)</div>
+      <div class="cc-desc">AIが自律的に動く中で、外部への実際の影響（送信・削除・決済）が発生する前に人間の確認を挟む安全装置。</div>
+      <div class="cc-why" style="border-color:rgba(239,68,68,0.4)">なぜ重要か：自律AIへの信頼は「止められる仕組み」があって初めて成立する。AGI時代の責任あるAI開発の基本パターン。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">🔄</div>
+      <div class="cc-name">Agentic Loop</div>
+      <div class="cc-desc">生成 → 自己評価 → 改善という反復サイクル。人間のレビューなしに品質を高める自律改善メカニズム。</div>
+      <div class="cc-why" style="border-color:rgba(245,158,11,0.4)">なぜ重要か：1回の生成で完璧な回答は難しい。評価-改善ループがあることでアウトプット品質が統計的に向上する。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">⚡</div>
+      <div class="cc-name">Token Streaming (SSE)</div>
+      <div class="cc-desc">LLMの生成をトークン単位でリアルタイム転送。ユーザーは完了を待たず即座に読み始められる。体感レスポンス速度が劇的に向上。</div>
+      <div class="cc-why" style="border-color:rgba(139,92,246,0.4)">なぜ重要か：5秒の完了待ちと、即座に文字が流れてくる体験の差は UX として致命的。ChatGPTが普及した理由の一つ。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">🔗</div>
+      <div class="cc-name">A2A Delegation</div>
+      <div class="cc-desc">Agent-to-Agent プロトコル。複合タスクを自動分解し、専門エージェントのチェーンで実行。前のエージェントの出力が次のインプットになる。</div>
+      <div class="cc-why" style="border-color:rgba(16,185,129,0.4)">なぜ重要か：単一の汎用AIより専門AIの連携の方が高品質。人間の組織と同じ「分業 + 連携」のパラダイムをAIに適用。</div>
+    </div>
+    <div class="concept-card">
+      <div class="cc-icon">🧠</div>
+      <div class="cc-name">Long-term Memory</div>
+      <div class="cc-desc">Mem0インスパイア。会話から重要情報を自動抽出してSQLiteに蓄積。セッションを跨いでユーザーを「覚え続ける」パーソナライズAI。</div>
+      <div class="cc-why" style="border-color:rgba(244,114,182,0.4)">なぜ重要か：毎回「私の名前は〜で、プロジェクトは〜」と説明するAIは実用的ではない。記憶があることで初めて「アシスタント」になれる。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 5: 技術スタック
+════════════════════════════════════════════════════════ -->
+<div class="section" style="padding-top:56px">
+  <div class="section-label">テック スタック</div>
+  <div class="section-title">使用技術一覧</div>
+  <div class="section-desc">すべて Python + ブラウザのみで動作。外部インフラなし。</div>
+
+  <div class="stack-grid">
+    <div class="stack-item"><span class="stack-icon">⚡</span><div><div class="stack-name">FastAPI</div><div class="stack-role">APIサーバー / SSEエンドポイント</div></div></div>
+    <div class="stack-item"><span class="stack-icon">🤖</span><div><div class="stack-name">Anthropic Claude</div><div class="stack-role">Sonnet 4.6 (生成) + Haiku (評価・抽出)</div></div></div>
+    <div class="stack-item"><span class="stack-icon">🌐</span><div><div class="stack-name">Playwright</div><div class="stack-role">ヘッドレスブラウザ (永続インスタンス)</div></div></div>
+    <div class="stack-item"><span class="stack-icon">🗄️</span><div><div class="stack-name">SQLite + aiosqlite</div><div class="stack-role">会話履歴 / HITL / 長期記憶</div></div></div>
+    <div class="stack-item"><span class="stack-icon">📧</span><div><div class="stack-name">Resend</div><div class="stack-role">トランザクションメール送信</div></div></div>
+    <div class="stack-item"><span class="stack-icon">📈</span><div><div class="stack-name">yFinance</div><div class="stack-role">株価・財務データ取得</div></div></div>
+    <div class="stack-item"><span class="stack-icon">🦆</span><div><div class="stack-name">DuckDuckGo Search</div><div class="stack-role">プライバシー重視の Web 検索</div></div></div>
+    <div class="stack-item"><span class="stack-icon">📖</span><div><div class="stack-name">Wikipedia API</div><div class="stack-role">百科事典情報取得</div></div></div>
+  </div>
+</div>
+
+<footer style="margin-top:64px">
+  <p>A2A Demo — Multi-Agent AI System</p>
+  <p style="margin-top:6px"><a href="/">← デモに戻って試してみる</a></p>
+</footer>
+
+<script>
+function showScenario(id) {
+  document.querySelectorAll('.scenario-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.stab').forEach(el => el.classList.remove('active'));
+  document.getElementById('sc-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
