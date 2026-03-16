@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Synapse Multi-Agent AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:      #09090b;
+  --surface: #111113;
+  --card:    #18181b;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #fafafa;
+  --muted:   #71717a;
+  --muted2:  #52525b;
+  --accent:  #8b5cf6;
+  --accent2: #06b6d4;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --pink:    #f472b6;
+}
+html, body { min-height:100%; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+}
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius:3px; }
+
+/* ── Auth Gate ───────────────────────────────────────────────────────── */
+#auth-overlay {
+  position: fixed; inset:0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#auth-box {
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+#auth-box .logo {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+#auth-box .logo span { color: var(--accent); }
+#auth-box .subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+#auth-box label {
+  display: block;
+  text-align: left;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+#auth-token-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color 0.15s;
+}
+#auth-token-input:focus { border-color: var(--accent); }
+#auth-submit-btn {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+#auth-submit-btn:hover { opacity: 0.88; }
+#auth-error {
+  margin-top: 12px;
+  color: var(--red);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+/* ── Top Bar ──────────────────────────────────────────────────────────── */
+#topbar {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 16px;
+}
+#topbar .brand {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+#topbar .brand span { color: var(--accent); }
+#topbar .badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(139,92,246,0.18);
+  color: var(--accent);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+#topbar .spacer { flex:1; }
+#topbar .back-link {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  transition: color 0.15s, border-color 0.15s;
+}
+#topbar .back-link:hover { color: var(--text); border-color: var(--border2); }
+#refresh-indicator {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot-pulse {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Main Layout ─────────────────────────────────────────────────────── */
+#main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+  display: none;
+}
+#main.visible { display: block; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+
+/* ── Stats Grid ──────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card .stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: var(--text);
+}
+.stat-card .stat-icon {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* ── Charts Grid ─────────────────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+@media (max-width: 768px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+.chart-card .chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.chart-card .chart-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.chart-wrapper {
+  position: relative;
+  height: 240px;
+}
+
+/* ── Actions Row ─────────────────────────────────────────────────────── */
+.actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+@media (max-width: 640px) {
+  .actions-row { grid-template-columns: 1fr; }
+}
+.action-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.action-card .action-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.action-card .action-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+  text-decoration: none;
+}
+.btn:active { transform: scale(0.97); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border2); }
+.btn:hover { opacity: 0.82; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.token-input-row {
+  display: flex;
+  gap: 8px;
+}
+.token-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  outline: none;
+}
+.token-input-row input:focus { border-color: var(--accent); }
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 13px;
+  color: var(--text);
+  z-index: 9999;
+  transition: transform 0.25s ease, opacity 0.25s;
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+#toast.success { border-color: rgba(16,185,129,0.4); color: var(--green); }
+#toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+
+/* ── Skeleton ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.04) 50%, var(--card) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+  height: 28px;
+}
+
+/* ── Last updated ─────────────────────────────────────────────────────── */
+#last-updated {
+  font-size: 12px;
+  color: var(--muted2);
+  margin-bottom: 20px;
+}
+
+/* ── Responsive topbar ────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  #topbar .brand { font-size: 14px; }
+  #refresh-indicator span { display: none; }
+  #main { padding: 16px 12px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div id="auth-overlay">
+  <div id="auth-box">
+    <div class="logo">Synapse <span>Admin</span></div>
+    <div class="subtitle">管理者トークンを入力してください</div>
+    <label for="auth-token-input">Admin Token</label>
+    <input type="password" id="auth-token-input" placeholder="••••••••••••••••" autocomplete="off">
+    <button class="btn btn-accent" id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:11px;font-size:14px;">
+      ログイン
+    </button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<!-- Top Bar -->
+<div id="topbar">
+  <div class="brand">Synapse <span>Admin</span></div>
+  <div class="badge">管理者</div>
+  <div class="spacer"></div>
+  <div id="refresh-indicator">
+    <div class="dot-pulse"></div>
+    <span>自動更新 30s</span>
+  </div>
+  <a href="/" class="back-link">
+    ← メインアプリ
+  </a>
+</div>
+
+<!-- Main Content -->
+<div id="main">
+  <div id="last-updated">最終更新: —</div>
+
+  <!-- Stats -->
+  <div class="section-title">概要統計</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💬</div>
+      <div class="stat-label">総メッセージ数</div>
+      <div class="stat-value" id="stat-messages">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🗂️</div>
+      <div class="stat-label">総セッション数</div>
+      <div class="stat-value" id="stat-sessions">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">👤</div>
+      <div class="stat-label">総ユーザー数</div>
+      <div class="stat-value" id="stat-users">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-label">総記憶数</div>
+      <div class="stat-value" id="stat-memories">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🌐</div>
+      <div class="stat-label">アクティブブラウザセッション</div>
+      <div class="stat-value" id="stat-browser-sessions">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📸</div>
+      <div class="stat-label">スクリーンショットファイル数</div>
+      <div class="stat-value" id="stat-screenshots">—</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="section-title">使用状況チャート</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">エージェント別使用数</div>
+      <div class="chart-sub">上位エージェントのメッセージ数</div>
+      <div class="chart-wrapper">
+        <canvas id="agentChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">日別使用量</div>
+      <div class="chart-sub">過去 30 日間のメッセージ数</div>
+      <div class="chart-wrapper">
+        <canvas id="dailyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="section-title">クイックアクション</div>
+  <div class="actions-row">
+    <!-- Screenshot clear -->
+    <div class="action-card">
+      <div class="action-title">スクリーンショット管理</div>
+      <div class="action-desc">蓄積されたスクリーンショットファイルをすべて削除します。</div>
+      <button class="btn btn-red" id="clear-ss-btn" onclick="clearScreenshots()">
+        🗑️ スクリーンショット全削除
+      </button>
+    </div>
+
+    <!-- Refresh -->
+    <div class="action-card">
+      <div class="action-title">データ再読み込み</div>
+      <div class="action-desc">統計データを今すぐ手動で再取得します。</div>
+      <button class="btn btn-ghost" onclick="loadStats()">
+        🔄 再読み込み
+      </button>
+    </div>
+
+    <!-- Token change -->
+    <div class="action-card">
+      <div class="action-title">Admin Token 変更</div>
+      <div class="action-desc">ローカルに保存されたトークンを更新します。</div>
+      <div class="token-input-row">
+        <input type="password" id="new-token-input" placeholder="新しいトークン" autocomplete="off">
+        <button class="btn btn-accent" onclick="updateToken()">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let adminToken = '';
+let refreshTimer = null;
+let agentChart = null;
+let dailyChart = null;
+
+// ── Auth ───────────────────────────────────────────────────────────────
+function init() {
+  const stored = localStorage.getItem('synapse_admin_token');
+  if (stored) {
+    adminToken = stored;
+    tryAuth(adminToken);
+  }
+  document.getElementById('auth-token-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitAuth();
+  });
+}
+
+async function submitAuth() {
+  const input = document.getElementById('auth-token-input');
+  const token = input.value.trim();
+  if (!token) return;
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('auth-submit-btn').disabled = true;
+  document.getElementById('auth-submit-btn').textContent = '確認中…';
+  await tryAuth(token);
+  document.getElementById('auth-submit-btn').disabled = false;
+  document.getElementById('auth-submit-btn').textContent = 'ログイン';
+}
+
+async function tryAuth(token) {
+  try {
+    const res = await fetch(`/admin/stats?token=${encodeURIComponent(token)}`);
+    if (res.status === 401) {
+      document.getElementById('auth-error').textContent = '❌ 認証に失敗しました。トークンを確認してください。';
+      return;
+    }
+    if (!res.ok) {
+      document.getElementById('auth-error').textContent = `❌ エラー: HTTP ${res.status}`;
+      return;
+    }
+    // Success
+    adminToken = token;
+    localStorage.setItem('synapse_admin_token', token);
+    const data = await res.json();
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('main').classList.add('visible');
+    renderStats(data);
+    startAutoRefresh();
+  } catch (e) {
+    document.getElementById('auth-error').textContent = `❌ ネットワークエラー: ${e.message}`;
+  }
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`/admin/stats?token=${encodeURIComponent(adminToken)}`);
+    if (res.status === 401) {
+      showToast('セッションが切れました。再ログインしてください。', 'error');
+      logout();
+      return;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderStats(data);
+    showToast('データを更新しました', 'success');
+  } catch (e) {
+    showToast(`取得エラー: ${e.message}`, 'error');
+  }
+}
+
+function renderStats(data) {
+  // Cards
+  setValue('stat-messages',        fmt(data.total_messages        ?? data.messages        ?? 0));
+  setValue('stat-sessions',        fmt(data.total_sessions        ?? data.sessions        ?? 0));
+  setValue('stat-users',           fmt(data.total_users           ?? data.users           ?? 0));
+  setValue('stat-memories',        fmt(data.total_memories        ?? data.memories        ?? 0));
+  setValue('stat-browser-sessions',fmt(data.active_browser_sessions ?? data.browser_sessions ?? 0));
+  setValue('stat-screenshots',     fmt(data.screenshot_files      ?? data.screenshots     ?? 0));
+
+  // Charts
+  const agentData = data.agent_usage || data.agents || {};
+  const dailyData = data.daily_usage || data.daily   || {};
+
+  renderAgentChart(agentData);
+  renderDailyChart(dailyData);
+
+  // Timestamp
+  const now = new Date();
+  document.getElementById('last-updated').textContent =
+    `最終更新: ${now.toLocaleString('ja-JP')}`;
+}
+
+function setValue(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function fmt(n) {
+  if (n === undefined || n === null) return '—';
+  return Number(n).toLocaleString('ja-JP');
+}
+
+// ── Charts ─────────────────────────────────────────────────────────────
+const chartDefaults = {
+  color: '#fafafa',
+  borderColor: 'rgba(255,255,255,0.07)',
+  font: { family: "-apple-system, 'Helvetica Neue', sans-serif", size: 11 }
+};
+
+function chartBaseOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#18181b',
+        borderColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        titleColor: '#fafafa',
+        bodyColor: '#a1a1aa',
+        padding: 10,
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#71717a', font: { size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+      },
+      y: {
+        ticks: { color: '#71717a', font: { size: 10 } },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        beginAtZero: true,
+      }
+    }
+  };
+}
+
+function renderAgentChart(agentObj) {
+  const entries = Object.entries(agentObj)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+  const labels = entries.map(([k]) => k);
+  const values = entries.map(([, v]) => v);
+
+  const ctx = document.getElementById('agentChart').getContext('2d');
+  if (agentChart) agentChart.destroy();
+  agentChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: 'rgba(139,92,246,0.55)',
+        borderColor: 'rgba(139,92,246,0.9)',
+        borderWidth: 1,
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: chartBaseOptions()
+  });
+}
+
+function renderDailyChart(dailyObj) {
+  // dailyObj: { "2025-06-01": 42, ... }  OR array of {date, count}
+  let entries;
+  if (Array.isArray(dailyObj)) {
+    entries = dailyObj.map(d => [d.date || d.day, d.count || d.value || 0]);
+  } else {
+    entries = Object.entries(dailyObj).sort((a, b) => a[0].localeCompare(b[0]));
+  }
+  // Fill last 30 days if empty
+  if (entries.length === 0) {
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      entries.push([d.toISOString().slice(0, 10), 0]);
+    }
+  }
+  // Trim to 30
+  if (entries.length > 30) entries = entries.slice(-30);
+
+  const labels = entries.map(([k]) => {
+    const d = new Date(k);
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  });
+  const values = entries.map(([, v]) => v);
+
+  const ctx = document.getElementById('dailyChart').getContext('2d');
+  if (dailyChart) dailyChart.destroy();
+  dailyChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        borderColor: '#06b6d4',
+        backgroundColor: 'rgba(6,182,212,0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#06b6d4',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      ...chartBaseOptions(),
+      scales: {
+        ...chartBaseOptions().scales,
+        x: {
+          ...chartBaseOptions().scales.x,
+          ticks: {
+            color: '#71717a',
+            font: { size: 10 },
+            maxTicksLimit: 8,
+            maxRotation: 0,
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Actions ────────────────────────────────────────────────────────────
+async function clearScreenshots() {
+  if (!confirm('スクリーンショットをすべて削除しますか？この操作は元に戻せません。')) return;
+  const btn = document.getElementById('clear-ss-btn');
+  btn.disabled = true;
+  btn.textContent = '削除中…';
+  try {
+    const res = await fetch('/hitl/clear', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (res.ok) {
+      showToast('スクリーンショットを削除しました', 'success');
+      await loadStats();
+    } else {
+      showToast(`削除失敗: HTTP ${res.status}`, 'error');
+    }
+  } catch (e) {
+    showToast(`エラー: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗑️ スクリーンショット全削除';
+  }
+}
+
+function updateToken() {
+  const input = document.getElementById('new-token-input');
+  const val = input.value.trim();
+  if (!val) { showToast('トークンを入力してください', 'error'); return; }
+  adminToken = val;
+  localStorage.setItem('synapse_admin_token', val);
+  input.value = '';
+  showToast('トークンを保存しました', 'success');
+}
+
+function logout() {
+  clearInterval(refreshTimer);
+  localStorage.removeItem('synapse_admin_token');
+  document.getElementById('main').classList.remove('visible');
+  document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('auth-token-input').value = '';
+  document.getElementById('auth-error').textContent = '';
+}
+
+// ── Auto Refresh ──────────────────────────────────────────────────────
+function startAutoRefresh() {
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(loadStats, 30000);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -29,6 +30,48 @@
   --red:     #ef4444;
   --pink:    #f472b6;
 }
+/* ── Light Mode ───────────────────────────────────────────────────────── */
+body.light-mode {
+  --bg:      #f8f8f9;
+  --surface: #ffffff;
+  --card:    #f1f1f3;
+  --border:  rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.15);
+  --text:    #18181b;
+  --muted:   #71717a;
+  --muted2:  #a1a1aa;
+}
+body.light-mode #topbar { background: rgba(248,248,249,0.92); }
+body.light-mode .msg-ai-bubble { background: #ffffff; }
+body.light-mode #chatMessages { background: #f4f4f6; }
+body.light-mode #chatInput { background: #ffffff; color: #18181b; }
+body.light-mode .chip { background: #ffffff; }
+
+/* ── Command Palette ──────────────────────────────────────────────────── */
+#cmd-palette {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000;
+  display: none; align-items: flex-start; justify-content: center; padding-top: 15vh;
+  backdrop-filter: blur(4px);
+}
+#cmd-palette.open { display: flex; }
+#cmd-box {
+  width: 100%; max-width: 560px; background: #1a1a1e; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+}
+#cmd-input {
+  width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 16px 20px; font-size: 16px; color: var(--text); outline: none; font-family: inherit;
+}
+.cmd-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 20px;
+  cursor: pointer; font-size: 13px; color: var(--text); transition: background 0.1s;
+}
+.cmd-item:hover, .cmd-item.active { background: rgba(139,92,246,0.15); }
+.cmd-item-icon { font-size: 16px; width: 24px; text-align: center; }
+.cmd-item-label { flex: 1; }
+.cmd-item-hint { font-size: 11px; color: var(--muted2); }
+#cmd-results { max-height: 360px; overflow-y: auto; }
+
 html, body { height:100%; }
 body {
   font-family: -apple-system, 'Helvetica Neue', sans-serif;
@@ -930,13 +973,16 @@ body {
       <span id="tier-icon">💰</span>
       <span id="tier-label">エコノミー</span>
     </button>
+    <button id="theme-btn" onclick="toggleTheme()" title="ダーク/ライト切り替え"
+      style="width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:16px;color:var(--muted);transition:all 0.15s;display:flex;align-items:center;justify-content:center;">🌙</button>
     <div style="position:relative;">
-      <button id="more-btn" onclick="toggleMoreMenu()" title="メニュー">⋯</button>
+      <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
       <div id="more-dropdown" class="dropdown">
         <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 ダッシュボード</button>
         <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 使用状況</button>
         <button class="dropdown-item" onclick="openRankingPanel();toggleMoreMenu()">🏆 エージェントランキング</button>
-        <button class="dropdown-item" onclick="exportConversation();toggleMoreMenu()">⬇️ エクスポート</button>
+        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 会話をエクスポート (MD)</button>
+        <button class="dropdown-item" onclick="exportConversation('json');toggleMoreMenu()">📋 会話をエクスポート (JSON)</button>
         <button class="dropdown-item" onclick="sendFeedback();toggleMoreMenu()">💬 フィードバック</button>
         <button class="dropdown-item" onclick="installApp();toggleMoreMenu()">📲 インストール</button>
         <div class="dropdown-sep"></div>
@@ -2226,40 +2272,56 @@ async function loadMetrics() {
   }
 }
 
-// ── Feature 1: Voice Input ─────────────────────────────────────────────────
-let _recognition = null, _isRecording = false;
+// ── Voice Input (Web Speech API) ──────────────────────────────────────────────
+let _recognition = null;
+let _isListening = false;
 
-function toggleVoice() {
+function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('このブラウザは音声入力に対応していません。Chrome をお試しください。');
-    return;
-  }
-  const btn = document.getElementById('mic-btn');
-  if (_isRecording) {
-    _recognition?.stop();
-    return;
-  }
+  if (!SpeechRecognition) return;
   _recognition = new SpeechRecognition();
   _recognition.lang = 'ja-JP';
-  _recognition.interimResults = false;
-  _recognition.maxAlternatives = 1;
-  _isRecording = true;
-  btn.classList.add('recording');
-
+  _recognition.continuous = false;
+  _recognition.interimResults = true;
   _recognition.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
     const input = document.getElementById('chatInput');
-    input.value = (input.value ? input.value + ' ' : '') + transcript;
-    autoResize(input);
+    if (input) input.value = transcript;
+    if (e.results[e.results.length - 1].isFinal) {
+      stopVoice();
+      setTimeout(() => sendMessage(), 300);
+    }
   };
-  _recognition.onerror = () => {};
-  _recognition.onend = () => {
-    _isRecording = false;
-    btn.classList.remove('recording');
-    _recognition = null;
-  };
+  _recognition.onend = () => { _isListening = false; updateMicBtn(); };
+  _recognition.onerror = () => { _isListening = false; updateMicBtn(); };
+}
+
+function toggleVoice() {
+  if (!_recognition) { initVoice(); }
+  if (!_recognition) { showToast('音声入力は非対応ブラウザです'); return; }
+  _isListening ? stopVoice() : startVoice();
+}
+
+function startVoice() {
   _recognition.start();
+  _isListening = true;
+  updateMicBtn();
+  showToast('🎤 話しかけてください…');
+}
+
+function stopVoice() {
+  try { _recognition.stop(); } catch(e) {}
+  _isListening = false;
+  updateMicBtn();
+}
+
+function updateMicBtn() {
+  const btn = document.getElementById('mic-btn');
+  if (!btn) return;
+  btn.style.color = _isListening ? 'var(--red)' : '';
+  btn.style.borderColor = _isListening ? 'rgba(239,68,68,0.5)' : '';
+  btn.textContent = _isListening ? '⏹' : '🎤';
+  btn.title = _isListening ? '録音停止' : '音声入力';
 }
 
 // ── Feature 2: File Upload (Drag & Drop) ──────────────────────────────────
@@ -2336,37 +2398,121 @@ _chatWrap.addEventListener('drop', (e) => {
 // ── Feature 3: Conversation Export ────────────────────────────────────────
 const _sessionId = SESSION_ID;
 
-async function exportConversation() {
-  try {
-    const r = await fetch(`/export/${_sessionId}`);
-    if (!r.ok) throw new Error('export failed');
-    const blob = await r.blob();
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `synapse_${_sessionId}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
-  } catch {
-    // Fallback: export from DOM
-    const msgs = document.getElementById('chatMessages');
-    let md = `# Synapse 会話ログ\nSession: ${_sessionId}\nDate: ${new Date().toLocaleString('ja-JP')}\n\n`;
-    msgs.querySelectorAll('.msg-user-bubble').forEach(el => {
-      md += `**You:** ${el.textContent.trim()}\n\n`;
-    });
-    msgs.querySelectorAll('.msg-ai-bubble').forEach(el => {
-      md += `**AI:** ${el.textContent.trim()}\n\n`;
-    });
-    const blob = new Blob([md], { type: 'text/markdown' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `synapse_${_sessionId}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
+async function exportConversation(fmt = 'markdown') {
+  const sid = _sessionId;
+  if (!sid) { showToast('エクスポートするセッションがありません'); return; }
+  showToast('エクスポート中...');
+  const url = `/export/${sid}?fmt=${fmt}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `synapse_${sid.slice(0,8)}.${fmt === 'json' ? 'json' : 'md'}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ── Dark/Light Theme ──────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+function loadTheme() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-mode');
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '☀️';
   }
+}
+
+// ── Command Palette (Cmd+K) ───────────────────────────────────────────────────
+const CMD_ITEMS = [
+  { icon:'✨', label:'新しい会話を開始', hint:'', action: () => { getMessages().innerHTML = ''; _sessionId = 'session_' + Date.now(); } },
+  { icon:'🔍', label:'リサーチAI に切り替え', hint:'', action: () => selectAgent('research') },
+  { icon:'⚙️', label:'コードAI に切り替え', hint:'', action: () => selectAgent('code') },
+  { icon:'🌐', label:'QA/ブラウザAI に切り替え', hint:'', action: () => selectAgent('qa') },
+  { icon:'📊', label:'アナリストAI に切り替え', hint:'', action: () => selectAgent('analyst') },
+  { icon:'💹', label:'金融AI に切り替え', hint:'', action: () => selectAgent('finance') },
+  { icon:'⚖️', label:'法務AI に切り替え', hint:'', action: () => selectAgent('legal') },
+  { icon:'📨', label:'通知AI に切り替え', hint:'', action: () => selectAgent('notify') },
+  { icon:'🚀', label:'デプロイAI に切り替え', hint:'', action: () => selectAgent('deployer') },
+  { icon:'💰', label:'プラン・課金を開く', hint:'', action: () => openBillingModal() },
+  { icon:'🧠', label:'記憶を管理', hint:'', action: () => openMemoryModal() },
+  { icon:'🔗', label:'Webhook URLを確認', hint:'', action: () => openWebhookModal() },
+  { icon:'📥', label:'会話をエクスポート (Markdown)', hint:'', action: () => exportConversation('markdown') },
+  { icon:'📋', label:'会話をエクスポート (JSON)', hint:'', action: () => exportConversation('json') },
+  { icon:'🌙', label:'ダーク/ライトモード切り替え', hint:'', action: () => toggleTheme() },
+  { icon:'💰', label:'エコノミーモード', hint:'Llama 3.3', action: () => { _currentTier='cheap'; renderTierBtn(); fetch('/settings/tier',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:_sessionId,tier:'cheap'})}); } },
+  { icon:'🚀', label:'プロモード', hint:'Claude Sonnet', action: () => { _currentTier='pro'; renderTierBtn(); fetch('/settings/tier',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:_sessionId,tier:'pro'})}); } },
+  { icon:'🔑', label:'ログイン', hint:'', action: () => openLoginModal() },
+];
+let _cmdFiltered = [...CMD_ITEMS];
+let _cmdActive = 0;
+
+function openCmdPalette() {
+  _cmdFiltered = [...CMD_ITEMS];
+  _cmdActive = 0;
+  renderCmdItems();
+  const pal = document.getElementById('cmd-palette');
+  pal.classList.add('open');
+  setTimeout(() => document.getElementById('cmd-input')?.focus(), 50);
+}
+function closeCmdPalette() {
+  document.getElementById('cmd-palette')?.classList.remove('open');
+  const inp = document.getElementById('cmd-input');
+  if (inp) inp.value = '';
+}
+function filterCmdItems(q) {
+  _cmdFiltered = q ? CMD_ITEMS.filter(i => i.label.toLowerCase().includes(q.toLowerCase())) : [...CMD_ITEMS];
+  _cmdActive = 0;
+  renderCmdItems();
+}
+function renderCmdItems() {
+  const el = document.getElementById('cmd-results');
+  if (!el) return;
+  el.innerHTML = _cmdFiltered.map((item, i) =>
+    `<div class="cmd-item${i===_cmdActive?' active':''}" onclick="runCmdItem(${i})">
+      <span class="cmd-item-icon">${item.icon}</span>
+      <span class="cmd-item-label">${item.label}</span>
+      <span class="cmd-item-hint">${item.hint}</span>
+    </div>`
+  ).join('');
+}
+function runCmdItem(i) {
+  const item = _cmdFiltered[i];
+  if (item) { closeCmdPalette(); item.action(); }
+}
+function cmdKeyNav(e) {
+  if (e.key === 'ArrowDown') { _cmdActive = Math.min(_cmdActive+1, _cmdFiltered.length-1); renderCmdItems(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { _cmdActive = Math.max(_cmdActive-1, 0); renderCmdItems(); e.preventDefault(); }
+  else if (e.key === 'Enter') { runCmdItem(_cmdActive); e.preventDefault(); }
+  else if (e.key === 'Escape') { closeCmdPalette(); }
+}
+// Keyboard shortcut: Cmd+K / Ctrl+K
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmdPalette(); }
+  if (e.key === 'Escape') closeCmdPalette();
+});
+
+// ── Google OAuth callback ─────────────────────────────────────────────────────
+async function handleGoogleLogin(response) {
+  const sid = _sessionId || 'session_' + Date.now();
+  try {
+    const r = await fetch('/auth/google/callback', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ credential: response.credential, session_id: sid })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showToast(`✅ ようこそ、${d.name}さん！`);
+      document.getElementById('user-email-display').textContent = d.email;
+      document.getElementById('logout-btn').style.display = '';
+      document.getElementById('login-btn').style.display = 'none';
+      closeLoginModal?.();
+    }
+  } catch(e) { showToast('ログインに失敗しました'); }
 }
 
 // ── Feature 4: Message Rating ──────────────────────────────────────────────

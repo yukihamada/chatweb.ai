@@ -73,6 +73,9 @@ GOG_AVAILABLE = shutil.which("gog") is not None
 # In-memory store for uploaded files
 _uploaded_files: dict = {}
 
+# In-memory user session store (session_id → user info)
+_user_sessions: dict = {}  # session_id → {"user_id": str, "email": str, "plan": str}
+
 # ── Cost tracking ─────────────────────────────────────────────────────────────
 # Prices per 1M tokens (USD) — updated 2025
 MODEL_COSTS = {
@@ -846,12 +849,13 @@ async def tool_browser_open(session_id: str, url: str) -> dict:
         except Exception:
             pass
         title = await page.title()
-        _browser_sessions[session_id] = {"page": page, "context": ctx, "url": url}
+        _browser_sessions[session_id] = {"page": page, "context": ctx, "url": url, "last_used": time.time()}
         # Take screenshot
         sid = str(uuid.uuid4())[:8]
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
         url_path = f"/static/screenshots/{sid}.png"
+        _browser_sessions[session_id]["last_used"] = time.time()
         return {"ok": True, "title": title, "url": url, "url_path": url_path}
     except Exception as e:
         await ctx.close()
@@ -887,6 +891,7 @@ async def tool_browser_click(session_id: str, selector: str, text: str = "") -> 
         sid = str(uuid.uuid4())[:8]
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
+        _browser_sessions[session_id]["last_used"] = time.time()
         return {"ok": True, "title": title, "url": url, "url_path": f"/static/screenshots/{sid}.png"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -909,6 +914,7 @@ async def tool_browser_fill(session_id: str, selector: str, value: str, slow: bo
                 await page.type(selector, ch, delay=random.randint(40, 130))
         else:
             await page.fill(selector, value, timeout=5000)
+        _browser_sessions[session_id]["last_used"] = time.time()
         return {"ok": True, "filled": value}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -3945,8 +3951,19 @@ async def init_db():
                 id TEXT PRIMARY KEY,
                 email TEXT UNIQUE NOT NULL,
                 verified INTEGER DEFAULT 0,
+                name TEXT,
+                plan TEXT DEFAULT 'free',
                 created_at TEXT DEFAULT (datetime('now','localtime'))
             )""")
+        # Add name/plan columns to existing users table if missing
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN name TEXT")
+        except Exception:
+            pass
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free'")
+        except Exception:
+            pass
         await db.execute("""
             CREATE TABLE IF NOT EXISTS auth_tokens (
                 token TEXT PRIMARY KEY,
@@ -4226,8 +4243,51 @@ async def auth_me(request: Request):
     token = _extract_session_token(request)
     user = await _get_user_from_session(token)
     if not user:
+        # Also check _user_sessions cookie-based sessions
+        sid = request.cookies.get("session_id", "")
+        us = _user_sessions.get(sid)
+        if us:
+            return {"logged_in": True, **us}
         return {"logged_in": False}
     return {"logged_in": True, "email": user["email"], "user_id": user["id"]}
+
+
+@app.post("/auth/google/callback")
+async def google_auth_callback(request: Request):
+    """Google OAuth コールバック（フロントエンドからトークン受け取り）"""
+    try:
+        import base64 as _b64
+        import json as _json
+        body = await request.json()
+        credential = body.get("credential", "")
+        # Decode JWT payload (no verification needed for demo - in prod use google-auth library)
+        parts = credential.split(".")
+        if len(parts) >= 2:
+            padded = parts[1] + "=" * (4 - len(parts[1]) % 4)
+            payload = _json.loads(_b64.urlsafe_b64decode(padded))
+            email = payload.get("email", "")
+            name = payload.get("name", "")
+            user_id = payload.get("sub", "")
+        else:
+            return JSONResponse({"error": "Invalid token"}, status_code=400)
+
+        session_id = body.get("session_id", str(uuid.uuid4()))
+        _user_sessions[session_id] = {
+            "user_id": user_id, "email": email, "name": name, "plan": "free",
+            "logged_in_at": datetime.utcnow().isoformat()
+        }
+        # Save to DB
+        async with db_conn() as db:
+            await db.execute(
+                "INSERT OR REPLACE INTO users (id, email, name, plan, created_at) VALUES (?,?,?,?,?)",
+                (user_id, email, name, "free", datetime.utcnow().isoformat())
+            )
+            await db.commit()
+        resp = JSONResponse({"ok": True, "user_id": user_id, "email": email, "name": name, "plan": "free"})
+        resp.set_cookie("session_id", session_id, max_age=86400 * 30, httponly=True, samesite="lax")
+        return resp
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 # ── Per-user secrets (API keys, etc.) ─────────────────────────────────────
@@ -5776,6 +5836,43 @@ async def _load_custom_agents():
         log.warning(f"Custom agent load error: {e}")
 
 
+async def _cleanup_screenshots():
+    """スクリーンショットファイルを24時間後に自動削除"""
+    while True:
+        await asyncio.sleep(3600)  # hourly check
+        try:
+            now = time.time()
+            deleted = 0
+            for f in os.listdir(SCREENSHOTS_DIR):
+                fp = os.path.join(SCREENSHOTS_DIR, f)
+                if os.path.isfile(fp) and (now - os.path.getmtime(fp)) > 86400:
+                    os.remove(fp)
+                    deleted += 1
+            if deleted:
+                log.info(f"Cleanup: deleted {deleted} old screenshots")
+        except Exception as e:
+            log.error(f"Screenshot cleanup error: {e}")
+
+
+async def _cleanup_browser_sessions():
+    """非アクティブなブラウザセッションを30分後に自動クローズ"""
+    while True:
+        await asyncio.sleep(300)  # every 5 minutes
+        try:
+            now = time.time()
+            stale = [sid for sid, sess in _browser_sessions.items()
+                     if now - sess.get("last_used", now) > 1800]
+            for sid in stale:
+                try:
+                    await _browser_sessions[sid]["context"].close()
+                except Exception:
+                    pass
+                del _browser_sessions[sid]
+                log.info(f"Browser session closed (TTL): {sid}")
+        except Exception as e:
+            log.error(f"Browser cleanup error: {e}")
+
+
 @app.on_event("startup")
 async def startup():
     await init_db()
@@ -5793,6 +5890,10 @@ async def startup():
     asyncio.create_task(_cron_runner())
     # Start interval-based scheduler
     asyncio.create_task(_run_scheduler())
+    # Start screenshot auto-cleanup (24h TTL)
+    asyncio.create_task(_cleanup_screenshots())
+    # Start browser session TTL cleanup (30min idle)
+    asyncio.create_task(_cleanup_browser_sessions())
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -6763,8 +6864,19 @@ async def chat_stream_with_file(session_id: str, req: ChatWithFileRequest, reque
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/export/{session_id}")
-async def export_conversation(session_id: str):
-    """Export full conversation as Markdown attachment."""
+async def export_conversation(session_id: str, fmt: str = "markdown"):
+    """Export full conversation as Markdown or JSON attachment."""
+    history = await get_history(session_id, limit=200)
+
+    if fmt == "json":
+        content = json.dumps(history, ensure_ascii=False, indent=2)
+        return Response(
+            content,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=synapse_{session_id[:8]}.json"},
+        )
+
+    # Markdown export
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
@@ -6777,11 +6889,11 @@ async def export_conversation(session_id: str):
     if not rows:
         raise HTTPException(404, "No conversation found for this session")
 
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     lines = [
         f"# Synapse 会話エクスポート",
-        f"**セッション**: {session_id}",
-        f"**エクスポート日時**: {now_str}",
+        f"**セッション**: `{session_id}`",
+        f"**日時**: {now_str}",
         "",
         "---",
         "",
@@ -6794,26 +6906,27 @@ async def export_conversation(session_id: str):
         if row["role"] == "user":
             turn += 1
             lines.append(f"## ターン {turn}")
-            lines.append(f"**ユーザー**: {row['content']}")
-            lines.append("")
+            content_text = row['content']
+            if isinstance(content_text, list):
+                content_text = " ".join(c.get("text", "") for c in content_text if isinstance(c, dict))
+            lines.append(f"\n**👤 ユーザー**\n\n{content_text}\n")
             # Check next for assistant
             if i + 1 < len(rows) and rows[i + 1]["role"] == "assistant":
                 a = rows[i + 1]
                 agent_label = AGENTS.get(a.get("agent_id") or "", {}).get("name", "AI")
-                lines.append(f"**{agent_label}**: {a['content']}")
-                lines.append("")
-                lines.append("---")
-                lines.append("")
+                a_content = a['content']
+                if isinstance(a_content, list):
+                    a_content = " ".join(c.get("text", "") for c in a_content if isinstance(c, dict))
+                lines.append(f"\n**🤖 {agent_label}**\n\n{a_content}\n\n---\n")
                 i += 2
                 continue
         i += 1
 
     md_content = "\n".join(lines)
-    filename = f"synapse_{session_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
     return Response(
-        content=md_content,
+        content=md_content.encode("utf-8"),
         media_type="text/markdown",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f"attachment; filename=synapse_{session_id[:8]}.md"},
     )
 
 
@@ -8934,6 +9047,76 @@ async def _run_platform_tool(tool_name: str, agent_tools: list, message: str) ->
                 results[tool] = f"{tool} error: {e}"
 
     return results
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ADMIN DASHBOARD
+# ══════════════════════════════════════════════════════════════════════════════
+
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "synapse-admin-2024")
+
+
+@app.get("/admin/stats")
+async def admin_stats(token: str = ""):
+    if token != ADMIN_TOKEN:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    async with db_conn() as db:
+        cur = await db.execute("SELECT COUNT(*) FROM messages WHERE role='user'")
+        total_msgs = (await cur.fetchone())[0]
+        cur = await db.execute("SELECT COUNT(DISTINCT session_id) FROM messages")
+        total_sessions = (await cur.fetchone())[0]
+        cur = await db.execute("SELECT COUNT(*) FROM users")
+        total_users = (await cur.fetchone())[0]
+        cur = await db.execute("SELECT COUNT(*) FROM memories")
+        total_memories = (await cur.fetchone())[0]
+        cur = await db.execute(
+            "SELECT agent_id, COUNT(*) as cnt FROM messages WHERE role='user' GROUP BY agent_id ORDER BY cnt DESC LIMIT 10"
+        )
+        top_agents = [{"agent": r[0], "count": r[1]} for r in await cur.fetchall()]
+        cur = await db.execute(
+            "SELECT DATE(created_at) as day, COUNT(*) as cnt FROM messages WHERE role='user' GROUP BY day ORDER BY day DESC LIMIT 30"
+        )
+        daily = [{"date": r[0], "count": r[1]} for r in await cur.fetchall()]
+    return {
+        "total_messages": total_msgs,
+        "total_sessions": total_sessions,
+        "total_users": total_users,
+        "total_memories": total_memories,
+        "top_agents": top_agents,
+        "daily_usage": daily,
+        "active_browser_sessions": len(_browser_sessions),
+        "screenshot_files": len(os.listdir(SCREENSHOTS_DIR)) if os.path.isdir(SCREENSHOTS_DIR) else 0,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONVERSATION FULL-TEXT SEARCH
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/search")
+async def search_conversations(q: str, session_id: str = "", limit: int = 20):
+    """会話全文検索"""
+    if not q:
+        return {"results": []}
+    async with db_conn() as db:
+        if session_id:
+            cur = await db.execute(
+                "SELECT session_id, role, content, created_at FROM messages WHERE session_id=? AND content LIKE ? ORDER BY created_at DESC LIMIT ?",
+                (session_id, f"%{q}%", limit)
+            )
+        else:
+            cur = await db.execute(
+                "SELECT session_id, role, content, created_at FROM messages WHERE content LIKE ? ORDER BY created_at DESC LIMIT ?",
+                (f"%{q}%", limit)
+            )
+        rows = await cur.fetchall()
+    results = []
+    for r in rows:
+        content = r[2] if isinstance(r[2], str) else str(r[2])
+        idx = content.lower().find(q.lower())
+        snippet = content[max(0, idx - 50):idx + 100] if idx >= 0 else content[:150]
+        results.append({"session_id": r[0], "role": r[1], "snippet": snippet, "created_at": r[3]})
+    return {"results": results, "query": q, "total": len(results)}
 
 
 # ── Route hints for new agents ────────────────────────────────────────────────
