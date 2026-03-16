@@ -3,7 +3,7 @@ Synapse — Multi-Agent AI Platform
 Streaming + Browser QA + History + A2A Delegation
 Semantic Routing + MCP (ALL REAL) + HITL (REAL SEND) + Agentic Workflow
 """
-import os, uuid, json, asyncio, logging, re, tempfile, base64, shlex, csv, io, hashlib, hmac, shutil
+import os, uuid, json, asyncio, logging, re, tempfile, base64, shlex, csv, io, hashlib, hmac, shutil, time
 from datetime import datetime
 from functools import lru_cache
 
@@ -23,7 +23,7 @@ import resend
 import yfinance as yf
 import pdfplumber
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, StreamingResponse, Response
+from fastapi.responses import HTMLResponse, StreamingResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -57,6 +57,9 @@ ZAPIER_WEBHOOK_URL = os.getenv("ZAPIER_WEBHOOK_URL", "")
 GMAIL_USER         = os.getenv("GMAIL_USER",         "")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 GCAL_SERVICE_ACCOUNT_JSON = os.getenv("GCAL_SERVICE_ACCOUNT_JSON", "")
+STRIPE_SECRET_KEY     = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_ID_PRO   = os.getenv("STRIPE_PRICE_ID_PRO", "")
 # On Fly.io, /data is a persistent volume; locally use current dir
 DB_PATH            = os.getenv("DB_PATH", "/data/hitl.db" if os.path.isdir("/data") else "hitl.db")
 SCREENSHOTS_DIR    = "static/screenshots"
@@ -138,6 +141,24 @@ app = FastAPI(title="Synapse")
 app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Rate limiting
+_rate_limit: dict = {}  # ip → [timestamps]
+_RATE_LIMIT_WINDOW = 60   # seconds
+_RATE_LIMIT_MAX    = 30   # requests per window
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if request.url.path.startswith("/chat") or request.url.path.startswith("/a2a"):
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        hits = _rate_limit.get(ip, [])
+        hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
+        if len(hits) >= _RATE_LIMIT_MAX:
+            return JSONResponse({"error": "レート制限: しばらく待ってから再試行してください"}, status_code=429)
+        hits.append(now)
+        _rate_limit[ip] = hits
+    return await call_next(request)
 
 # ── Shared HTTP client (reuse TLS connections) ────────────────────────────────
 _http: httpx.AsyncClient | None = None
@@ -3465,7 +3486,8 @@ check_element: セレクタ""",
         "description": "新幹線・交通検索 (Yahoo路線情報ブラウザ自動化) + 予約HITL",
         "mcp_tools": ["shinkansen_search", "browser_screenshot", "shinkansen_book"],
         "real_tools": ["shinkansen_search", "browser_screenshot"],
-        "hitl_required": True,
+        # HITL is only required for actual booking steps, not for searching
+        "hitl_required": False,
         "emoji": "🚄",
         "system": """あなたは交通・旅行専門エージェントです。Yahoo路線情報のブラウザ自動化で新幹線の空席・時刻を実際に検索します。
 
@@ -4009,6 +4031,12 @@ async def init_db():
                 code TEXT NOT NULL,
                 input_schema TEXT DEFAULT '{}',
                 created_at TEXT DEFAULT (datetime('now','localtime'))
+            )""")
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS shares (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                created_at TEXT
             )""")
         await db.commit()
 
@@ -5539,9 +5567,16 @@ async def execute_agent_loop(
     CONTINUE_MARKER = "[[CONTINUE]]"
     DONE_MARKERS = ["[[DONE]]", "[[完了]]", "タスク完了", "完了しました"]
 
+    # Code agent has a stricter hard limit to prevent hanging
+    _is_code_agent = (agent_id == "code")
+    _CODE_AGENT_MAX = 3
+    if _is_code_agent:
+        max_iterations = min(max_iterations, _CODE_AGENT_MAX)
+
     iteration = 0
     accumulated = []
     current_message = message
+    _no_marker_count = 0  # track iterations without either marker
 
     while iteration < max_iterations:
         iteration += 1
@@ -5561,6 +5596,16 @@ async def execute_agent_loop(
         # Check stop conditions
         has_continue = CONTINUE_MARKER in response
         has_done = any(m in response for m in DONE_MARKERS)
+
+        # If neither marker is present, count consecutive ambiguous iterations
+        if not has_continue and not has_done:
+            _no_marker_count += 1
+        else:
+            _no_marker_count = 0
+
+        # Default to DONE if 2+ iterations lack both markers (prevents infinite loop)
+        if _no_marker_count >= 2:
+            break
 
         if has_done or (not has_continue):
             # Agent is done
@@ -5673,6 +5718,40 @@ async def _cron_runner():
             log.error(f"Cron runner error: {e}")
 
 
+async def _run_scheduler():
+    """定期スケジュールを実行するバックグラウンドタスク"""
+    while True:
+        try:
+            await asyncio.sleep(60)  # check every minute
+            async with db_conn() as db:
+                cur = await db.execute(
+                    "SELECT id, agent_id, message, session_id, cron_expr, last_run FROM schedules WHERE active=1"
+                )
+                rows = await cur.fetchall()
+            for row in rows:
+                sid, agent_id, message, session_id, cron_expr, last_run = row
+                # Simple interval check: if cron_expr is "*/N" minutes
+                now = datetime.utcnow()
+                try:
+                    interval_min = int(cron_expr.replace("*/","").strip()) if cron_expr and "*/" in cron_expr else None
+                except:
+                    interval_min = None
+                if interval_min:
+                    last = datetime.fromisoformat(last_run) if last_run else datetime.min
+                    if (now - last).total_seconds() >= interval_min * 60:
+                        log.info(f"Scheduler: running {agent_id} for session {session_id}")
+                        try:
+                            await execute_agent(agent_id, message, session_id=session_id or "scheduler")
+                            async with db_conn() as db:
+                                await db.execute("UPDATE schedules SET last_run=? WHERE id=?",
+                                                 (now.isoformat(), sid))
+                                await db.commit()
+                        except Exception as e:
+                            log.error(f"Scheduler error: {e}")
+        except Exception as e:
+            log.error(f"Scheduler loop error: {e}")
+
+
 async def _load_custom_agents():
     """Load custom agents from DB into AGENTS dict on startup."""
     try:
@@ -5712,6 +5791,8 @@ async def startup():
         asyncio.create_task(setup_telegram_webhook(base_url))
     # Start cron runner
     asyncio.create_task(_cron_runner())
+    # Start interval-based scheduler
+    asyncio.create_task(_run_scheduler())
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -6063,6 +6144,100 @@ async def hitl_delete(task_id: str):
 async def get_session_history(session_id: str):
     h = await get_history(session_id, limit=20)
     return {"messages": h}
+
+
+@app.post("/share/{session_id}")
+async def create_share(session_id: str):
+    """会話をパブリックシェアURLとして公開"""
+    share_id = str(uuid.uuid4())[:12]
+    async with db_conn() as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO shares (id, session_id, created_at) VALUES (?,?,?)",
+            (share_id, session_id, datetime.utcnow().isoformat())
+        )
+        await db.commit()
+    return {"share_id": share_id, "url": f"/share/{share_id}"}
+
+@app.get("/share/{share_id}", response_class=HTMLResponse)
+async def view_share(share_id: str):
+    async with db_conn() as db:
+        cur = await db.execute("SELECT session_id FROM shares WHERE id=?", (share_id,))
+        row = await cur.fetchone()
+    if not row:
+        return HTMLResponse("<h1>共有リンクが見つかりません</h1>", status_code=404)
+    session_id = row[0]
+    history = await get_history(session_id, limit=100)
+    msgs_html = ""
+    for m in history:
+        role = m.get("role","")
+        content = m.get("content","")
+        if role == "user":
+            msgs_html += f'<div style="text-align:right;margin:8px 0"><span style="background:#8b5cf6;color:#fff;padding:8px 14px;border-radius:14px;display:inline-block;max-width:75%;text-align:left">{content}</span></div>'
+        elif role == "assistant":
+            msgs_html += f'<div style="margin:8px 0"><span style="background:#18181b;color:#fafafa;padding:8px 14px;border-radius:14px;display:inline-block;max-width:80%;border:1px solid rgba(255,255,255,0.1)">{content}</span></div>'
+    return HTMLResponse(f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synapse 共有</title><style>body{{font-family:-apple-system,sans-serif;background:#09090b;color:#fafafa;padding:20px;max-width:720px;margin:0 auto}}h1{{font-size:18px;margin-bottom:16px;color:#a78bfa}}a{{color:#8b5cf6}}</style></head><body><h1>◈ Synapse — 共有会話</h1>{msgs_html}<p style="margin-top:20px;font-size:12px;color:#52525b"><a href="/">Synapseを使ってみる →</a></p></body></html>""")
+
+
+@app.post("/webhook/{agent_id}")
+async def webhook_trigger(agent_id: str, request: Request):
+    """外部サービスからのWebhookでエージェントをトリガー"""
+    try:
+        body = await request.json()
+    except:
+        body = {}
+    message = body.get("message") or body.get("text") or body.get("content") or str(body)[:500]
+    session_id = body.get("session_id", f"webhook_{agent_id}")
+    if agent_id not in AGENTS:
+        return JSONResponse({"error": f"エージェント '{agent_id}' が見つかりません"}, status_code=404)
+    result = await execute_agent(agent_id, message, session_id=session_id)
+    return {"ok": True, "agent_id": agent_id, "response": result.get("response","")[:1000]}
+
+
+@app.get("/billing/plans")
+async def billing_plans():
+    return {
+        "plans": [
+            {"id": "free",  "name": "フリー",    "price": 0,    "requests_per_month": 100, "features": ["基本エージェント", "長期記憶50件", "ファイルアップロード"]},
+            {"id": "pro",   "name": "プロ",      "price": 2980, "requests_per_month": 2000,"features": ["全エージェント", "長期記憶無制限", "Proモデル優先", "ウェブフック", "API接続"]},
+            {"id": "team",  "name": "チーム",    "price": 9800, "requests_per_month": 10000,"features": ["プロの全機能", "チームワークスペース", "カスタムエージェント", "SLAサポート"]},
+        ]
+    }
+
+@app.post("/billing/create-checkout")
+async def create_checkout(request: Request):
+    if not STRIPE_SECRET_KEY:
+        return JSONResponse({"error": "Stripe未設定。STRIPE_SECRET_KEYを設定してください。"}, status_code=400)
+    try:
+        import stripe
+        stripe.api_key = STRIPE_SECRET_KEY
+        body = await request.json()
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{"price": STRIPE_PRICE_ID_PRO, "quantity": 1}],
+            mode="subscription",
+            success_url=body.get("success_url", "https://synapse-demo.fly.dev/?upgraded=1"),
+            cancel_url=body.get("cancel_url", "https://synapse-demo.fly.dev/"),
+        )
+        return {"checkout_url": session.url}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.get("/usage/{session_id}")
+async def get_usage(session_id: str):
+    async with db_conn() as db:
+        cur = await db.execute(
+            "SELECT COUNT(*) as cnt, SUM(cost_usd) as total_cost FROM messages WHERE session_id=? AND role='assistant'",
+            (session_id,)
+        )
+        row = await cur.fetchone()
+    return {
+        "session_id": session_id,
+        "requests": row[0] if row else 0,
+        "total_cost_usd": round(row[1] or 0, 6),
+        "plan": "free",
+        "limit": 100
+    }
 
 
 @app.get("/workflow", response_class=HTMLResponse)

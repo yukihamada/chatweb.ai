@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>プライバシーポリシー — Synapse Multi-Agent AI</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:      #09090b;
+  --surface: #111113;
+  --card:    #18181b;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #fafafa;
+  --muted:   #71717a;
+  --accent:  #8b5cf6;
+  --accent2: #06b6d4;
+  --green:   #10b981;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 56px;
+  background: rgba(9,9,11,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 17px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.nav-link {
+  font-size: 14px; color: var(--muted);
+  text-decoration: none; padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border2);
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+.container { max-width: 780px; margin: 0 auto; padding: 60px 24px 100px; }
+
+.page-header { text-align: center; margin-bottom: 60px; }
+.page-header .badge {
+  display: inline-block; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent2);
+  background: rgba(6,182,212,0.1);
+  border: 1px solid rgba(6,182,212,0.3);
+  padding: 4px 12px; border-radius: 100px; margin-bottom: 20px;
+}
+.page-header h1 {
+  font-size: clamp(28px, 5vw, 42px); font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.55));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 16px;
+}
+.page-header .updated { font-size: 13px; color: var(--muted); }
+
+/* Compliance badges */
+.compliance-badges {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 60px;
+}
+.badge-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px; color: rgba(255,255,255,0.7);
+}
+.badge-item .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+/* TOC */
+.toc {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 28px; margin-bottom: 48px;
+}
+.toc h3 {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 12px;
+}
+.toc ol { list-style: none; counter-reset: toc; display: flex; flex-direction: column; gap: 6px; }
+.toc li { counter-increment: toc; }
+.toc a {
+  text-decoration: none; color: rgba(255,255,255,0.7); font-size: 14px;
+  display: flex; align-items: center; gap: 10px; transition: color 0.2s;
+}
+.toc a::before {
+  content: counter(toc, decimal-leading-zero);
+  font-size: 11px; font-weight: 700; color: var(--accent2); min-width: 22px;
+}
+.toc a:hover { color: var(--text); }
+
+/* Sections */
+.section { margin-bottom: 52px; padding-bottom: 52px; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: none; }
+.section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+.section-num {
+  width: 36px; height: 36px;
+  background: rgba(6,182,212,0.12);
+  border: 1px solid rgba(6,182,212,0.3);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--accent2); flex-shrink: 0;
+}
+.section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.section p { color: rgba(255,255,255,0.75); margin-bottom: 16px; font-size: 15px; }
+.section p:last-child { margin-bottom: 0; }
+.section h3 { font-size: 15px; font-weight: 700; margin: 24px 0 10px; color: var(--text); }
+
+/* Data table */
+.data-table {
+  width: 100%; border-collapse: collapse;
+  margin: 16px 0; font-size: 14px;
+}
+.data-table th, .data-table td {
+  text-align: left; padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+  background: rgba(255,255,255,0.03);
+}
+.data-table td { color: rgba(255,255,255,0.75); vertical-align: top; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* List */
+.list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.list li { display: flex; gap: 12px; color: rgba(255,255,255,0.75); font-size: 14px; }
+.list li::before { content: '→'; color: var(--accent2); flex-shrink: 0; }
+
+/* Highlight box */
+.highlight-box {
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.highlight-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.highlight-box p { margin: 0; font-size: 14px; color: rgba(255,255,255,0.8); }
+
+/* Warning box */
+.warning-box {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.warning-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.warning-box p { margin: 0; font-size: 14px; color: rgba(255,255,255,0.8); }
+
+/* Contact card */
+.contact-card {
+  background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(139,92,246,0.08));
+  border: 1px solid rgba(6,182,212,0.25);
+  border-radius: 16px; padding: 28px; margin-top: 20px;
+}
+.contact-card p { color: rgba(255,255,255,0.75); margin-bottom: 10px; }
+.contact-card a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+.contact-card a:hover { text-decoration: underline; }
+
+/* Rights grid */
+.rights-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px; margin: 16px 0;
+}
+.right-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.right-item .right-icon { font-size: 20px; margin-bottom: 8px; }
+.right-item .right-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.right-item .right-desc { font-size: 12px; color: var(--muted); }
+
+footer {
+  text-align: center; padding: 40px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted); font-size: 13px;
+}
+footer a { color: var(--muted); text-decoration: none; margin: 0 10px; }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 600px) {
+  nav { padding: 0 16px; }
+  .container { padding: 40px 16px 80px; }
+  .compliance-badges { gap: 8px; }
+  .data-table { font-size: 13px; }
+  .data-table th, .data-table td { padding: 10px 12px; }
+  .rights-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">
+    <div class="logo-icon">⚡</div>
+    Synapse
+  </a>
+  <a href="/" class="nav-link">← アプリに戻る</a>
+</nav>
+
+<div class="container">
+
+  <div class="page-header">
+    <div class="badge">Privacy</div>
+    <h1>プライバシーポリシー</h1>
+    <p class="updated">最終更新日: 2025年1月1日 / 施行日: 2025年1月1日</p>
+  </div>
+
+  <div class="compliance-badges">
+    <div class="badge-item"><div class="dot"></div> 個人情報保護法 準拠</div>
+    <div class="badge-item"><div class="dot"></div> GDPR 対応</div>
+    <div class="badge-item"><div class="dot"></div> SSL/TLS 暗号化</div>
+    <div class="badge-item"><div class="dot"></div> 国内データ保管</div>
+  </div>
+
+  <div class="toc">
+    <h3>目次</h3>
+    <ol>
+      <li><a href="#collect">収集する情報</a></li>
+      <li><a href="#purpose">利用目的</a></li>
+      <li><a href="#third-party">第三者提供</a></li>
+      <li><a href="#cookie">Cookie・トラッキング</a></li>
+      <li><a href="#storage">データ保管・セキュリティ</a></li>
+      <li><a href="#rights">ユーザーの権利</a></li>
+      <li><a href="#contact">お問い合わせ・DPO</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="collect">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2>収集する情報</h2>
+    </div>
+    <p>本サービスでは、以下の情報を収集します。</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>情報の種類</th>
+          <th>具体的な内容</th>
+          <th>収集タイミング</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>アカウント情報</strong></td>
+          <td>メールアドレス、表示名、パスワード（ハッシュ化）</td>
+          <td>登録時</td>
+        </tr>
+        <tr>
+          <td><strong>利用ログ</strong></td>
+          <td>エージェント実行履歴、操作ログ、セッション情報</td>
+          <td>サービス利用時</td>
+        </tr>
+        <tr>
+          <td><strong>入力データ</strong></td>
+          <td>AIへの入力テキスト、アップロードファイル</td>
+          <td>タスク実行時</td>
+        </tr>
+        <tr>
+          <td><strong>技術情報</strong></td>
+          <td>IPアドレス、ブラウザ情報、デバイス種別</td>
+          <td>アクセス時</td>
+        </tr>
+        <tr>
+          <td><strong>決済情報</strong></td>
+          <td>請求先情報（カード番号は決済代行会社が管理）</td>
+          <td>有料プラン契約時</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="highlight-box">
+      <div class="icon">🔒</div>
+      <p>パスワードはbcryptによりハッシュ化して保存します。平文のパスワードは保存されません。クレジットカード番号は当社サーバーには保存されず、PCI-DSS準拠の決済代行業者が管理します。</p>
+    </div>
+  </div>
+
+  <div class="section" id="purpose">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <h2>利用目的</h2>
+    </div>
+    <p>収集した情報は以下の目的のみに使用します。</p>
+    <ul class="list">
+      <li>本サービスの提供・維持・改善</li>
+      <li>ユーザーサポートおよびお問い合わせへの対応</li>
+      <li>AIモデルの性能改善（オプトイン制、デフォルトOFF）</li>
+      <li>不正利用の検知・防止・セキュリティ確保</li>
+      <li>利用料金の請求・決済処理</li>
+      <li>サービスに関する重要な通知の送信</li>
+      <li>法令上の義務の履行</li>
+    </ul>
+    <div class="warning-box">
+      <div class="icon">⚠️</div>
+      <p>マーケティング目的でのメール送信は、明示的な同意をいただいた場合のみ行います。同意はいつでも撤回可能です。</p>
+    </div>
+  </div>
+
+  <div class="section" id="third-party">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <h2>第三者提供</h2>
+    </div>
+    <p>原則として、ユーザーの個人情報を第三者に提供・売却・賃貸しません。以下の場合を除きます。</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>提供先・状況</th>
+          <th>提供する情報</th>
+          <th>目的</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>業務委託先</strong></td>
+          <td>必要最小限の情報</td>
+          <td>サービス運営委託（秘密保持契約締結済）</td>
+        </tr>
+        <tr>
+          <td><strong>AIプロバイダー</strong></td>
+          <td>入力テキスト（匿名化）</td>
+          <td>AIモデル処理（OpenAI等、利用規約に準拠）</td>
+        </tr>
+        <tr>
+          <td><strong>決済代行業者</strong></td>
+          <td>請求情報</td>
+          <td>決済処理</td>
+        </tr>
+        <tr>
+          <td><strong>法的要請</strong></td>
+          <td>裁判所・当局が要求する情報</td>
+          <td>法令遵守（可能な限りユーザーに通知）</td>
+        </tr>
+        <tr>
+          <td><strong>事業承継</strong></td>
+          <td>必要な個人情報</td>
+          <td>合併・買収時（事前通知あり）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section" id="cookie">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2>Cookie・トラッキング</h2>
+    </div>
+    <p>本サービスでは以下のCookieを使用します。</p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>種別</th>
+          <th>目的</th>
+          <th>保持期間</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>必須Cookie</strong></td>
+          <td>セッション管理、ログイン状態の維持</td>
+          <td>セッション終了まで</td>
+        </tr>
+        <tr>
+          <td><strong>機能Cookie</strong></td>
+          <td>ユーザー設定・言語・テーマ保存</td>
+          <td>1年間</td>
+        </tr>
+        <tr>
+          <td><strong>分析Cookie</strong></td>
+          <td>匿名利用統計（改善目的）</td>
+          <td>2年間（同意時のみ）</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>分析Cookieはオプトイン制です。ブラウザ設定からCookieを無効にすることができますが、一部機能が制限される場合があります。</p>
+  </div>
+
+  <div class="section" id="storage">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <h2>データ保管・セキュリティ</h2>
+    </div>
+    <h3>保管場所・期間</h3>
+    <ul class="list">
+      <li>データは日本国内のサーバー（東京リージョン）に保管</li>
+      <li>アカウント情報: アカウント存続中 + 削除後30日</li>
+      <li>利用ログ: 90日間（その後匿名化して保管）</li>
+      <li>入力データ: セッション終了後30日（自動削除）</li>
+      <li>請求情報: 法定保管期間（7年）</li>
+    </ul>
+    <h3>セキュリティ対策</h3>
+    <ul class="list">
+      <li>全通信をTLS 1.3で暗号化</li>
+      <li>データベースの保管時暗号化（AES-256）</li>
+      <li>定期的なセキュリティ監査・ペネトレーションテスト</li>
+      <li>アクセス制限（最小権限の原則）</li>
+      <li>2要素認証（管理者アクセス）</li>
+    </ul>
+    <div class="highlight-box">
+      <div class="icon">🛡️</div>
+      <p>セキュリティインシデントが発生した場合、影響を受けるユーザーに72時間以内に通知します（GDPR第33条準拠）。</p>
+    </div>
+  </div>
+
+  <div class="section" id="rights">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2>ユーザーの権利</h2>
+    </div>
+    <p>個人情報保護法およびGDPRに基づき、以下の権利を有します。</p>
+    <div class="rights-grid">
+      <div class="right-item">
+        <div class="right-icon">📋</div>
+        <div class="right-title">アクセス権</div>
+        <div class="right-desc">保有データの開示請求</div>
+      </div>
+      <div class="right-item">
+        <div class="right-icon">✏️</div>
+        <div class="right-title">訂正権</div>
+        <div class="right-desc">不正確なデータの修正</div>
+      </div>
+      <div class="right-item">
+        <div class="right-icon">🗑️</div>
+        <div class="right-title">削除権</div>
+        <div class="right-desc">データの消去を要求</div>
+      </div>
+      <div class="right-item">
+        <div class="right-icon">⏸️</div>
+        <div class="right-title">処理制限権</div>
+        <div class="right-desc">利用の一時停止を要求</div>
+      </div>
+      <div class="right-item">
+        <div class="right-icon">📦</div>
+        <div class="right-title">ポータビリティ権</div>
+        <div class="right-desc">データのエクスポート</div>
+      </div>
+      <div class="right-item">
+        <div class="right-icon">🚫</div>
+        <div class="right-title">異議申立権</div>
+        <div class="right-desc">処理への異議を申し立て</div>
+      </div>
+    </div>
+    <p style="margin-top:16px;">これらの権利を行使するには、下記お問い合わせ先までご連絡ください。30日以内に対応します。</p>
+  </div>
+
+  <div class="section" id="contact">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <h2>お問い合わせ・DPO</h2>
+    </div>
+    <p>プライバシーに関するご質問・権利行使のご依頼は下記へ。</p>
+    <div class="contact-card">
+      <p>運営: <strong>EnablerDAO</strong></p>
+      <p>プライバシー担当: <a href="mailto:privacy@enablerdao.com">privacy@enablerdao.com</a></p>
+      <p>一般お問い合わせ: <a href="mailto:support@enablerdao.com">support@enablerdao.com</a></p>
+      <p style="margin-top:16px;font-size:13px;color:var(--muted);">ご連絡から30日以内に回答いたします。GDPR対象地域のユーザーは、各国のデータ保護当局に苦情を申し立てる権利も有します。</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p style="margin-bottom:12px;">
+    <a href="/">アプリ</a>
+    <a href="/static/terms.html">利用規約</a>
+    <a href="/static/privacy.html">プライバシー</a>
+    <a href="/static/landing.html">サービス紹介</a>
+  </p>
+  <p>&copy; 2025 EnablerDAO. All rights reserved.</p>
+</footer>
+
+</body>
+</html>

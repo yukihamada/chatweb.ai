@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>利用規約 — Synapse Multi-Agent AI</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:      #09090b;
+  --surface: #111113;
+  --card:    #18181b;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #fafafa;
+  --muted:   #71717a;
+  --accent:  #8b5cf6;
+  --accent2: #06b6d4;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* Nav */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  background: rgba(9,9,11,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  text-decoration: none;
+  color: var(--text);
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.nav-link {
+  font-size: 14px;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border2);
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+/* Layout */
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 60px 24px 100px;
+}
+
+/* Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.page-header .badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(139,92,246,0.12);
+  border: 1px solid rgba(139,92,246,0.3);
+  padding: 4px 12px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+.page-header h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.55));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 16px;
+}
+.page-header .updated {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* TOC */
+.toc {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 48px;
+}
+.toc h3 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.toc ol {
+  list-style: none;
+  counter-reset: toc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.toc li { counter-increment: toc; }
+.toc a {
+  text-decoration: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: color 0.2s;
+}
+.toc a::before {
+  content: counter(toc, decimal-leading-zero);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 22px;
+}
+.toc a:hover { color: var(--text); }
+
+/* Sections */
+.section {
+  margin-bottom: 52px;
+  padding-bottom: 52px;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.section-num {
+  width: 36px; height: 36px;
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.section p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.section p:last-child { margin-bottom: 0; }
+
+/* Lists */
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+.list li {
+  display: flex;
+  gap: 12px;
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+}
+.list li::before {
+  content: '—';
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Prohibited */
+.prohibited-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+.prohibited-list li {
+  display: flex;
+  gap: 12px;
+  color: rgba(255,255,255,0.75);
+  font-size: 14px;
+  padding: 10px 14px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: 8px;
+}
+.prohibited-list li::before {
+  content: '✕';
+  color: #ef4444;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Contact card */
+.contact-card {
+  background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(6,182,212,0.08));
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 20px;
+}
+.contact-card p {
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 10px;
+}
+.contact-card a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.contact-card a:hover { text-decoration: underline; }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 40px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+footer a { color: var(--muted); text-decoration: none; margin: 0 10px; }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 600px) {
+  nav { padding: 0 16px; }
+  .container { padding: 40px 16px 80px; }
+  .toc { padding: 16px 18px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">
+    <div class="logo-icon">⚡</div>
+    Synapse
+  </a>
+  <a href="/" class="nav-link">← アプリに戻る</a>
+</nav>
+
+<div class="container">
+
+  <div class="page-header">
+    <div class="badge">Legal</div>
+    <h1>利用規約</h1>
+    <p class="updated">最終更新日: 2025年1月1日</p>
+  </div>
+
+  <div class="toc">
+    <h3>目次</h3>
+    <ol>
+      <li><a href="#overview">サービス概要</a></li>
+      <li><a href="#terms">利用規約</a></li>
+      <li><a href="#prohibited">禁止事項</a></li>
+      <li><a href="#disclaimer">免責事項</a></li>
+      <li><a href="#privacy">プライバシーポリシー</a></li>
+      <li><a href="#contact">お問い合わせ</a></li>
+    </ol>
+  </div>
+
+  <div class="section" id="overview">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2>サービス概要</h2>
+    </div>
+    <p>Synapse（以下「本サービス」）は、複数のAIエージェントが連携して複雑なタスクを自律実行するマルチエージェントAIプラットフォームです。ブラウザ自動化、調査・分析、コーディング支援など30種類以上の専門エージェントをご利用いただけます。</p>
+    <p>本サービスは、EnablerDAO（以下「運営者」）が提供します。本規約にご同意いただいた上でご利用ください。</p>
+    <ul class="list">
+      <li>提供形態: SaaS（Software as a Service）</li>
+      <li>対応言語: 日本語・英語</li>
+      <li>稼働目標: 99.5%（メンテナンス時間を除く）</li>
+      <li>データ保管: 国内サーバー（東京リージョン）</li>
+    </ul>
+  </div>
+
+  <div class="section" id="terms">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <h2>利用規約</h2>
+    </div>
+    <p><strong>アカウント登録</strong></p>
+    <p>本サービスの利用には、メールアドレスによるアカウント登録が必要です。登録情報は正確かつ最新の状態を保ってください。アカウントのセキュリティはご利用者ご自身の責任となります。</p>
+    <p><strong>利用料金</strong></p>
+    <p>有料プランの料金は各プランページに記載の通りです。月次請求となり、解約は翌月から反映されます。無料プランには月間100回の実行制限があります。</p>
+    <p><strong>知的財産権</strong></p>
+    <p>本サービスのソフトウェア・デザイン・コンテンツの著作権は運営者に帰属します。ユーザーが入力・生成したコンテンツの権利はユーザーに帰属します。</p>
+    <p><strong>規約の変更</strong></p>
+    <p>運営者は事前通知（30日前）を行った上で本規約を変更できます。変更後も継続利用された場合は変更後の規約への同意とみなします。</p>
+  </div>
+
+  <div class="section" id="prohibited">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <h2>禁止事項</h2>
+    </div>
+    <p>以下の行為を禁止します。違反した場合はアカウントを停止・削除する場合があります。</p>
+    <ul class="prohibited-list">
+      <li>違法なコンテンツの生成・配布・促進</li>
+      <li>他者のプライバシーや著作権の侵害</li>
+      <li>スパム・フィッシング・詐欺行為</li>
+      <li>マルウェアや有害コードの作成・配布</li>
+      <li>AIサービスの不正利用・リバースエンジニアリング</li>
+      <li>過度なリクエストによるサーバー負荷（DDoS等）</li>
+      <li>未成年者を対象とした不適切コンテンツ</li>
+      <li>アカウントの第三者への譲渡・貸与</li>
+    </ul>
+  </div>
+
+  <div class="section" id="disclaimer">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2>免責事項</h2>
+    </div>
+    <p>本サービスは「現状のまま（as-is）」で提供されます。AIが生成するコンテンツの正確性・完全性については保証しません。</p>
+    <ul class="list">
+      <li>AIの生成結果に起因する損害について、運営者は責任を負いません</li>
+      <li>サービス障害・停止による損失について、運営者の責任は利用料金の範囲内に限定されます</li>
+      <li>第三者サービス（外部API等）の障害については責任を負いません</li>
+      <li>ユーザー間のトラブルについては当事者間で解決してください</li>
+    </ul>
+    <p>重要な業務・法的判断・医療判断には、必ず専門家の確認を行ってください。</p>
+  </div>
+
+  <div class="section" id="privacy">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <h2>プライバシーポリシー</h2>
+    </div>
+    <p>プライバシーポリシーの詳細については、専用ページをご確認ください。</p>
+    <p>要点:</p>
+    <ul class="list">
+      <li>収集情報: メールアドレス、利用ログ、入力テキスト（改善目的）</li>
+      <li>第三者提供: 法的要請を除き、個人情報を第三者に提供しません</li>
+      <li>データ削除: アカウント削除後30日以内に全データを削除します</li>
+    </ul>
+    <p style="margin-top:16px;"><a href="/static/privacy.html" style="color:var(--accent);text-decoration:none;font-weight:600;">→ プライバシーポリシー全文を読む</a></p>
+  </div>
+
+  <div class="section" id="contact">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2>お問い合わせ</h2>
+    </div>
+    <p>本規約に関するご質問やご不明点は、下記までお問い合わせください。</p>
+    <div class="contact-card">
+      <p>運営: <strong>EnablerDAO</strong></p>
+      <p>メール: <a href="mailto:legal@enablerdao.com">legal@enablerdao.com</a></p>
+      <p>受付時間: 平日 10:00〜18:00（JST）</p>
+      <p style="margin-top:16px;font-size:13px;color:var(--muted);">通常3営業日以内にご返信いたします。</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p style="margin-bottom:12px;">
+    <a href="/">アプリ</a>
+    <a href="/static/terms.html">利用規約</a>
+    <a href="/static/privacy.html">プライバシー</a>
+    <a href="/static/landing.html">サービス紹介</a>
+  </p>
+  <p>&copy; 2025 EnablerDAO. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
