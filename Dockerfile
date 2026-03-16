@@ -21,6 +21,13 @@ RUN curl -L https://fly.io/install.sh | FLYCTL_INSTALL=/usr/local sh 2>/dev/null
     curl -L https://github.com/superfly/flyctl/releases/latest/download/flyctl_Linux_x86_64.tar.gz \
     | tar -xz -C /usr/local/bin flyctl && ln -sf /usr/local/bin/flyctl /usr/local/bin/fly
 
+# Install gogcli (Google Workspace CLI) — https://gogcli.sh
+RUN curl -fsSL https://gogcli.sh/install.sh | sh 2>/dev/null || \
+    (echo "gogcli install via script failed, trying GitHub releases" && \
+    GOGCLI_VERSION=$(curl -fsSL https://api.github.com/repos/steipete/gogcli/releases/latest | grep '"tag_name"' | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/') && \
+    curl -fsSL "https://github.com/steipete/gogcli/releases/download/${GOGCLI_VERSION}/gogcli_Linux_x86_64.tar.gz" \
+    | tar -xz -C /usr/local/bin 2>/dev/null) || echo "gogcli not available — Google Workspace agents will show setup instructions"
+
 WORKDIR /app
 
 COPY requirements.txt .

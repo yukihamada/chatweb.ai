@@ -1,0 +1,16 @@
+{
+  "name": "Synapse — Multi-Agent AI",
+  "short_name": "Synapse",
+  "description": "マルチエージェントAIプラットフォーム",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c6aff",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "ja"
+}
