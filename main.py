@@ -66,6 +66,14 @@ CF_API_KEY            = os.getenv("CF_API_KEY", "")
 CF_API_EMAIL          = os.getenv("CF_API_EMAIL", "mail@yukihamada.jp")
 CF_KV_NAMESPACE_ID    = os.getenv("CF_KV_NAMESPACE_ID", "d67714d343da41efa022d6a02c81ff30")
 SITE_BASE_DOMAIN      = os.getenv("SITE_BASE_DOMAIN", "chatweb.ai")
+ADMIN_EMAILS: set     = set(os.getenv("ADMIN_EMAILS", "yuki@hamada.tokyo").split(","))
+_APP_SOURCE_ROOT      = os.getenv("APP_SOURCE_ROOT", "/app")
+
+import contextvars
+_ctx_user_email: contextvars.ContextVar[str] = contextvars.ContextVar("user_email", default="")
+
+def _is_admin(email: str) -> bool:
+    return bool(email) and email.strip() in ADMIN_EMAILS
 # On Fly.io, /data is a persistent volume; locally use current dir
 DB_PATH            = os.getenv("DB_PATH", "/data/hitl.db" if os.path.isdir("/data") else "hitl.db")
 SCREENSHOTS_DIR    = "static/screenshots"
@@ -1105,6 +1113,104 @@ def _safe_path(path: str) -> str:
     if not (p.startswith(_WORKSPACE_ROOT) or p.startswith("/tmp")):
         raise ValueError(f"Path outside workspace: {path}")
     return p
+
+def _safe_source_path(path: str) -> str:
+    """Resolve path within app source root. Admin-only tools use this."""
+    if os.path.isabs(path):
+        p = os.path.realpath(path)
+    else:
+        p = os.path.realpath(os.path.join(_APP_SOURCE_ROOT, path))
+    if not p.startswith(_APP_SOURCE_ROOT):
+        raise ValueError(f"Path outside source root: {path}")
+    return p
+
+async def tool_source_read(path: str) -> str:
+    """Read a source file from the app directory. Admin only."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    try:
+        p = _safe_source_path(path)
+        if not os.path.exists(p):
+            return f"File not found: {path}"
+        size = os.path.getsize(p)
+        if size > 200_000:
+            return f"File too large ({size} bytes)"
+        with open(p, "r", errors="replace") as f:
+            return f.read()
+    except Exception as e:
+        return f"source_read error: {e}"
+
+async def tool_source_write(path: str, content: str) -> str:
+    """Write a source file in the app directory. Admin only."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    try:
+        p = _safe_source_path(path)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w") as f:
+            f.write(content)
+        return f"✅ Written {len(content)} chars to {path}"
+    except Exception as e:
+        return f"source_write error: {e}"
+
+async def tool_source_list(path: str = ".") -> str:
+    """List files in the app source directory. Admin only."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    try:
+        p = _safe_source_path(path)
+        if not os.path.isdir(p):
+            return f"Not a directory: {path}"
+        items = []
+        for name in sorted(os.listdir(p)):
+            full = os.path.join(p, name)
+            if name.startswith(".") and name not in (".env",):
+                continue
+            kind = "📁" if os.path.isdir(full) else "📄"
+            size = os.path.getsize(full) if os.path.isfile(full) else 0
+            items.append(f"{kind} {name}" + (f" ({size}B)" if size else ""))
+        return "\n".join(items) or "(empty)"
+    except Exception as e:
+        return f"source_list error: {e}"
+
+async def tool_git_source(command: str) -> str:
+    """Run git command in the app source directory. Admin only."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    if not command.startswith("git "):
+        command = "git " + command
+    BLOCKED_GIT = ["git push --force", "git push -f", "git reset --hard", "git clean -f"]
+    if any(b in command for b in BLOCKED_GIT):
+        return f"Blocked destructive git op: {command}"
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            command, cwd=_APP_SOURCE_ROOT,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        out = stdout.decode(errors="replace")[:4000]
+        err = stderr.decode(errors="replace")[:1000]
+        return f"[exit {proc.returncode}]\n{out}" + (f"\n[stderr]\n{err}" if err else "")
+    except asyncio.TimeoutError:
+        return "git timed out after 60s"
+    except Exception as e:
+        return f"git_source error: {e}"
+
+async def tool_deploy_self(message: str = "") -> str:
+    """Deploy chatweb-ai to Fly.io. Admin only."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            "fly deploy -a chatweb-ai --detach 2>&1",
+            cwd=_APP_SOURCE_ROOT,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=300)
+        out = stdout.decode(errors="replace")[-3000:]
+        return f"[exit {proc.returncode}]\n{out}"
+    except asyncio.TimeoutError:
+        return "Deploy timed out (5 min). Check https://fly.io/apps/chatweb-ai/monitoring"
+    except Exception as e:
+        return f"deploy_self error: {e}"
 
 async def tool_file_read(path: str) -> str:
     try:
@@ -4574,6 +4680,85 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 
 具体的な状況（業種・製品・顧客情報）を教えてください。""",
     },
+
+    # ── Admin-only agents ──────────────────────────────────────────────────
+    "code_editor": {
+        "name": "🛠️ コードエディタ",
+        "color": "#f59e0b",
+        "description": "chatweb.ai のソースコードを読み書き・git操作・Fly.ioデプロイ（管理者専用）",
+        "mcp_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self"],
+        "real_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self"],
+        "admin_only": True,
+        "system": """あなたは chatweb.ai のソースコードを管理する専用AIです。管理者 (yuki@hamada.tokyo) のみ利用可能です。
+
+## できること
+- **ファイル読み書き**: source_read / source_write / source_list
+- **Git操作**: git_source("git status"), git_source("git add -A"), git_source("git commit -m '...'"), git_source("git push")
+- **Fly.ioデプロイ**: deploy_self() → fly deploy -a chatweb-ai を実行
+
+## ファイル構成
+- /app/main.py — FastAPI バックエンド（Python）
+- /app/static/index.html — フロントエンド
+- /app/static/features.html, landing.html など静的ファイル
+- /app/requirements.txt — Python依存関係
+
+## 作業フロー
+1. source_listでファイル構成確認 → source_readで内容確認 → source_writeで編集
+2. git_source("git add -A") → git_source("git commit -m '...'") → git_source("git push")
+3. deploy_self() でFly.ioにデプロイ
+4. 完了報告（変更内容 + URL）
+
+変更前に必ず現在のファイル内容を確認してから編集してください。""",
+    },
+
+    "agent_manager": {
+        "name": "🎛️ エージェント管理",
+        "color": "#8b5cf6",
+        "description": "エージェントの作成・編集・公開設定・権限管理（管理者専用）",
+        "mcp_tools": ["list_agents", "create_agent", "update_agent", "delete_agent"],
+        "real_tools": [],
+        "admin_only": True,
+        "system": """あなたはエージェント管理専門のAIです。管理者 (yuki@hamada.tokyo) のみ利用可能です。
+
+## エージェントの公開設定
+- private (🔒): 自分だけ
+- public (🌐): 全ユーザー
+- paid (💰): 有料プラン (pro/team) のみ
+- admin_only (⚙️): 管理者のみ
+
+## 操作例
+「[エージェント名]の公開設定をpublicに変更して」→ PATCH /agents/custom/{id} {"visibility":"public"}
+「新しいエージェントを作って」→ POST /agents/custom
+「エージェント一覧を見せて」→ GET /agents/custom
+「[エージェント名]のシステムプロンプトを変更して」→ PATCH /agents/custom/{id}
+
+## デフォルトエージェント変更
+PUT /user/settings {"default_agent_id": "research"}
+
+以下のAPIエンドポイントを使用してエージェントを管理します。何を変更しますか？""",
+    },
+
+    "user_prefs": {
+        "name": "⚙️ 個人設定",
+        "color": "#64748b",
+        "description": "デフォルトエージェント・テーマ・言語などのパーソナライズ設定",
+        "mcp_tools": ["get_settings", "set_default_agent"],
+        "real_tools": [],
+        "system": """あなたはユーザーの個人設定を管理するAIアシスタントです。
+
+## できること
+1. デフォルトエージェントの変更（チャット開始時に使われるエージェント）
+2. 現在の設定確認
+3. 利用可能なエージェント一覧
+
+## 使い方
+- 「デフォルトエージェントをリサーチAIに変更して」
+- 「今の設定を確認して」
+
+主なエージェントID: auto（自動）, research, code, legal, finance, sns, meeting, crm, presentation, file_reader, analyst, translate, calendar, notify, coder, deployer
+
+APIは `/user/settings` を使用します。変更したい設定を教えてください。""",
+    },
 }
 
 sse_queues: dict[str, asyncio.Queue] = {}
@@ -4642,7 +4827,31 @@ async def init_db():
         try:
             await db.execute("ALTER TABLE runs ADD COLUMN rating INTEGER DEFAULT 0")
         except Exception:
-            pass  # Column already exists
+            pass
+        try:
+            await db.execute("ALTER TABLE runs ADD COLUMN user_id TEXT")
+        except Exception:
+            pass
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_runs_user ON runs(user_id, created_at)")
+        # ── custom_agents visibility columns ─────────────────────────────
+        for col_def in [
+            "ALTER TABLE custom_agents ADD COLUMN visibility TEXT DEFAULT 'private'",
+            "ALTER TABLE custom_agents ADD COLUMN owner_user_id TEXT",
+            "ALTER TABLE custom_agents ADD COLUMN required_plan TEXT DEFAULT 'free'",
+            "ALTER TABLE custom_agents ADD COLUMN allowed_emails TEXT DEFAULT '[]'",
+        ]:
+            try:
+                await db.execute(col_def)
+            except Exception:
+                pass
+        # ── user_settings ─────────────────────────────────────────────────
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_settings (
+                user_id TEXT PRIMARY KEY,
+                default_agent_id TEXT DEFAULT 'auto',
+                settings_json TEXT DEFAULT '{}',
+                updated_at TEXT DEFAULT (datetime('now','localtime'))
+            )""")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS scheduled_tasks (
                 id TEXT PRIMARY KEY,
@@ -5328,13 +5537,14 @@ async def save_run(session_id: str, agent_id: str, message: str, response: str,
                    routing_confidence: float = None, eval_score: int = None,
                    tool_latency_ms: int = None, hitl_approved: bool = None,
                    is_multi_agent: bool = False,
-                   input_tokens: int = 0, output_tokens: int = 0, cost_usd: float = 0):
+                   input_tokens: int = 0, output_tokens: int = 0, cost_usd: float = 0,
+                   user_id: str = None):
     async with db_conn() as db:
         await db.execute(
-            "INSERT INTO runs(id,session_id,agent_id,message,response,routing_confidence,"
+            "INSERT INTO runs(id,session_id,user_id,agent_id,message,response,routing_confidence,"
             "eval_score,tool_latency_ms,hitl_approved,is_multi_agent,input_tokens,output_tokens,cost_usd)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (str(uuid.uuid4()), session_id, agent_id, message[:200], response[:500],
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (str(uuid.uuid4()), session_id, user_id, agent_id, message[:200], response[:500],
              routing_confidence, eval_score, tool_latency_ms,
              (1 if hitl_approved else 0) if hitl_approved is not None else None,
              1 if is_multi_agent else 0, input_tokens, output_tokens, cost_usd)
@@ -6011,6 +6221,73 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
             await asyncio.sleep(0.1)
             await emit(tool, "done", real=False)
 
+    elif agent_id == "code_editor":
+        # Admin-only: source code management
+        user_email = _ctx_user_email.get()
+        if not _is_admin(user_email):
+            results["error"] = "⛔ このエージェントは管理者専用です (yuki@hamada.tokyo)"
+            return results
+        # Always list source files first
+        await emit("source_list", "calling", real=True)
+        results["source_list"] = await tool_source_list(".")
+        await emit("source_list", "done", real=True)
+        # Read specific file if mentioned
+        file_match = re.search(r'(?:read|open|show|cat|見て|読んで|確認)[^\w]*([\w./\-]+\.\w+)', message, re.I)
+        if file_match:
+            fname = file_match.group(1)
+            await emit("source_read", "calling", real=True)
+            results["source_read"] = await tool_source_read(fname)
+            await emit("source_read", "done", real=True)
+        # git status
+        if re.search(r'git|commit|push|status|diff|変更|変更点', message, re.I):
+            await emit("git_status", "calling", real=True)
+            results["git_status"] = await tool_git_source("git status --short")
+            await emit("git_status", "done", real=True)
+        # deploy
+        if re.search(r'deploy|デプロイ|リリース|反映', message, re.I):
+            await emit("deploy_self", "calling", real=True)
+            results["deploy_self"] = await tool_deploy_self(message)
+            await emit("deploy_self", "done", real=True)
+
+    elif agent_id == "agent_manager":
+        # Admin-only: agent management — list custom agents
+        user_email = _ctx_user_email.get()
+        if not _is_admin(user_email):
+            results["error"] = "⛔ このエージェントは管理者専用です (yuki@hamada.tokyo)"
+            return results
+        await emit("list_agents", "calling", real=True)
+        async with db_conn() as db:
+            rows = await db.execute_fetchall(
+                "SELECT id, name, emoji, description, visibility, owner_user_id, required_plan FROM custom_agents ORDER BY created_at DESC"
+            )
+        agent_list = "\n".join(
+            f"- {r['emoji'] or '🤖'} {r['name']} (id={r['id'][:8]}, visibility={r['visibility'] or 'private'}, plan={r['required_plan'] or 'free'})"
+            for r in rows
+        )
+        results["agent_list"] = f"カスタムエージェント一覧 ({len(rows)}件):\n{agent_list}" if rows else "カスタムエージェントはまだありません"
+        # Also show built-in agents count
+        admin_agents = [k for k, v in AGENTS.items() if v.get("admin_only")]
+        public_agents = [k for k, v in AGENTS.items() if not v.get("admin_only")]
+        results["builtin_summary"] = f"ビルトインエージェント: {len(public_agents)}個 (公開) + {len(admin_agents)}個 (管理者専用)"
+        await emit("list_agents", "done", real=True)
+
+    elif agent_id == "user_prefs":
+        # User settings: show current settings
+        await emit("get_settings", "calling", real=True)
+        _uid = (_user_sessions.get(session_id) or {}).get("user_id")
+        if _uid:
+            async with db_conn() as db:
+                row = await db.execute_fetchone(
+                    "SELECT default_agent_id, settings_json FROM user_settings WHERE user_id=?", (_uid,)
+                )
+            if row:
+                results["user_settings"] = f"現在の設定:\n- デフォルトエージェント: {row['default_agent_id'] or 'auto'}\n- その他: {row['settings_json'] or '{}'}"
+            else:
+                results["user_settings"] = "設定なし (デフォルト: auto 自動ルーティング)"
+        else:
+            results["user_settings"] = "ログインが必要です"
+        await emit("get_settings", "done", real=True)
+
     else:
         for tool in AGENTS[agent_id]["mcp_tools"][:2]:
             await emit(tool, "calling", real=False)
@@ -6099,8 +6376,31 @@ async def execute_agent(agent_id: str, message: str, session_id: str,
                         image_data: str = "",
                         image_b64: str | None = None,
                         image_media_type: str = "image/jpeg",
-                        lang: str = "") -> dict:
-    agent = AGENTS[agent_id]
+                        lang: str = "",
+                        user_email: str = "") -> dict:
+    agent = AGENTS.get(agent_id)
+    if agent is None:
+        return {"response": f"エージェント '{agent_id}' が見つかりません", "cost_usd": 0}
+    # Admin-only guard
+    if agent.get("admin_only") and not _is_admin(user_email):
+        return {"response": "⛔ このエージェントは管理者専用です。", "cost_usd": 0}
+    # Set user email in context for tool-level admin checks
+    token = _ctx_user_email.set(user_email)
+    queue = sse_queues.get(session_id)
+    try:
+        return await _execute_agent_inner(agent_id, agent, message, session_id,
+                                          history, memory_context, image_data,
+                                          image_b64, image_media_type, lang)
+    finally:
+        _ctx_user_email.reset(token)
+
+
+async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session_id: str,
+                                history: list = None, memory_context: str = "",
+                                image_data: str = "",
+                                image_b64: str | None = None,
+                                image_media_type: str = "image/jpeg",
+                                lang: str = "") -> dict:
     queue = sse_queues.get(session_id)
 
     # 1. Pre-execution tools
@@ -6963,8 +7263,79 @@ async def admin_backup(token: str = ""):
 
 
 @app.get("/agents")
-async def get_agents():
-    return {k: {**v, "mcp_tools": v["mcp_tools"]} for k, v in AGENTS.items()}
+async def get_agents(request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    user_email = user.get("email", "") if user else ""
+    user_plan  = user.get("plan", "free") if user else "free"
+    result = {}
+    for k, v in AGENTS.items():
+        if v.get("admin_only") and not _is_admin(user_email):
+            continue  # hide admin agents from non-admins
+        # Strip internal fields before returning
+        entry = {ek: ev for ek, ev in v.items() if ek not in ("system", "admin_only")}
+        result[k] = entry
+    return result
+
+
+@app.get("/user/settings")
+async def get_user_settings(request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
+    async with db_conn() as db:
+        row = await db.execute_fetchone(
+            "SELECT default_agent_id, settings_json FROM user_settings WHERE user_id=?",
+            (user["id"],))
+    if row:
+        return {"default_agent_id": row["default_agent_id"] or "auto",
+                "settings": json.loads(row["settings_json"] or "{}")}
+    return {"default_agent_id": "auto", "settings": {}}
+
+
+@app.put("/user/settings")
+async def put_user_settings(request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
+    body = await request.json()
+    default_agent_id = body.get("default_agent_id", "auto")
+    settings_json = json.dumps(body.get("settings", {}))
+    async with db_conn() as db:
+        await db.execute(
+            """INSERT INTO user_settings (user_id, default_agent_id, settings_json, updated_at)
+               VALUES (?, ?, ?, datetime('now','localtime'))
+               ON CONFLICT(user_id) DO UPDATE SET
+                 default_agent_id=excluded.default_agent_id,
+                 settings_json=excluded.settings_json,
+                 updated_at=excluded.updated_at""",
+            (user["id"], default_agent_id, settings_json))
+        await db.commit()
+    return {"ok": True, "default_agent_id": default_agent_id}
+
+
+@app.patch("/agents/custom/{agent_id}/visibility")
+async def patch_agent_visibility(agent_id: str, request: Request):
+    """Update agent visibility. Admin can change any; user can change own private agents."""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
+    body = await request.json()
+    visibility = body.get("visibility", "private")
+    required_plan = body.get("required_plan", "free")
+    allowed_emails = json.dumps(body.get("allowed_emails", []))
+    if visibility not in ("private", "public", "paid", "admin_only"):
+        raise HTTPException(400, "visibility must be: private, public, paid, admin_only")
+    async with db_conn() as db:
+        row = await db.execute_fetchone("SELECT owner_user_id FROM custom_agents WHERE id=?", (agent_id,))
+        if not row:
+            raise HTTPException(404, "エージェントが見つかりません")
+        if not _is_admin(user.get("email", "")) and row["owner_user_id"] != user["id"]:
+            raise HTTPException(403, "権限がありません")
+        await db.execute(
+            "UPDATE custom_agents SET visibility=?, required_plan=?, allowed_emails=? WHERE id=?",
+            (visibility, required_plan, allowed_emails, agent_id))
+        await db.commit()
+    return {"ok": True, "visibility": visibility}
 
 
 @app.post("/chat/stream/{session_id}")
@@ -7185,7 +7556,8 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                 result   = await execute_agent(agent_id, req.message, session_id, history,
                                               memory_context=memory_context,
                                               image_data=req.image_data,
-                                              lang=_req_lang)
+                                              lang=_req_lang,
+                                              user_email=user.get("email", "") if user else "")
                 draft    = result["response"]
 
                 final = draft
@@ -7211,7 +7583,8 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                    routing_confidence=conf, eval_score=score,
                                    input_tokens=result.get("input_tokens", 0),
                                    output_tokens=result.get("output_tokens", 0),
-                                   cost_usd=result.get("cost_usd", 0.0))
+                                   cost_usd=result.get("cost_usd", 0.0),
+                                   user_id=_uid)
                     # Background memory extraction
                     asyncio.create_task(_background_memory_extract(
                         req.message, final, sid, queue, user_id=_uid))
@@ -7532,9 +7905,21 @@ async def delete_site(subdomain: str, request: Request):
 async def billing_plans():
     return {
         "plans": [
-            {"id": "free",  "name": "フリー",    "price": 0,    "requests_per_month": 100, "features": ["基本エージェント", "長期記憶50件", "ファイルアップロード"]},
-            {"id": "pro",   "name": "プロ",      "price": 2980, "requests_per_month": 2000,"features": ["全エージェント", "長期記憶無制限", "Proモデル優先", "ウェブフック", "API接続"]},
-            {"id": "team",  "name": "チーム",    "price": 9800, "requests_per_month": 10000,"features": ["プロの全機能", "チームワークスペース", "カスタムエージェント", "SLAサポート"]},
+            {
+                "id": "free", "name": "フリー", "price": 0, "requests_per_month": 100,
+                "quota_label": "月100メッセージ",
+                "features": ["33種類のAIエージェント", "長期記憶 50件", "ファイルアップロード", "サイト公開 3件まで", "Slack/Discord 連携"],
+            },
+            {
+                "id": "pro", "name": "プロ", "price": 2980, "requests_per_month": 2000,
+                "quota_label": "月2,000メッセージ",
+                "features": ["全エージェント無制限", "長期記憶 無制限", "Proモデル優先処理", "サイト公開 無制限", "カスタムWebhook / API", "Google Calendar/Gmail 連携", "優先サポート"],
+            },
+            {
+                "id": "team", "name": "チーム", "price": 9800, "requests_per_month": 10000,
+                "quota_label": "月10,000メッセージ",
+                "features": ["プロの全機能", "チームワークスペース共有", "管理者ダッシュボード", "SLAサポート (1営業日)", "請求書払い対応"],
+            },
         ]
     }
 

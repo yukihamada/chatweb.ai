@@ -1056,7 +1056,7 @@ body {
         <!-- ── アカウント ── -->
         <div class="dropdown-label">アカウント</div>
         <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 <span data-i18n="menu_login">ログイン</span></button>
-        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none">👤 <span id="user-email-display"></span> · <span data-i18n="menu_logout">ログアウト</span></button>
+        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="user-email-display"></span><span data-i18n="menu_logout" style="font-size:13px">ログアウト</span></button>
         <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 <span data-i18n="menu_billing">プラン・課金</span></button>
         <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 <span data-i18n="menu_api_keys">APIキー管理</span></button>
         <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">🔗 <span data-i18n="menu_link_code">LINE/Telegram連携コード</span></button>
@@ -1785,133 +1785,130 @@ function autoResize(ta) {
 }
 // ── 100 Quick Chips (実際に使える具体的な質問) ──────────────────────────
 const ALL_CHIPS = [
-  // 📣 SNS/マーケティング — すぐ使える投稿文
-  "📣 「AIで業務効率化」をテーマにX投稿を絵文字多めで3パターン書いて",
-  "📣 新サービスのInstagramキャプション＋ハッシュタグ30個を作って",
-  "📣 エンジニア採用のLinkedIn投稿を書いて（カジュアルな雰囲気で）",
-  "📣 「○○さん、先日のウェビナーありがとうございました」のフォローDM文を書いて",
-  "📣 メルマガ件名を開封率が上がる5パターン考えて",
-  "📣 SaaSサービスの料金改定を告知するXスレッドを書いて",
-  "📣 「創業5周年」の感謝ポストをXとLinkedIn用に書いて",
-  "📣 来週のコンテンツカレンダー（月〜金 各SNS）を作って",
-  "📣 自社サービスのキャッチコピーを10案考えて（簡潔・刺さるもの）",
-  "📣 LINE公式アカウントの友達追加後の初回あいさつメッセージを作って",
+  // 🚀 今すぐ試せる — インパクト大
+  "🚀 「うちのサービスをXでバズらせたい」→ 今日投稿できるXスレッドを3パターン作って",
+  "🚀 昨日の営業MTGメモ「山田さん、予算100万、来月決裁」を元にフォローメールを書いて",
+  "🚀 フリーランス契約書の雛形を今すぐ作って（月60万・3ヶ月・NDA付き）",
+  "🚀 NVDAの今週の株価とアナリスト評価を調べて買い時か教えて",
+  "🚀 「AI×業務効率化」の社内勉強会スライド10枚を作ってURLで公開して",
+  "🚀 競合3社（Notion・Asana・Trello）の料金と機能を比較表にして",
 
-  // 📝 会議メモ — 即議事録に変換
-  "📝 「決定: 来月15日リリース。田中さんUI担当、山田さんAPI担当。予算80万」を議事録にして",
-  "📝 週次定例MTGの議事録テンプレート（決定事項・TODO・議題欄あり）を作って",
-  "📝 「売上目標未達、原因は営業リソース不足、来月採用強化で対応」を取締役会報告書にして",
-  "📝 1on1メモを振り返りシート（成果・課題・ネクストアクション）にまとめて",
-  "📝 プロジェクトキックオフのアジェンダと議事録フォーマットを作って",
+  // 📣 SNS投稿 — コピペして即使える
+  "📣 「新機能リリース！AIが自動で議事録を作成します」のX投稿を絵文字多めで書いて",
+  "📣 スタートアップ創業者らしいLinkedIn自己紹介文を書いて（フォロワーが増える型）",
+  "📣 Instagramのフォロワー増やすための1週間コンテンツカレンダーを作って",
+  "📣 「サービスの料金が上がります」を好意的に受け取ってもらえるXポストの文を書いて",
+  "📣 採用広告のコピーを10案作って（エンジニア向け・カジュアルな雰囲気）",
+  "📣 メルマガの件名「開封率30%超え」の型を5パターン教えて例も書いて",
+  "📣 「先日のウェビナーありがとう」フォローDMをInstagramとLinkedIn両方書いて",
+  "📣 会社の5周年記念投稿をX・Instagram・LinkedInの3プラットフォーム分作って",
 
-  // 💼 CRM/営業 — そのまま送れるメール
-  "💼 先週デモした顧客に「検討状況いかがでしょうか」のフォローメールを書いて",
-  "💼 初回飛び込み営業メールを書いて（ITツール導入支援・中小企業向け）",
-  "💼 提案後2週間音沙汰なし → 価値を再提示するメールを書いて",
-  "💼 失注した案件のお礼＋今後の関係継続メールを書いて",
-  "💼 月次営業レポートのテンプレート（目標・実績・達成率・来月の戦略）を作って",
-  "💼 クロージングで「高い」と言われた時の返し方スクリプトを作って",
-  "💼 新規リード獲得後の最初のアプローチ〜契約までの営業フロー図を作って",
+  // 📝 議事録・ドキュメント — 即完成
+  "📝 「決定: 9/15リリース、佐藤さんフロント、鈴木さんAPI、予算120万」→ 議事録にして",
+  "📝 週次定例MTGのアジェンダと議事録テンプレートを作って（毎週使い回せるやつ）",
+  "📝 「売上未達・原因は商談数不足・来月からSDR採用」を役員報告書にして",
+  "📝 1on1の会話メモを成長支援シート（強み・課題・90日アクションプラン）にして",
+  "📝 プロダクトのPRD（製品要件定義書）のテンプレートを作って",
 
-  // ⚖️ 法務 — 使える雛形をすぐ作成
-  "⚖️ フリーランス業務委託契約書の雛形を作って（報酬月50万・3ヶ月・秘密保持あり）",
-  "⚖️ SaaSサービスの利用規約の雛形を作って（日本法準拠）",
-  "⚖️ 英語のNDAを日本語に翻訳して法的リスクを確認して",
-  "⚖️ プライバシーポリシーの雛形を作って（個人情報保護法・GDPR対応）",
-  "⚖️ 従業員との秘密保持・競業避止契約書の雛形を作って",
-  "⚖️ 外部委託先との基本契約書の注意点を教えて",
+  // 💼 営業・CRM — 送るだけ
+  "💼 2週間前にデモした顧客が無反応 → 価値を再提示する「最後の1通」を書いて",
+  "💼 展示会で名刺交換した相手への翌日フォローメールを書いて（覚えてもらえる型）",
+  "💼 「高い」と言われたときの切り返しトーク5パターンを書いて",
+  "💼 失注後のお礼メール＋半年後に再アプローチする仕込みメールを書いて",
+  "💼 新規開拓の初回アプローチ〜クロージングまでの営業フローチャートを作って",
+  "💼 月次営業レポートを自動集計できるGoogleシートのテンプレートを作って",
 
-  // 💹 金融 — リアルデータ分析
-  "💹 NVDAの直近決算を分析して投資判断を教えて",
-  "💹 AppleとMicrosoftの過去1年の株価パフォーマンスを比較して",
-  "💹 日経平均が3万円台を維持できるか今の要因を分析して",
-  "💹 ビットコインの半減期後の価格推移パターンを分析して",
-  "💹 S&P500インデックス投資 vs 個別株の長期リターン比較をして",
-  "💹 円安が中小企業に与える影響を分析して対策を提案して",
+  // ⚖️ 法務 — 雛形すぐ作成
+  "⚖️ SaaS利用規約の雛形を作って（月額課金・解約・免責条項すべて含む・日本法準拠）",
+  "⚖️ 受け取ったNDAの英語を日本語訳して問題ある条項をハイライトして",
+  "⚖️ プライバシーポリシーを作って（個人情報保護法・GDPR・Cookie通知対応）",
+  "⚖️ 副業・競業避止義務の確認 — 会社員が副業するときに気をつける法的ポイントを教えて",
+  "⚖️ 業務委託 vs 正社員雇用のメリット・デメリットを法的観点から比較して",
 
-  // 🎤 プレゼン — 作ってそのまま公開
-  "🎤 「AIを使った業務効率化」の社内勉強会スライド5枚を作って公開して",
-  "🎤 スタートアップのシードラウンド投資家向けピッチデック（10枚）を作って公開して",
-  "🎤 新機能リリースの顧客向け説明資料を作って公開して",
-  "🎤 四半期の事業進捗報告スライドのテンプレートを作って公開して",
-  "🎤 チーム採用説明会用のカルチャーデック（会社紹介スライド）を作って公開して",
+  // 💹 投資・金融 — リアルデータで分析
+  "💹 今週のApple・Microsoft・NVDA・Googleの株価と決算予測を調べてまとめて",
+  "💹 ビットコインとS&P500の過去5年のパフォーマンス比較チャートを作って",
+  "💹 日経平均が今後3ヶ月で上がるか下がるか — 主要指標を調べて予測して",
+  "💹 新NISAの成長投資枠で今買うべきETFをランキングで教えて理由も",
+  "💹 円安150円台が続く場合に海外投資家はどう動くか分析して",
 
-  // 📊 データ分析
-  "📊 「先月比売上-20%」の原因を仮説立てしてMECEに整理して",
-  "📊 SaaSビジネスのMRR・ARR・チャーン率・LTVの計算方法と改善施策を教えて",
-  "📊 A/Bテストの結果（A: CVR 3.2%, B: CVR 3.8%, n=1000）が有意差あるか検定して",
-  "📊 ユーザーインタビュー10件のフィードバックをカテゴリ分けして課題を整理して",
-  "📊 競合5社の機能比較マトリクスを作って（価格・機能・対象ユーザー）",
+  // 🎤 プレゼン・スライド — URLですぐ共有
+  "🎤 投資家向けピッチデック10枚（課題・解決策・市場規模・収益モデル・チーム）を作って公開して",
+  "🎤 新機能の顧客向けウェビナー資料を作って公開URLを教えて",
+  "🎤 「生成AIの業務活用入門」の社内研修スライドを作って公開して",
+  "🎤 四半期の事業進捗ダッシュボード（グラフ付き）HTMLページを作って公開して",
+  "🎤 採用説明会のカルチャーデック（会社・ミッション・チーム・制度）を作って公開して",
 
-  // 🌐 サイト公開 — 今すぐ使えるツール
-  "🌐 ポートフォリオサイトを作って [自分の名前].chatweb.aiで公開して",
-  "🌐 プロジェクト進捗管理ダッシュボードアプリを作って公開して",
-  "🌐 カウントダウンタイマーサイト（日付設定できる）を作って公開して",
-  "🌐 会社の採用ランディングページを作って公開して",
-  "🌐 イベント参加登録フォーム付きページを作って公開して",
-  "🌐 シンプルなBMI計算ツールを作って公開して",
-  "🌐 英語→日本語 瞬時翻訳ツールサイトを作って公開して",
-  "🌐 日替わりランダム名言サイトを作って公開して",
+  // 📊 データ・分析
+  "📊 先月比売上-18%の原因を「ファネル分析」で仮説立てしてMECEに整理して",
+  "📊 A/Bテスト（A:CVR 2.9%, B:CVR 3.6%, 各n=800）の有意差をt検定して",
+  "📊 SaaSのMRR・ARR・チャーン率・NRR・LTVの計算と改善施策をまとめて",
+  "📊 ユーザーインタビュー12件のフィードバックをカテゴリ分けしてペインポイントを整理して",
+  "📊 PM向けの北極星指標（NSM）とOKR設計のフレームワークを教えて例も作って",
 
-  // 🎨 画像生成
-  "🎨 テックスタートアップらしい紫グラデーションのロゴを生成して",
-  "🎨 「AIとビジネス」をテーマにしたXのヘッダー画像を作って",
-  "🎨 和風モダンな飲食店のSNSバナーを作って",
-  "🎨 プレゼン表紙用のシンプルでプロフェッショナルな背景画像を作って",
+  // 🌐 サイト・ツール公開 — 即URL
+  "🌐 自分のポートフォリオサイトを作って myname.chatweb.ai で公開して",
+  "🌐 リアルタイムで動くカウントダウンタイマーページを作って公開して",
+  "🌐 会社の採用LPを作って（ミッション・福利厚生・募集職種・応募フォーム付き）公開して",
+  "🌐 イベント告知ページ（日時・場所・申し込みフォーム付き）を作って公開して",
+  "🌐 BMI・体脂肪率計算ツールをダークテーマで作って公開して",
+  "🌐 ランダムな格言を毎日1つ表示するサイトを作って公開して",
 
-  // ⚙️ コード — 実行まで
-  "⚙️ PythonでWebスクレイピングしてCSVに保存するコードを書いて実行して",
-  "⚙️ FastAPIで認証付きCRUD APIを書いて動作確認して",
-  "⚙️ SQLでユーザーテーブルのコホート分析クエリを書いて",
-  "⚙️ TypeScriptでZodバリデーション付きのフォームを書いて",
-  "⚙️ Pythonでスプレッドシートのデータをmatplotlibでグラフ化して",
-  "⚙️ Dockerで開発環境を構築するdocker-compose.ymlを書いて",
-  "⚙️ GitHubActionsのCI/CDパイプラインのyamlを書いて",
+  // ⚙️ コード — 書いて即実行
+  "⚙️ PythonでTwitterの自分のツイートをスクレイピングしてCSV保存するコードを書いて実行して",
+  "⚙️ FastAPI + JWT認証 + SQLiteのCRUD APIを書いてエンドポイント一覧を教えて",
+  "⚙️ React+TypeScript+Zodでリアルタイムバリデーション付きフォームを書いて",
+  "⚙️ SQLでコホート別のチャーン率を計算するクエリを書いてサンプルデータで実行して",
+  "⚙️ Docker Compose で Python+PostgreSQL+Redisの開発環境を構築して",
+  "⚙️ GitHub Actions で test→build→deployのCI/CDパイプラインを書いて",
+  "⚙️ Pythonで売上CSVをMatplotlibで月次グラフにして画像保存するコードを書いて実行して",
 
-  // 📅 Google連携
-  "📅 明日14:00に「田中さんとの営業MTG」をGoogleカレンダーに追加して",
-  "📧 「先日はありがとうございました。提案書を添付します」のメールを田中さんに送って",
-  "📊 今週の作業時間をGoogleシートに記録するテンプレートを作って入力して",
-  "📝 「今日の会議まとめ」をGoogle Docsに議事録として保存して",
-  "📂 Googleドライブの契約書フォルダのファイル一覧を確認して",
+  // 📄 ファイル解析 — アップロードして分析
+  "📄 アップロードしたPDFの契約書から問題になりそうな条項だけ抜き出して",
+  "📄 アップロードしたExcelの売上データを分析して「何が伸びて何が落ちているか」を教えて",
+  "📄 アップロードしたCSVでユーザーのLTVとチャーン率を計算して",
+  "📄 アップロードした議事録PDFからTODO・決定事項・次回アジェンダを抽出して",
 
-  // 🚀 DevOps
-  "🚀 fly deploy --app myapp で本番デプロイして結果を教えて",
-  "🛠️ GitHubの最新PRを確認してマージして",
-  "🛠️ 本番サーバーのエラーログを確認して原因を教えて",
+  // 📅 Google連携 — 実際に実行
+  "📅 今日15:00に「山田さんとクロージングMTG」をGoogleカレンダーに追加して",
+  "📧 「提案書をお送りします、ご検討よろしくお願いします」をGmailで田中さんに送って",
+  "📊 今週の作業ログをGoogleスプレッドシートに記録する表を作ってシェアURLを教えて",
+  "📝 今日の会議メモをGoogle Docsに議事録として保存してURLを教えて",
 
-  // 📄 ファイル解析（アップロード後）
-  "📄 アップロードしたPDFを要約して重要なポイントを3つ教えて",
-  "📄 アップロードしたExcelの売上データを分析して前月比と傾向を教えて",
-  "📄 アップロードした契約書PDFから重要条項とリスクを抽出して",
-  "📄 アップロードしたCSVデータでチャーン率を計算して",
+  // 📨 通知・Slack連携
+  "📨 「デプロイ完了しました v2.3.1 — 変更点: バグ修正3件」をSlack #devに送って",
+  "📨 チーム全員に「今月のOKR達成率85%！来月の目標を共有します」メールを書いて送って",
 
-  // 📚 知識ベース活用
-  "📚 社内マニュアルから有給申請の手順を教えて",
-  "📚 アップロードした仕様書から実装すべき機能一覧を抽出して",
+  // 🔍 リサーチ・調査
+  "🔍 Claude・GPT-4o・Gemini 1.5 Proの最新性能・料金・制限を比較表で教えて",
+  "🔍 日本のSaaS市場2024年の規模・成長率・注目スタートアップを調べてレポートにして",
+  "🔍 生成AI導入で「業務時間30%削減」した企業の成功事例を5つ調べて",
+  "🔍 プロダクトマネージャーの転職市場 — 必要スキル・年収相場・求人を調べて",
+  "🔍 競合3社の製品・価格・強み・弱みをSWOT分析して差別化戦略を提案して",
 
-  // 🚄 旅行
-  "🚄 来週月曜の東京発→大阪着の新幹線の時刻と料金を調べて",
-  "✈️ 来月の東京→台北の往復航空券の相場を調べて",
-  "🏨 京都の4つ星以上の温泉旅館を3軒比較して",
+  // 🚄 旅行・予定
+  "🚄 来週月曜の東京→大阪 新幹線の時刻・料金・座席種類を調べて比較して",
+  "✈️ 来月の東京→バンコク往復の最安値フライトを調べて",
+  "🏨 京都の温泉付き旅館3軒を「価格・評価・アクセス」で比較して",
 
-  // 📨 通知・連絡
-  "📨 「今日のデプロイ完了しました」とSlackのdevチャンネルに送って",
-  "📨 チームメンバー全員に週次目標達成のお知らせメールを送って",
+  // 🤖 日常・汎用
+  "🤖 英語の長文メールを「3行の日本語要約＋重要な依頼事項のリスト」にして",
+  "🤖 上司への遅延報告メールを「誠実さが伝わる丁寧な敬語」で書き直して",
+  "🤖 来週やるべきタスク一覧から優先順位をつけてスケジュール表にして",
+  "🤖 「この機能をなぜ作るのか」を説明するプロダクトビジョン文を3パターン書いて",
+  "🤖 社内向けAI活用ポリシー（使っていいこと・禁止事項・管理ルール）の雛形を作って",
+  "🤖 退職の挨拶メールを社内向けと社外取引先向けの2バージョン書いて",
 
-  // 🔍 リサーチ
-  "🔍 ChatGPT・Claude・Geminiの最新モデルの性能と料金を比較して",
-  "🔍 日本のSaaS市場規模と成長率トレンドを調べてレポートにして",
-  "🔍 競合3社の強み弱みをSWOT分析して",
-  "🔍 生成AIの業務活用で効果が出た事例を5つ調べて",
-  "🔍 プロダクトマネージャーに必要なスキルセットと学習リソースを調べて",
+  // 🏢 経営・戦略
+  "🏢 30分で書けるOne-Page Business Planのテンプレートと記入例を作って",
+  "🏢 新規事業アイデア「AIを使った〇〇」を5個ブレストして実現可能性でランク付けして",
+  "🏢 スタートアップの採用面接で聞くべき質問リストをカルチャーフィット重視で作って",
+  "🏢 月次の損益計算書（P&L）のシンプルなテンプレートをGoogleシート用に作って",
 
-  // 🤖 汎用・日常
-  "🤖 この長い英語メールを日本語に翻訳して要点を3行でまとめて",
-  "🤖 上司へのお詫びメールを丁寧な敬語に書き直して",
-  "🤖 来週の仕事の優先順位を付けてスケジュールを組んで",
-  "🤖 プレゼンの冒頭30秒の掴みトークを3パターン書いて",
-  "🤖 社内向けAI活用ガイドライン（禁止事項・推奨事項付き）の雛形を作って",
+  // 🎨 クリエイティブ
+  "🎨 テックスタートアップのブランドカラー（紫系）でロゴデザインを生成して",
+  "🎨 「AI×未来」をテーマにしたXのヘッダー画像（1500×500）を作って",
+  "🎨 飲食店のInstagram用バナー（和風モダン・夜の雰囲気）を作って",
 ];
 
 function initQuickChips() {
@@ -3275,13 +3272,28 @@ async function showLinkCode() {
     const code = d.code;
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:flex;align-items:center;justify-content:center';
-    modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:32px;width:360px;max-width:90vw;text-align:center">
-      <h3 style="margin-bottom:12px">🔗 LINE / Telegram 連携</h3>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">以下のコードをLINEまたはTelegramで入力してください（10分間有効）</p>
-      <div style="font-size:36px;font-weight:700;letter-spacing:8px;color:var(--accent);margin-bottom:8px;font-family:monospace">${code}</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">LINE: <code>/link ${code}</code><br>Telegram: <code>/link ${code}</code></p>
-      <button onclick="navigator.clipboard.writeText('/link ${code}');this.textContent='✅ コピー済み'" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:14px;margin-right:8px">📋 コピー</button>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:14px">閉じる</button>
+    const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('/link ' + code)}`;
+    const tgQr   = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('/link ' + code)}`;
+    modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:400px;max-width:94vw;text-align:center">
+      <h3 style="margin-bottom:6px">🔗 LINE / Telegram 連携</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">以下のコードを入力またはQRを読み取ってください（10分間有効）</p>
+      <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:10px 0;border-radius:10px">${code}</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin:16px 0">
+        <div>
+          <img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="LINE QR">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">📱 LINE</div>
+          <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
+        </div>
+        <div>
+          <img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="Telegram QR">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">✈️ Telegram</div>
+          <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button onclick="navigator.clipboard.writeText('/link ${code}');this.textContent='✅ コピー済み'" style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">📋 コードをコピー</button>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 14px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:13px">閉じる</button>
+      </div>
     </div>`;
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -4715,7 +4727,7 @@ async function openBillingModal() {
       id: 'free', name: 'フリー', price: 0, period: '',
       badge: '', badgeColor: '',
       desc: '個人利用・お試しに最適',
-      requests: '月100回',
+      requests: '月100メッセージ',
       btnLabel: '現在のプラン', btnDisabled: true,
       accentColor: '#64748b',
       features: [
@@ -4730,7 +4742,7 @@ async function openBillingModal() {
       id: 'pro', name: 'プロ', price: 2980, period: '/月',
       badge: '🔥 最も人気', badgeColor: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
       desc: 'ビジネス利用・本格活用に',
-      requests: '月2,000回',
+      requests: '月2,000メッセージ',
       btnLabel: 'プロにアップグレード', btnDisabled: false,
       accentColor: '#8b5cf6',
       features: [
@@ -4747,7 +4759,7 @@ async function openBillingModal() {
       id: 'team', name: 'チーム', price: 9800, period: '/月',
       badge: '🏢 法人向け', badgeColor: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
       desc: 'チーム・企業での本格導入',
-      requests: '月10,000回',
+      requests: '月10,000メッセージ',
       btnLabel: 'チームプランを開始', btnDisabled: false,
       accentColor: '#0ea5e9',
       features: [
@@ -4794,6 +4806,8 @@ async function openBillingModal() {
         <span>Stripe による安全な決済</span>
         <span>·</span>
         <span>いつでもキャンセル可能</span>
+        <span>·</span>
+        <span>※ 1メッセージ = AIへの1回の質問・依頼</span>
         <span>·</span>
         <span><a href="mailto:support@chatweb.ai" style="color:var(--accent2);text-decoration:none">お問い合わせ</a></span>
       </div>
@@ -5924,11 +5938,48 @@ updateAuthUI = function(user) {
     <style>.secret-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}.secret-row button{padding:4px 10px;border-radius:6px;border:none;background:var(--red);color:#fff;cursor:pointer;font-size:12px}</style>
     <p style="font-size:13px;color:var(--muted);margin-bottom:10px">新しいキーを追加:</p>
     <div style="display:flex;gap:8px;margin-bottom:8px">
-      <input id="secret-name" type="text" placeholder="キー名 (例: OPENAI_API_KEY)"
+      <select id="secret-name-select" onchange="document.getElementById('secret-name').value=this.value"
+        style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px">
+        <option value="">-- キー名を選択 --</option>
+        <optgroup label="AI モデル">
+          <option value="ANTHROPIC_API_KEY">ANTHROPIC_API_KEY (Claude)</option>
+          <option value="OPENAI_API_KEY">OPENAI_API_KEY (GPT-4)</option>
+          <option value="GOOGLE_API_KEY">GOOGLE_API_KEY (Gemini)</option>
+          <option value="GROQ_API_KEY">GROQ_API_KEY (Llama)</option>
+          <option value="OPENROUTER_API_KEY">OPENROUTER_API_KEY</option>
+        </optgroup>
+        <optgroup label="検索 / ブラウザ">
+          <option value="TAVILY_API_KEY">TAVILY_API_KEY (検索)</option>
+          <option value="E2B_API_KEY">E2B_API_KEY (コード実行)</option>
+        </optgroup>
+        <optgroup label="Google Workspace">
+          <option value="GCAL_SERVICE_ACCOUNT_JSON">GCAL_SERVICE_ACCOUNT_JSON</option>
+          <option value="GMAIL_USER">GMAIL_USER</option>
+          <option value="GMAIL_APP_PASSWORD">GMAIL_APP_PASSWORD</option>
+        </optgroup>
+        <optgroup label="通知">
+          <option value="SLACK_BOT_TOKEN">SLACK_BOT_TOKEN</option>
+          <option value="LINE_CHANNEL_ACCESS_TOKEN">LINE_CHANNEL_ACCESS_TOKEN</option>
+          <option value="TELEGRAM_BOT_TOKEN">TELEGRAM_BOT_TOKEN</option>
+          <option value="RESEND_API_KEY">RESEND_API_KEY (メール)</option>
+        </optgroup>
+        <optgroup label="決済">
+          <option value="STRIPE_SECRET_KEY">STRIPE_SECRET_KEY</option>
+          <option value="STRIPE_WEBHOOK_SECRET">STRIPE_WEBHOOK_SECRET</option>
+          <option value="STRIPE_PRICE_ID_PRO">STRIPE_PRICE_ID_PRO</option>
+        </optgroup>
+        <optgroup label="その他">
+          <option value="GITHUB_TOKEN">GITHUB_TOKEN</option>
+          <option value="CUSTOM">カスタム（下のフィールドに入力）</option>
+        </optgroup>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="secret-name" type="text" placeholder="キー名（カスタムの場合）"
         style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px">
-      <input id="secret-value" type="password" placeholder="値"
+      <input id="secret-value" type="password" placeholder="APIキーの値"
         style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px">
       <button onclick="saveSecret()"
         style="padding:8px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px">保存</button>
