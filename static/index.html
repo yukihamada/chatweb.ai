@@ -1378,49 +1378,74 @@ function appendTyping(id) {
   scrollToBottom();
 }
 
+// Each stream gets a unique numeric suffix to avoid ID collisions across agents
+let _streamSeq = 0;
+let _streamBubbleEl  = null;  // direct reference to bubble wrapper
+let _streamFooterEl  = null;  // direct reference to footer
+
 function startStreamBubble(agentId, agentName) {
-  // Remove typing
+  // Finalize any previous stream that wasn't closed cleanly
+  if (_streamBubbleEl) _cleanupStreamIds();
+
+  _streamSeq++;
+  const seq = _streamSeq;
+
+  // Remove typing indicator
   document.getElementById('typing_active')?.closest('.msg-container')?.remove();
 
   const div = document.createElement('div');
   div.className = 'msg-ai';
-  div.id = 'stream_bubble';
+  div.dataset.streamSeq = seq;
   div.innerHTML = `
     <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
     <div class="msg-ai-body">
-      <div class="msg-ai-name" id="stream_name">${agentName}</div>
-      <div class="msg-ai-bubble streaming" id="stream_content"><span class="cursor"></span></div>
-      <div class="msg-ai-footer" id="stream_footer"></div>
+      <div class="msg-ai-name">${agentName}</div>
+      <div class="msg-ai-bubble streaming" data-stream-content="${seq}"><span class="cursor"></span></div>
+      <div class="msg-ai-footer" data-stream-footer="${seq}"></div>
     </div>`;
   getMessages().appendChild(wrap(div));
-  currentStreamEl   = document.getElementById('stream_content');
+  _streamBubbleEl  = div;
+  currentStreamEl  = div.querySelector(`[data-stream-content="${seq}"]`);
+  _streamFooterEl  = div.querySelector(`[data-stream-footer="${seq}"]`);
   currentStreamText = '';
   scrollToBottom();
 }
 
+function _cleanupStreamIds() {
+  // Clear all legacy stream IDs to prevent cross-agent contamination
+  document.getElementById('stream_bubble')?.removeAttribute('id');
+  document.getElementById('stream_content')?.removeAttribute('id');
+  document.getElementById('stream_name')?.removeAttribute('id');
+  document.getElementById('stream_footer')?.removeAttribute('id');
+  _streamBubbleEl = null;
+  _streamFooterEl = null;
+}
+
 function finalizeStreamBubble(response, realTools, qualityScore) {
-  const bubble = document.getElementById('stream_bubble');
-  if (bubble) {
-    const content = document.getElementById('stream_content');
-    const footer  = document.getElementById('stream_footer');
-    if (content) {
-      content.classList.remove('streaming');
-      content.innerHTML = renderMarkdown(response);
-    }
-    if (footer) {
-      const badge = (realTools||[]).length > 0
-        ? `<span class="tool-chip">✅ ${realTools.join(', ')}</span>` : '';
-      const qbadge = qualityScore !== null && qualityScore !== undefined
-        ? `<span class="quality-chip">★ ${qualityScore}/10</span>` : '';
-      footer.innerHTML = badge + qbadge;
-    }
-    bubble.removeAttribute('id');
+  // Use direct references (not getElementById) to target the correct bubble
+  const content = currentStreamEl;
+  const footer  = _streamFooterEl;
+
+  if (content) {
+    content.classList.remove('streaming');
+    content.innerHTML = renderMarkdown(response);
+    content.removeAttribute('data-stream-content');
   }
+  if (footer) {
+    const badge = (realTools||[]).length > 0
+      ? `<span class="tool-chip">✅ ${realTools.join(', ')}</span>` : '';
+    const qbadge = qualityScore !== null && qualityScore !== undefined
+      ? `<span class="quality-chip">★ ${qualityScore}/10</span>` : '';
+    footer.innerHTML = badge + qbadge;
+    footer.removeAttribute('data-stream-footer');
+  }
+  const bubble = _streamBubbleEl;
+  _streamBubbleEl  = null;
+  _streamFooterEl  = null;
   currentStreamEl   = null;
   currentStreamText = '';
-  // Add rating + TTS + replay buttons to the last AI bubble
-  const allBubbles = document.querySelectorAll('#chatMessages .msg-ai');
-  const lastBubble = allBubbles[allBubbles.length - 1];
+  // Add rating + TTS + replay buttons to THIS bubble (use direct ref, not querySelector)
+  const lastBubble = bubble;
   if (lastBubble) {
     addRatingButtons(lastBubble, null);
     addTTSButton(lastBubble);
