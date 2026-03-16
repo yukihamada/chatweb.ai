@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax check
+        run: python -m py_compile main.py
+
+      - name: Check for secrets in code
+        run: |
+          if grep -rE '(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36})' \
+            --include='*.py' --include='*.html' --include='*.js' .; then
+            echo "::error::Potential secrets found in code"
+            exit 1
+          fi
+
+  staging:
+    name: Deploy to Staging
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to staging
+        run: flyctl deploy --config fly.staging.toml --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Health check
+        run: |
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb-ai-staging.fly.dev/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Staging health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "Staging healthy (HTTP 200)"
+
+  production:
+    name: Deploy to Production
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to production
+        run: flyctl deploy -a chatweb-ai --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Health check
+        run: |
+          sleep 10
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb.ai/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Production health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "Production healthy (HTTP 200)"
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Deployed to production: chatweb.ai"
+          echo "Commit: ${{ github.sha }}"

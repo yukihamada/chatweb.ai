@@ -60,6 +60,8 @@
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font-family: inherit; }
 :root {
   --bg:      #09090b;
   --surface: #111113;
@@ -520,8 +522,11 @@ body {
   border-radius: 20px; border: 1px solid var(--border);
   background: var(--card); color: var(--muted);
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  min-height: 36px; /* touch target */
+  font-family: inherit;
 }
 .chip:hover { border-color: var(--border2); color: var(--text); background: rgba(255,255,255,0.06); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .input-row {
   display: flex; gap: 8px; align-items: flex-end;
@@ -582,7 +587,7 @@ body {
 
 /* Mic button */
 #mic-btn {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   border-radius: 11px;
   border: 1px solid var(--border);
   background: var(--card); color: var(--muted);
@@ -1189,10 +1194,11 @@ body {
         </div>
         <textarea id="chatInput" rows="1"
           placeholder="メッセージを入力…  Shift+Enter で改行"
+          aria-label="メッセージ入力"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"></textarea>
-        <button id="mic-btn" title="音声入力" data-i18n-title="voice_input" onclick="toggleVoice()">🎤</button>
-        <button id="sendBtn" onclick="sendMessage()">
+        <button id="mic-btn" title="音声入力" aria-label="音声入力" data-i18n-title="voice_input" onclick="toggleVoice()">🎤</button>
+        <button id="sendBtn" aria-label="送信" onclick="sendMessage()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
       </div>
@@ -1201,6 +1207,23 @@ body {
 </div>
 
 <script>
+// ── Client-side error reporting ───────────────────────────────────────────────
+function _reportError(category, message, context) {
+  try {
+    fetch('/feedback/log', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({category, message: String(message).slice(0, 500), context, session_id: typeof SESSION_ID !== 'undefined' ? SESSION_ID : ''}),
+    }).catch(() => {});
+  } catch(_) {}
+}
+window.onerror = function(msg, src, line, col) {
+  _reportError('js_error', msg, {src, line, col});
+};
+window.addEventListener('unhandledrejection', function(e) {
+  _reportError('js_promise', String(e.reason).slice(0, 300), {});
+});
+
 // ── State ─────────────────────────────────────────────────────────────────────
 const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2,9);
 let agents = {};
@@ -1725,7 +1748,7 @@ function appendHITLCard(taskId, agentName, draft, agentId) {
   div.className = 'hitl-card';
   div.innerHTML = `
     <div class="hitl-header">⚠️ 承認が必要 — ${agentName}</div>
-    <div class="hitl-sub">以下の内容を実行します。確認してください。</div>
+    <div class="hitl-sub">以下の内容を実行します。よろしいですか？</div>
     <div class="hitl-draft">${renderMarkdown(draft)}</div>
     <div class="hitl-actions">
       <button class="hitl-btn hitl-btn-approve" onclick="hitlDecide('${taskId}',true)">✅ 承認して実行</button>
@@ -1917,7 +1940,7 @@ function initQuickChips() {
   // Shuffle and pick 20
   const shuffled = [...ALL_CHIPS].sort(() => Math.random() - 0.5);
   chips.innerHTML = shuffled.slice(0, 20).map(c =>
-    `<span class="chip" onclick="useChip(this)">${c}</span>`
+    `<button class="chip" onclick="useChip(this)" type="button">${c}</button>`
   ).join('');
 }
 
@@ -1974,7 +1997,7 @@ async function sendMessage() {
       finalizeStreamBubble(currentStreamText, [], null);
     } else {
       removeEl(typingId);
-      appendAiMsg('⚠️ エラー: ' + e.message);
+      appendAiMsg('問題が発生しました: ' + e.message);
     }
   } finally {
     setStatus('');
@@ -2453,7 +2476,7 @@ async function saveAgentEdit() {
     agents[id] = { ...agents[id], name, description: desc, system };
     closeAgentDetail();
     loadAgents();
-  } catch(e) { alert('保存に失敗しました: ' + e); }
+  } catch(e) { alert('保存できませんでした: ' + e); }
 }
 function getAgentBg(id) {
   const c = agents[id]?.color || '#8b5cf6';
@@ -2533,7 +2556,7 @@ async function loadMetrics() {
         ${distHtml}
       </div>`;
   } catch(e) {
-    el.innerHTML = '<div class="mem-empty">読み込みエラー</div>';
+    el.innerHTML = '<div class="mem-empty">読み込めませんでした</div>';
   }
 }
 
@@ -2563,7 +2586,7 @@ function initVoice() {
 
 function toggleVoice() {
   if (!_recognition) { initVoice(); }
-  if (!_recognition) { showToast('音声入力は非対応ブラウザです'); return; }
+  if (!_recognition) { showToast('このブラウザは音声入力に対応していません'); return; }
   _isListening ? stopVoice() : startVoice();
 }
 
@@ -2665,7 +2688,7 @@ const _sessionId = SESSION_ID;
 
 async function exportConversation(fmt = 'markdown') {
   const sid = _sessionId;
-  if (!sid) { showToast('エクスポートするセッションがありません'); return; }
+  if (!sid) { showToast('エクスポートする会話がまだありません'); return; }
   showToast('エクスポート中...');
   const url = `/export/${sid}?fmt=${fmt}`;
   const a = document.createElement('a');
@@ -2777,7 +2800,7 @@ async function handleGoogleLogin(response) {
       document.getElementById('login-btn').style.display = 'none';
       closeLoginModal?.();
     }
-  } catch(e) { showToast('ログインに失敗しました'); }
+  } catch(e) { showToast('ログインできませんでした。もう一度お試しください'); }
 }
 
 // ── Feature 4: Message Rating ──────────────────────────────────────────────
@@ -3260,7 +3283,7 @@ async function sendMagicLink() {
       msg.style.color = 'var(--green)';
     }
   } catch(e) {
-    msg.textContent = 'エラーが発生しました';
+    msg.textContent = '問題が発生しました。もう一度お試しください';
     msg.style.color = 'var(--red)';
   } finally { btn.disabled = false; }
 }
@@ -3272,20 +3295,29 @@ async function showLinkCode() {
     const code = d.code;
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:flex;align-items:center;justify-content:center';
-    const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('/link ' + code)}`;
-    const tgQr   = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent('/link ' + code)}`;
-    modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:400px;max-width:94vw;text-align:center">
+    const lineBotId = d.line_bot_basic_id || '';
+    const tgBotUser = d.telegram_bot_username || 'chatweb_aichat_bot';
+    const linkCmd = `/link ${code}`;
+    // LINE: if we have the bot basic ID, generate deep link that opens chat with pre-filled message
+    const lineUrl = lineBotId
+      ? `https://line.me/R/oaMessage/${lineBotId}/?${encodeURIComponent(linkCmd)}`
+      : `https://line.me/`;
+    // Telegram: t.me/botname?start=linkCODE (start param passed as /start linkCODE)
+    const tgUrl = `https://t.me/${tgBotUser}?start=link${code}`;
+    const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(lineUrl)}`;
+    const tgQr   = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(tgUrl)}`;
+    modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:420px;max-width:94vw;text-align:center">
       <h3 style="margin-bottom:6px">🔗 LINE / Telegram 連携</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">以下のコードを入力またはQRを読み取ってください（10分間有効）</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">QRを読み取るか、ボットにコマンドを送ってください（10分間有効）</p>
       <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:10px 0;border-radius:10px">${code}</div>
       <div style="display:flex;gap:16px;justify-content:center;margin:16px 0">
         <div>
-          <img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="LINE QR">
+          <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="LINE QR"></a>
           <div style="font-size:11px;color:var(--muted);margin-top:4px">📱 LINE</div>
           <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
         </div>
         <div>
-          <img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="Telegram QR">
+          <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="Telegram QR"></a>
           <div style="font-size:11px;color:var(--muted);margin-top:4px">✈️ Telegram</div>
           <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
         </div>
@@ -3298,7 +3330,7 @@ async function showLinkCode() {
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   } catch(e) {
-    alert('ログインが必要です');
+    alert('この機能を使うにはログインが必要です');
   }
 }
 
@@ -3480,7 +3512,7 @@ function closeImageGenModal() {
 async function generateImage() {
   const prompt = document.getElementById('ig-prompt').value.trim();
   const size = document.getElementById('ig-size').value;
-  if (!prompt) { alert('プロンプトを入力してください'); return; }
+  if (!prompt) { alert('プロンプトを入力してから実行できます'); return; }
   const btn = document.getElementById('ig-gen-btn');
   btn.disabled = true; btn.textContent = '生成中…';
   const res = document.getElementById('ig-result');
@@ -3507,10 +3539,10 @@ async function generateImage() {
       getMessages().appendChild(wrap(imgEl));
       scrollToBottom();
     } else {
-      res.innerHTML = `<p style="color:var(--red)">エラー: ${escHtml(d.detail || '生成失敗')}</p>`;
+      res.innerHTML = `<p style="color:var(--red)">生成できませんでした: ${escHtml(d.detail || '再度お試しください')}</p>`;
     }
   } catch(e) {
-    res.innerHTML = `<p style="color:var(--red)">エラー: ${escHtml(e.message)}</p>`;
+    res.innerHTML = `<p style="color:var(--red)">問題が発生しました: ${escHtml(e.message)}</p>`;
   } finally {
     btn.disabled = false; btn.textContent = '生成';
   }
@@ -3600,7 +3632,7 @@ async function loadFiles() {
       </div>`;
     }).join('');
   } catch(e) {
-    list.innerHTML = `<div style="color:var(--red);padding:12px">エラー: ${escHtml(e.message)}</div>`;
+    list.innerHTML = `<div style="color:var(--red);padding:12px">読み込めませんでした: ${escHtml(e.message)}</div>`;
   }
 }
 async function deleteFile(id) {
@@ -3608,7 +3640,7 @@ async function deleteFile(id) {
   try {
     await fetch(`/files/${id}`, { method: 'DELETE' });
     loadFiles();
-  } catch(e) { alert('削除エラー: ' + e.message); }
+  } catch(e) { alert('削除できませんでした: ' + e.message); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3643,14 +3675,14 @@ async function loadWebhooks() {
         </div>
       </div>`).join('');
   } catch(e) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px">取得エラー</div>';
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px">読み込めませんでした</div>';
   }
 }
 async function createWebhook() {
   const url = document.getElementById('wh-url').value.trim();
   const secret = document.getElementById('wh-secret').value.trim();
   const events = ['task_complete','agent_error'].filter(ev => document.getElementById('wh-ev-'+ev)?.checked);
-  if (!url) { alert('URLを入力してください'); return; }
+  if (!url) { alert('URLを入力してから実行できます'); return; }
   try {
     const r = await fetch('/webhooks/outbound', {
       method: 'POST',
@@ -3663,7 +3695,7 @@ async function createWebhook() {
       loadWebhooks();
     } else {
       const d = await r.json();
-      alert('エラー: ' + (d.detail || '作成失敗'));
+      alert('作成できませんでした: ' + (d.detail || 'もう一度お試しください'));
     }
   } catch(e) { alert('エラー: ' + e.message); }
 }
@@ -3854,7 +3886,7 @@ async function loadAgentVersions(agentId) {
         <button onclick="restoreAgentVersion('${agentId}','${v.id}')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text);cursor:pointer;font-size:11px">復元</button>
       </div>`).join('');
   } catch(e) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px">取得エラー</div>';
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px">読み込めませんでした</div>';
   }
 }
 async function saveAgentVersion() {
@@ -4046,7 +4078,7 @@ async function createCustomTool() {
       document.getElementById('ct-code').value = '';
       document.getElementById('ct-schema').value = '';
       loadCustomTools();
-    } else { const d = await r.json(); alert('エラー: ' + (d.detail || '作成失敗')); }
+    } else { const d = await r.json(); alert('作成できませんでした: ' + (d.detail || 'もう一度お試しください')); }
   } catch(e) { alert('エラー: ' + e.message); }
 }
 async function deleteCustomTool(id) {
@@ -4609,7 +4641,7 @@ function applyLanguage(code) {
   const chips = document.getElementById('quickChips');
   if (chips && s.quick_chips) {
     chips.innerHTML = s.quick_chips.map(c =>
-      `<span class="chip" onclick="useChip(this)">${c}</span>`
+      `<button class="chip" onclick="useChip(this)" type="button">${c}</button>`
     ).join('');
   }
 
@@ -5512,7 +5544,7 @@ async function createTeam() {
       loadTeams();
     } else {
       const d = await r.json();
-      alert('エラー: ' + (d.detail || '作成失敗'));
+      alert('作成できませんでした: ' + (d.detail || 'もう一度お試しください'));
     }
   } catch(e) { alert('エラー: ' + e.message); }
 }
@@ -6404,7 +6436,7 @@ async function deleteSite(subdomain) {
     if (!r.ok) throw new Error(await r.text());
     await loadSitesList();
   } catch (e) {
-    alert('削除エラー: ' + e.message);
+    alert('削除できませんでした: ' + e.message);
   }
 }
 </script>

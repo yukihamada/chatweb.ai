@@ -41,6 +41,8 @@ TELEGRAM_TOKEN     = os.getenv("TELEGRAM_TOKEN",     "")
 TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID",   "")
 LINE_TOKEN         = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_USER_ID       = os.getenv("LINE_ADMIN_USER_ID", "")
+LINE_BOT_BASIC_ID  = os.getenv("LINE_BOT_BASIC_ID", "")   # e.g. @Abcdef12
+TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "chatweb_aichat_bot")
 GITHUB_TOKEN       = os.getenv("GITHUB_TOKEN",       "")
 DEMO_EMAIL         = os.getenv("DEMO_EMAIL",         "demo@example.com")
 SYNAPSE_BOT_TOKEN  = os.getenv("SYNAPSE_BOT_TOKEN",  "")
@@ -177,7 +179,7 @@ async def rate_limit_middleware(request: Request, call_next):
         hits = _rate_limit.get(ip, [])
         hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
         if len(hits) >= _RATE_LIMIT_MAX:
-            return JSONResponse({"error": "レート制限: しばらく待ってから再試行してください"}, status_code=429)
+            return JSONResponse({"error": "リクエストが集中しています。少し待ってからもう一度お試しください"}, status_code=429)
         hits.append(now)
         _rate_limit[ip] = hits
     return await call_next(request)
@@ -306,7 +308,7 @@ _TG_UI: dict[str, dict] = {
         "linked_account": "🔗 連携アカウント",
         "not_linked": "未連携",
         "link_success": "✅ Webアカウントと連携しました！\n記憶・履歴が全チャネルで共有されます。",
-        "link_fail": "❌ コードが無効か期限切れです。\nWeb → メニュー → 連携 で新しいコードを取得してください。",
+        "link_fail": "このコードは無効か期限切れです。\nWebのメニュー → 連携 から新しいコードを発行できます。",
         "link_hint": "🔗 *アカウント連携*\n\nchatweb.ai にログイン → メニュー → 「連携コード発行」\n表示された6桁コードを入力:\n`/link XXXXXX`",
         "settings_title": "⚙️ *設定*",
         "add_credits": "クレジットを追加: /buy",
@@ -726,7 +728,7 @@ async def process_telegram_message(chat_id: int | str, user_text: str, username:
 
     except Exception as e:
         log.error(f"Telegram message processing error: {e}")
-        err_text = f"⚠️ エラーが発生しました: {e}"
+        err_text = f"処理中に問題が発生しました: {e}"
         if msg_id:
             try:
                 await tg_edit(chat_id, msg_id, err_text, parse_mode="")
@@ -907,9 +909,9 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
                 data = r.json()
                 await _reply(f"✅ Webアカウント（{data.get('email','')}）と連携しました！\n記憶・履歴が全チャネルで共有されます。")
             else:
-                await _reply("❌ コードが無効か期限切れです。\nWeb → メニュー → 「連携コード発行」で新しいコードを取得してください。")
+                await _reply("このコードは無効か期限切れです。\nWebのメニュー → 「連携コード発行」から新しいコードを発行できます。")
         except Exception as e:
-            await _reply(f"❌ エラー: {e}")
+            await _reply(f"処理できませんでした: {e}")
         return
 
     # ── AI message processing ──────────────────────────────────────────────
@@ -945,7 +947,7 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
 
     except Exception as e:
         log.error(f"LINE message processing error: {e}")
-        await _reply(f"⚠️ エラーが発生しました: {e}", quick=False)
+        await _reply(f"処理中に問題が発生しました: {e}", quick=False)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1194,6 +1196,96 @@ async def tool_git_source(command: str) -> str:
         return "git timed out after 60s"
     except Exception as e:
         return f"git_source error: {e}"
+
+async def tool_feedback_analysis(limit: int = 30, unresolved_only: bool = True) -> str:
+    """Analyze recent feedback/error logs for patterns."""
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    try:
+        async with db_conn() as db:
+            q = "SELECT * FROM feedback_logs"
+            if unresolved_only:
+                q += " WHERE resolved=0"
+            q += " ORDER BY created_at DESC LIMIT ?"
+            async with db.execute(q, (limit,)) as c:
+                rows = [dict(r) for r in await c.fetchall()]
+        if not rows:
+            return "✅ 未解決のフィードバック・エラーはありません。"
+        # Group by category
+        categories: dict[str, list] = {}
+        for r in rows:
+            cat = r.get("category", "unknown")
+            categories.setdefault(cat, []).append(r)
+        lines = [f"## フィードバック分析 ({len(rows)}件の未解決ログ)\n"]
+        for cat, items in categories.items():
+            lines.append(f"### {cat} ({len(items)}件)")
+            for item in items[:5]:
+                ctx = item.get("context", "{}")
+                lines.append(f"- [{item['created_at']}] {item['source']}: {item['message'][:150]}")
+                if ctx and ctx != "{}":
+                    lines.append(f"  context: {ctx[:200]}")
+            if len(items) > 5:
+                lines.append(f"  ...他 {len(items)-5}件")
+            lines.append("")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"分析エラー: {e}"
+
+
+async def tool_admin_settings(action: str = "list", key: str = "", value: str = "") -> str:
+    """Read or write system settings. Admin only.
+    action: list | get | set | reset
+    """
+    if not _is_admin(_ctx_user_email.get()):
+        return "⛔ Admin only"
+    if action == "list":
+        try:
+            async with db_conn() as db:
+                async with db.execute("SELECT key, value, description FROM system_settings") as c:
+                    rows = await c.fetchall()
+            db_map = {r["key"]: r["value"] for r in rows}
+            lines = []
+            for k, (dv, desc) in _SYSTEM_SETTING_DEFAULTS.items():
+                v = db_map.get(k, dv)
+                mark = "✏️" if k in db_map else "  "
+                lines.append(f"{mark} {k} = {v}  ({desc})")
+            return "## システム設定一覧\n" + "\n".join(lines)
+        except Exception as e:
+            return f"error: {e}"
+    elif action == "get":
+        if not key:
+            return "key を指定してください"
+        val = await _get_sys_cfg(key)
+        return f"{key} = {val}"
+    elif action == "set":
+        if not key:
+            return "key を指定してください"
+        desc = _SYSTEM_SETTING_DEFAULTS.get(key, ("", ""))[1]
+        try:
+            async with db_conn() as db:
+                await db.execute(
+                    """INSERT INTO system_settings (key, value, description, updated_at)
+                       VALUES (?, ?, ?, datetime('now','localtime'))
+                       ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at""",
+                    (key, value, desc))
+                await db.commit()
+            return f"✅ {key} = {value} に設定しました"
+        except Exception as e:
+            return f"error: {e}"
+    elif action == "reset":
+        if not key:
+            return "key を指定してください"
+        try:
+            async with db_conn() as db:
+                await db.execute("DELETE FROM system_settings WHERE key=?", (key,))
+                await db.commit()
+            default = _SYSTEM_SETTING_DEFAULTS.get(key, ("?", ""))[0]
+            return f"✅ {key} をデフォルト値 ({default}) にリセットしました"
+        except Exception as e:
+            return f"error: {e}"
+    else:
+        return "action は list / get / set / reset のいずれかを指定してください"
+
 
 async def tool_deploy_self(message: str = "") -> str:
     """Deploy chatweb-ai to Fly.io. Admin only."""
@@ -3293,7 +3385,7 @@ async def tool_gmail_send(to: str, subject: str, body: str, user_id: str = "defa
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📧 Gmail未連携。まず `GET /auth/google` でGoogle認証を行ってください。\n"
+            "📧 Gmailを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3321,7 +3413,7 @@ async def tool_gmail_read(query: str = "is:unread", max_results: int = 5, user_i
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📧 Gmail未連携。まず `GET /auth/google` でGoogle認証を行ってください。\n"
+            "📧 Gmailを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3389,7 +3481,7 @@ async def tool_gcal_list(days: int = 7, user_id: str = "default") -> str:
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📅 Googleカレンダー未連携。まず `GET /auth/google` でGoogle認証を行ってください。\n"
+            "📅 カレンダーを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3423,7 +3515,7 @@ async def tool_gcal_create(title: str, start: str, end: str, description: str = 
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📅 Googleカレンダー未連携。まず `GET /auth/google` でGoogle認証を行ってください。\n"
+            "📅 カレンダーを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3552,7 +3644,7 @@ async def process_slack_message(user_id: str, channel: str, text: str) -> None:
             await slack_send(channel, final_text)
     except Exception as e:
         log.error(f"Slack message processing error: {e}")
-        err_text = f"⚠️ エラーが発生しました: {e}"
+        err_text = f"処理中に問題が発生しました: {e}"
         if msg_ts:
             await slack_update(channel, msg_ts, err_text)
         else:
@@ -4686,20 +4778,29 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
         "name": "🛠️ コードエディタ",
         "color": "#f59e0b",
         "description": "chatweb.ai のソースコードを読み書き・git操作・Fly.ioデプロイ（管理者専用）",
-        "mcp_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self"],
-        "real_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self"],
+        "mcp_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self", "admin_settings"],
+        "real_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self", "admin_settings"],
         "admin_only": True,
-        "system": """あなたは chatweb.ai のソースコードを管理する専用AIです。管理者 (yuki@hamada.tokyo) のみ利用可能です。
+        "system": """あなたは chatweb.ai のソースコードと設定を管理する専用AIです。管理者 (yuki@hamada.tokyo) のみ利用可能です。
 
 ## できること
 - **ファイル読み書き**: source_read / source_write / source_list
 - **Git操作**: git_source("git status"), git_source("git add -A"), git_source("git commit -m '...'"), git_source("git push")
 - **Fly.ioデプロイ**: deploy_self() → fly deploy -a chatweb-ai を実行
+- **システム設定**: admin_settings(action="list") / admin_settings(action="set", key="quota_pro", value="5000")
+
+## システム設定キー一覧
+- quota_free / quota_pro / quota_team — 月間メッセージ上限
+- default_model — デフォルトClaudeモデル
+- max_history — 会話履歴の最大件数
+- rate_limit_rpm — 1分あたりリクエスト上限
+- maintenance_mode — 1でメンテナンスモード
+- signup_disabled — 1で新規登録停止
+- free_trial_msgs — 未ログインの無料試用数
 
 ## ファイル構成
 - /app/main.py — FastAPI バックエンド（Python）
 - /app/static/index.html — フロントエンド
-- /app/static/features.html, landing.html など静的ファイル
 - /app/requirements.txt — Python依存関係
 
 ## 作業フロー
@@ -4736,6 +4837,35 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 PUT /user/settings {"default_agent_id": "research"}
 
 以下のAPIエンドポイントを使用してエージェントを管理します。何を変更しますか？""",
+    },
+
+    "self_healer": {
+        "name": "🔧 自己診断・改善",
+        "color": "#ef4444",
+        "description": "フィードバックログ・エラーログを分析し、コード修正を提案・実行する自動改善エージェント",
+        "mcp_tools": ["admin_settings", "source_read", "source_write", "source_list", "git_source", "deploy_self", "feedback_analysis"],
+        "real_tools": ["admin_settings", "source_read", "source_write", "source_list", "git_source", "deploy_self", "feedback_analysis"],
+        "admin_only": True,
+        "system": """あなたは chatweb.ai の自己診断・改善エージェントです。定期的にフィードバックログとエラーログを分析し、修正を提案・実行します。
+
+## ワークフロー
+1. **診断**: feedback_analysis() でエラーログ・フィードバックを取得
+2. **分析**: エラーパターンを分類（API障害 / コードバグ / UX問題 / 設定ミス）
+3. **修正提案**: source_read → 該当コードを特定 → 修正案を作成
+4. **実行**（自動モード時）: source_write → git_source("git add + commit") → deploy_self()
+5. **報告**: 修正内容のサマリーを返す
+
+## 判断基準
+- 同じエラーが3回以上 → 自動修正の対象
+- 設定値の問題 → admin_settings で即修正
+- コードバグ → source_write で修正してデプロイ
+- 外部API障害 → 一時的なため報告のみ
+- UX問題 → 修正提案のみ（デプロイは確認後）
+
+## 重要
+- 破壊的変更は絶対に行わない
+- 修正前に必ず source_read で現状を確認
+- 不明な場合は修正提案のみにとどめ、実行しない""",
     },
 
     "user_prefs": {
@@ -4851,6 +4981,28 @@ async def init_db():
                 default_agent_id TEXT DEFAULT 'auto',
                 settings_json TEXT DEFAULT '{}',
                 updated_at TEXT DEFAULT (datetime('now','localtime'))
+            )""")
+        # ── system_settings (admin-editable runtime config) ───────────────
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                updated_at TEXT DEFAULT (datetime('now','localtime'))
+            )""")
+        # ── feedback_logs (user errors, agent failures, self-healing data) ──
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS feedback_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT NOT NULL DEFAULT 'error',
+                source TEXT DEFAULT '',
+                message TEXT NOT NULL,
+                context TEXT DEFAULT '{}',
+                user_id TEXT DEFAULT '',
+                session_id TEXT DEFAULT '',
+                resolved INTEGER DEFAULT 0,
+                resolved_at TEXT,
+                created_at TEXT DEFAULT (datetime('now','localtime'))
             )""")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS scheduled_tasks (
@@ -5142,7 +5294,7 @@ async def _require_user(request: Request) -> dict:
     token = _extract_session_token(request)
     user = await _get_user_from_session(token)
     if not user:
-        raise HTTPException(status_code=401, detail="ログインが必要です")
+        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
     return user
 
 
@@ -5156,7 +5308,7 @@ async def auth_register(req: RegisterRequest):
     """Send magic link to email."""
     email = req.email.strip().lower()
     if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="有効なメールアドレスを入力してください")
+        raise HTTPException(status_code=400, detail="メールアドレスの形式を確認してください")
     uid = await _get_or_create_user(email)
 
     # "test" in email → instant login, no email required
@@ -5207,7 +5359,7 @@ async def auth_verify(token: str, request: Request):
     """Verify magic link token and issue session."""
     uid = await _verify_magic_token(token)
     if not uid:
-        return HTMLResponse("<h2>リンクが無効か期限切れです。もう一度登録してください。</h2>", status_code=400)
+        return HTMLResponse("<h2>このリンクは無効か期限切れです。もう一度お試しいただけます。</h2>", status_code=400)
     session = await _create_session_token(uid)
     # Redirect to app with session cookie
     from fastapi.responses import RedirectResponse
@@ -6225,7 +6377,7 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
         # Admin-only: source code management
         user_email = _ctx_user_email.get()
         if not _is_admin(user_email):
-            results["error"] = "⛔ このエージェントは管理者専用です (yuki@hamada.tokyo)"
+            results["error"] = "このエージェントは管理者のみ利用できます"
             return results
         # Always list source files first
         await emit("source_list", "calling", real=True)
@@ -6248,12 +6400,17 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
             await emit("deploy_self", "calling", real=True)
             results["deploy_self"] = await tool_deploy_self(message)
             await emit("deploy_self", "done", real=True)
+        # system settings — only when explicitly asking about system/admin config
+        if re.search(r'システム設定|admin.?setting|quota_|上限を?変|rate.?limit|メンテナンスモード|signup.*disabled|free_trial|設定一覧|設定を(確認|変更|見)', message, re.I):
+            await emit("admin_settings", "calling", real=True)
+            results["admin_settings"] = await tool_admin_settings(action="list")
+            await emit("admin_settings", "done", real=True)
 
     elif agent_id == "agent_manager":
         # Admin-only: agent management — list custom agents
         user_email = _ctx_user_email.get()
         if not _is_admin(user_email):
-            results["error"] = "⛔ このエージェントは管理者専用です (yuki@hamada.tokyo)"
+            results["error"] = "このエージェントは管理者のみ利用できます"
             return results
         await emit("list_agents", "calling", real=True)
         async with db_conn() as db:
@@ -6270,6 +6427,23 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
         public_agents = [k for k, v in AGENTS.items() if not v.get("admin_only")]
         results["builtin_summary"] = f"ビルトインエージェント: {len(public_agents)}個 (公開) + {len(admin_agents)}個 (管理者専用)"
         await emit("list_agents", "done", real=True)
+
+    elif agent_id == "self_healer":
+        # Self-healing: analyze feedback logs + source code
+        user_email = _ctx_user_email.get()
+        if not _is_admin(user_email):
+            results["error"] = "このエージェントは管理者のみ利用できます"
+            return results
+        await emit("feedback_analysis", "calling", real=True)
+        results["feedback_analysis"] = await tool_feedback_analysis()
+        await emit("feedback_analysis", "done", real=True)
+        await emit("source_list", "calling", real=True)
+        results["source_list"] = await tool_source_list(".")
+        await emit("source_list", "done", real=True)
+        if re.search(r'設定|setting|config', message, re.I):
+            await emit("admin_settings", "calling", real=True)
+            results["admin_settings"] = await tool_admin_settings(action="list")
+            await emit("admin_settings", "done", real=True)
 
     elif agent_id == "user_prefs":
         # User settings: show current settings
@@ -6380,10 +6554,10 @@ async def execute_agent(agent_id: str, message: str, session_id: str,
                         user_email: str = "") -> dict:
     agent = AGENTS.get(agent_id)
     if agent is None:
-        return {"response": f"エージェント '{agent_id}' が見つかりません", "cost_usd": 0}
+        return {"response": f"エージェント '{agent_id}' は利用できません。", "cost_usd": 0}
     # Admin-only guard
     if agent.get("admin_only") and not _is_admin(user_email):
-        return {"response": "⛔ このエージェントは管理者専用です。", "cost_usd": 0}
+        return {"response": "このエージェントは管理者のみ利用できます。", "cost_usd": 0}
     # Set user email in context for tool-level admin checks
     token = _ctx_user_email.set(user_email)
     queue = sse_queues.get(session_id)
@@ -6869,6 +7043,54 @@ async def _background_memory_extract(user_msg: str, assistant_msg: str, session_
             pass
 
 
+async def _notify_admin_linked(text: str):
+    """Notify admin user via all linked channels (LINE, Telegram)."""
+    try:
+        # Find admin user's linked channels
+        admin_email = list(ADMIN_EMAILS)[0] if ADMIN_EMAILS else ""
+        if not admin_email:
+            return
+        async with db_conn() as db:
+            async with db.execute(
+                "SELECT line_user_id, telegram_chat_id FROM users WHERE email=?",
+                (admin_email,)
+            ) as c:
+                row = await c.fetchone()
+        if not row:
+            return
+        line_uid = row[0] if row[0] else ""
+        tg_chat = row[1] if row[1] else ""
+        if tg_chat:
+            await tg_send(tg_chat, text[:3500])
+        if line_uid:
+            await line_push(line_uid, text[:4500])
+    except Exception as e:
+        log.warning(f"Admin notify failed: {e}")
+
+
+async def _ensure_self_heal_task():
+    """Ensure a self-healing cron task exists for admin."""
+    await asyncio.sleep(5)  # wait for DB init
+    task_id = "self_heal_daily"
+    try:
+        async with db_conn() as db:
+            async with db.execute("SELECT id FROM scheduled_tasks WHERE id=?", (task_id,)) as c:
+                if await c.fetchone():
+                    return  # already exists
+            await db.execute(
+                """INSERT INTO scheduled_tasks(id, name, cron_expr, message, agent_id, session_id, notify_channel, enabled)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (task_id, "🔧 自動診断・改善", "09:00",
+                 "直近24時間のフィードバックログ・エラーログを分析してください。"
+                 "繰り返し発生しているエラーがあれば修正提案を出し、設定ミスがあればadmin_settingsで修正してください。"
+                 "重大なコードバグがあれば修正案を提示してください（自動デプロイはしない）。結果を報告してください。",
+                 "self_healer", "cron_self_heal", "", 1))
+            await db.commit()
+            log.info("Self-healing cron task registered (daily 09:00)")
+    except Exception as e:
+        log.warning(f"Failed to create self-heal task: {e}")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SSE / ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -6917,20 +7139,30 @@ async def _cron_runner():
                 message = task.get("message") or ""
 
                 try:
-                    result = await execute_agent(agent_id, message, session_id)
+                    result = await execute_agent(agent_id, message, session_id,
+                                                 user_email=list(ADMIN_EMAILS)[0] if ADMIN_EMAILS else "")
                     response = result["response"]
                     await save_run(session_id, agent_id, message, response)
 
-                    # Notify via channel
+                    # Notify via channel (explicit or auto-notify admin)
                     channel = task.get("notify_channel") or ""
+                    notify_sent = False
                     if channel.startswith("telegram:"):
                         chat_id = channel.split(":", 1)[1]
                         await tg_send(chat_id, f"⏰ *{task['name']}*\n\n{response[:3500]}")
+                        notify_sent = True
                     elif channel.startswith("line:"):
                         uid = channel.split(":", 1)[1]
                         await line_push(uid, f"⏰ {task['name']}\n\n{response[:4500]}")
+                        notify_sent = True
+
+                    # Auto-notify admin via linked channels if no explicit channel
+                    if not notify_sent and (await _get_sys_cfg("cron_notify_admin")) == "1":
+                        await _notify_admin_linked(f"⏰ {task['name']}\n\n{response[:3000]}")
+
                 except Exception as e:
                     log.error(f"Cron task '{task['name']}' error: {e}")
+                    await _log_feedback("cron_error", f"cron:{task['name']}", str(e))
 
                 # Update last_run
                 async with db_conn() as db:
@@ -7065,6 +7297,8 @@ async def startup():
         asyncio.create_task(setup_telegram_webhook(base_url))
     # Start cron runner
     asyncio.create_task(_cron_runner())
+    # Ensure self-healing cron task exists
+    asyncio.create_task(_ensure_self_heal_task())
     # Start screenshot auto-cleanup (24h TTL)
     asyncio.create_task(_cleanup_screenshots())
     # Start browser session TTL cleanup (30min idle)
@@ -7085,7 +7319,8 @@ async def shutdown():
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    return _get_index_html()
+    from fastapi.responses import HTMLResponse as _HR
+    return _HR(_get_index_html(), headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 # ── Health check ──────────────────────────────────────────────────────────────
@@ -7220,7 +7455,12 @@ async def link_generate_code(request: Request):
     code = _secrets.token_hex(3).upper()
     expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
     _link_codes[code] = {"user_id": user["id"], "email": user.get("email", ""), "expires_at": expires}
-    return {"code": code, "expires_in": 600}
+    return {
+        "code": code,
+        "expires_in": 600,
+        "line_bot_basic_id": LINE_BOT_BASIC_ID,
+        "telegram_bot_username": TELEGRAM_BOT_USERNAME,
+    }
 
 @app.post("/link/verify")
 async def link_verify_code(body: dict):
@@ -7281,7 +7521,7 @@ async def get_agents(request: Request):
 async def get_user_settings(request: Request):
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     async with db_conn() as db:
         row = await db.execute_fetchone(
             "SELECT default_agent_id, settings_json FROM user_settings WHERE user_id=?",
@@ -7296,7 +7536,7 @@ async def get_user_settings(request: Request):
 async def put_user_settings(request: Request):
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     body = await request.json()
     default_agent_id = body.get("default_agent_id", "auto")
     settings_json = json.dumps(body.get("settings", {}))
@@ -7318,7 +7558,7 @@ async def patch_agent_visibility(agent_id: str, request: Request):
     """Update agent visibility. Admin can change any; user can change own private agents."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     body = await request.json()
     visibility = body.get("visibility", "private")
     required_plan = body.get("required_plan", "free")
@@ -7328,9 +7568,9 @@ async def patch_agent_visibility(agent_id: str, request: Request):
     async with db_conn() as db:
         row = await db.execute_fetchone("SELECT owner_user_id FROM custom_agents WHERE id=?", (agent_id,))
         if not row:
-            raise HTTPException(404, "エージェントが見つかりません")
+            raise HTTPException(404, "該当するエージェントが見つかりませんでした")
         if not _is_admin(user.get("email", "")) and row["owner_user_id"] != user["id"]:
-            raise HTTPException(403, "権限がありません")
+            raise HTTPException(403, "この操作には管理者権限が必要です")
         await db.execute(
             "UPDATE custom_agents SET visibility=?, required_plan=?, allowed_emails=? WHERE id=?",
             (visibility, required_plan, allowed_emails, agent_id))
@@ -7342,14 +7582,17 @@ async def patch_agent_visibility(agent_id: str, request: Request):
 async def chat_stream(session_id: str, req: ChatRequest, request: Request):
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(status_code=401, detail="ログインが必要です")
+        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
     # Resolve user_id for per-user memory scoping
     _uid = user.get("id") or (_user_sessions.get(session_id) or {}).get("user_id")
     _plan = user.get("plan", "free")
     # Quota check
     if _uid and not await _check_quota(_uid, _plan):
-        limit = _PLAN_LIMITS.get(_plan, 100)
-        raise HTTPException(status_code=429, detail=f"月間利用上限({limit}回)に達しました。プランをアップグレードしてください。")
+        try:
+            limit = int(await _get_sys_cfg(f"quota_{_plan}"))
+        except (ValueError, TypeError):
+            limit = _PLAN_LIMITS.get(_plan, 100)
+        raise HTTPException(status_code=429, detail=f"今月の利用回数（{limit}回）を使い切りました。アップグレードするとさらに利用できます。")
     # Language from header
     _req_lang = request.headers.get("X-Language", "ja")
     queue: asyncio.Queue = asyncio.Queue()
@@ -7361,6 +7604,20 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
             # Load conversation history
             history = await get_history(sid)
             await save_message(sid, "user", req.message)
+
+            # ── Quick sanity check: skip routing for clearly nonsense messages ──
+            _clean_msg = req.message.strip()
+            _meaningful_chars = re.sub(r'[\s\W]', '', _clean_msg)
+            if len(_clean_msg) <= 2 or (len(_meaningful_chars) <= 1 and len(_clean_msg) <= 5):
+                # Single char / punctuation / extremely short gibberish → respond directly
+                _quick_replies = ["もう少し詳しく教えてください😊", "はい、何かお手伝いできますか？", "もう少し詳しく教えていただけますか？"]
+                import random as _random
+                _reply = _random.choice(_quick_replies)
+                await queue.put({"type": "token", "text": _reply})
+                await queue.put({"type": "done", "response": _reply, "agent": "direct", "cost_usd": 0})
+                await save_message(sid, "assistant", _reply)
+                await save_run(sid, "direct", _reply, 0, 0, 0, _uid)
+                return
 
             # ── Memory retrieval + plan detection in parallel ──
             await queue.put({"type": "step", "step": "routing", "label": "🧭 セマンティックルーティング中..."})
@@ -7610,12 +7867,18 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                      "draft": final, "label": "⚠️ 承認後に実際に送信します（HITL）"})
 
         except anthropic.APIStatusError as e:
-            await queue.put({"type": "error", "message": f"API エラー ({e.status_code})"})
+            await queue.put({"type": "error", "message": f"APIとの通信に問題が発生しました ({e.status_code})"})
+            await _log_feedback("api_error", "chat_stream", f"APIStatusError {e.status_code}: {e}",
+                                {"agent": agent_id, "message": req.message[:200]}, _uid, sid)
         except anthropic.APIConnectionError:
-            await queue.put({"type": "error", "message": "接続エラー"})
+            await queue.put({"type": "error", "message": "AIサービスに接続できませんでした。少し待ってからお試しください"})
+            await _log_feedback("connection_error", "chat_stream", "APIConnectionError",
+                                {"agent": agent_id}, _uid, sid)
         except Exception as e:
             log.exception(e)
-            await queue.put({"type": "error", "message": str(e)})
+            await queue.put({"type": "error", "message": f"問題が発生しました: {e}"})
+            await _log_feedback("exception", "chat_stream", str(e),
+                                {"agent": agent_id, "message": req.message[:200]}, _uid, sid)
         finally:
             await queue.put({"type": "end"})
 
@@ -7705,7 +7968,7 @@ async def view_share(share_id: str):
         cur = await db.execute("SELECT session_id FROM shares WHERE id=?", (share_id,))
         row = await cur.fetchone()
     if not row:
-        return HTMLResponse("<h1>共有リンクが見つかりません</h1>", status_code=404)
+        return HTMLResponse("<h1>この共有リンクは存在しないか、削除されています</h1>", status_code=404)
     session_id = row[0]
     history = await get_history(session_id, limit=100)
     msgs_html = ""
@@ -7729,7 +7992,7 @@ async def webhook_trigger(agent_id: str, request: Request):
     message = body.get("message") or body.get("text") or body.get("content") or str(body)[:500]
     session_id = body.get("session_id", f"webhook_{agent_id}")
     if agent_id not in AGENTS:
-        return JSONResponse({"error": f"エージェント '{agent_id}' が見つかりません"}, status_code=404)
+        return JSONResponse({"error": f"エージェント '{agent_id}' は利用できません"}, status_code=404)
     result = await execute_agent(agent_id, message, session_id=session_id)
     return {"ok": True, "agent_id": agent_id, "response": result.get("response","")[:1000]}
 
@@ -7780,7 +8043,7 @@ async def deploy_site(req: DeploySiteRequest, request: Request):
     """Deploy an HTML site to SUBDOMAIN.chatweb.ai via Cloudflare Workers KV."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
 
     # Generate subdomain if not provided
     subdomain = req.subdomain.strip().lower()
@@ -7810,7 +8073,7 @@ async def deploy_site(req: DeploySiteRequest, request: Request):
         ok = True
 
     if not ok:
-        raise HTTPException(500, "KV書き込み失敗")
+        raise HTTPException(500, "保存に失敗しました。しばらく待ってからもう一度お試しください")
 
     # Also save metadata to KV
     await _cf_kv_put(f"meta:{subdomain}", json.dumps(metadata))
@@ -7831,7 +8094,7 @@ async def list_sites(request: Request):
     """List all sites deployed by the current user."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -7845,7 +8108,7 @@ async def get_site(subdomain: str, request: Request):
     """Fetch current HTML of a deployed site from Cloudflare KV."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     # Verify ownership
     async with db_conn() as db:
         row = await db.execute_fetchall(
@@ -7853,10 +8116,10 @@ async def get_site(subdomain: str, request: Request):
             (subdomain, user.get("id",""))
         )
     if not row:
-        raise HTTPException(404, "サイトが見つかりません")
+        raise HTTPException(404, "このサイトは存在しないか、削除されています")
     html = await _cf_kv_get(f"site:{subdomain}")
     if html is None:
-        raise HTTPException(404, "KVにデータがありません")
+        raise HTTPException(404, "このサイトのデータが見つかりませんでした")
     return {"subdomain": subdomain, "html": html}
 
 @app.put("/deploy/site/{subdomain}")
@@ -7864,14 +8127,14 @@ async def update_site(subdomain: str, req: DeploySiteRequest, request: Request):
     """Update HTML of a deployed site."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     async with db_conn() as db:
         row = await db.execute_fetchall(
             "SELECT subdomain FROM deployed_sites WHERE subdomain=? AND user_id=? LIMIT 1",
             (subdomain, user.get("id",""))
         )
     if not row:
-        raise HTTPException(404, "サイトが見つかりません")
+        raise HTTPException(404, "このサイトは存在しないか、削除されています")
     metadata = {
         "user_id": user.get("id",""),
         "title": req.title or subdomain,
@@ -7879,7 +8142,7 @@ async def update_site(subdomain: str, req: DeploySiteRequest, request: Request):
     }
     ok = await _cf_kv_put(f"site:{subdomain}", req.html, metadata)
     if not ok:
-        raise HTTPException(500, "KV書き込み失敗")
+        raise HTTPException(500, "保存に失敗しました。しばらく待ってからもう一度お試しください")
     async with db_conn() as db:
         await db.execute("UPDATE deployed_sites SET title=? WHERE subdomain=? AND user_id=?",
                          (req.title or subdomain, subdomain, user.get("id","")))
@@ -7891,7 +8154,7 @@ async def delete_site(subdomain: str, request: Request):
     """Delete a deployed site."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(401, "ログインが必要です")
+        raise HTTPException(401, "この機能を使うにはログインが必要です")
     await _cf_kv_delete(f"site:{subdomain}")
     await _cf_kv_delete(f"meta:{subdomain}")
     async with db_conn() as db:
@@ -7926,7 +8189,7 @@ async def billing_plans():
 @app.post("/billing/create-checkout")
 async def create_checkout(request: Request):
     if not STRIPE_SECRET_KEY:
-        return JSONResponse({"error": "Stripe未設定。STRIPE_SECRET_KEYを設定してください。"}, status_code=400)
+        return JSONResponse({"error": "決済システムが未設定です。管理者にお問い合わせください。"}, status_code=400)
     try:
         import stripe
         stripe.api_key = STRIPE_SECRET_KEY
@@ -7993,9 +8256,41 @@ async def stripe_webhook(request: Request):
 
 _PLAN_LIMITS = {"free": 100, "pro": 2000, "team": 10000, "enterprise": 999999}
 
+# Default system settings (key -> (default_value, description))
+_SYSTEM_SETTING_DEFAULTS: dict[str, tuple[str, str]] = {
+    "quota_free":        ("100",     "月間無料プランのメッセージ上限"),
+    "quota_pro":         ("2000",    "月間プロプランのメッセージ上限"),
+    "quota_team":        ("10000",   "月間チームプランのメッセージ上限"),
+    "default_model":     ("claude-sonnet-4-5", "デフォルトで使用するClaudeモデル"),
+    "max_history":       ("30",      "会話履歴の最大件数"),
+    "rate_limit_rpm":    ("20",      "1分あたり最大リクエスト数（無料）"),
+    "maintenance_mode":  ("0",       "1=メンテナンスモード（ログイン不要ユーザーをブロック）"),
+    "signup_disabled":   ("0",       "1=新規登録停止"),
+    "free_trial_msgs":   ("10",      "未ログインユーザーの無料試用メッセージ数"),
+    "cron_notify_admin": ("1",       "1=定期タスクの結果をLINE/Telegramに通知（0=OFF）"),
+    "self_heal_enabled": ("1",       "1=自動診断・改善タスクを有効化"),
+}
+
+
+async def _get_sys_cfg(key: str) -> str:
+    """Get a system setting value from DB, falling back to default."""
+    default, _ = _SYSTEM_SETTING_DEFAULTS.get(key, ("", ""))
+    try:
+        async with db_conn() as db:
+            async with db.execute("SELECT value FROM system_settings WHERE key=?", (key,)) as c:
+                row = await c.fetchone()
+                return row["value"] if row else default
+    except Exception:
+        return default
+
+
 async def _check_quota(user_id: str, plan: str) -> bool:
     """Returns True if user is within monthly quota."""
-    limit = _PLAN_LIMITS.get(plan, 100)
+    # Read plan limits from system_settings (live, overrides _PLAN_LIMITS)
+    try:
+        limit = int(await _get_sys_cfg(f"quota_{plan}"))
+    except (ValueError, TypeError):
+        limit = _PLAN_LIMITS.get(plan, 100)
     if limit >= 999999:
         return True
     month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0).isoformat()
@@ -8843,7 +9138,7 @@ async def chat_stream_with_file(session_id: str, req: ChatWithFileRequest, reque
     """Chat endpoint that prepends file content to the message before routing."""
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(status_code=401, detail="ログインが必要です")
+        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
     file_info = _uploaded_files.get(req.file_id)
     if not file_info:
         raise HTTPException(404, "File not found — upload first via POST /upload")
@@ -9398,7 +9693,7 @@ async def chat_loop(session_id: str, req: LoopRequest, request: Request):
     """
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(status_code=401, detail="ログインが必要です")
+        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
 
     sid = req.session_id or session_id
     _uid_a2a = user.get("id") or (_user_sessions.get(sid) or {}).get("user_id")
@@ -11173,7 +11468,8 @@ async def execute_agent_extended(agent_id: str, message: str, session_id: str = 
                                    image_data: str = "",
                                    image_b64: str | None = None,
                                    image_media_type: str = "image/jpeg",
-                                   lang: str = "") -> dict:
+                                   lang: str = "",
+                                   user_email: str = "") -> dict:
     """Extended execute_agent: pre-runs platform tools for agent_creator / platform_ops."""
     agent = AGENTS.get(agent_id)
     if agent and agent_id in ("agent_creator", "platform_ops"):
@@ -11183,10 +11479,134 @@ async def execute_agent_extended(agent_id: str, message: str, session_id: str = 
             tool_context = "\n\n".join([f"【{k}結果】\n{v}" for k, v in platform_results.items()])
             message = f"{message}\n\n---\n{tool_context}"
     return await _orig_execute_agent(agent_id, message, session_id, history, memory_context,
-                                     image_data, image_b64=image_b64, image_media_type=image_media_type, lang=lang)
+                                     image_data, image_b64=image_b64, image_media_type=image_media_type,
+                                     lang=lang, user_email=user_email)
 
 
 execute_agent = execute_agent_extended
+
+
+@app.get("/admin/settings")
+async def admin_get_settings(request: Request):
+    """List all system settings (admin only)."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    async with db_conn() as db:
+        async with db.execute("SELECT key, value, description, updated_at FROM system_settings") as c:
+            rows = await c.fetchall()
+    db_settings = {r["key"]: {"value": r["value"], "description": r["description"], "updated_at": r["updated_at"]} for r in rows}
+    # Merge with defaults
+    result = []
+    for key, (default_val, desc) in _SYSTEM_SETTING_DEFAULTS.items():
+        entry = db_settings.get(key)
+        result.append({
+            "key": key,
+            "value": entry["value"] if entry else default_val,
+            "default": default_val,
+            "description": entry["description"] if (entry and entry["description"]) else desc,
+            "updated_at": entry["updated_at"] if entry else None,
+            "is_custom": key in db_settings,
+        })
+    return {"settings": result}
+
+
+@app.put("/admin/settings/{key}")
+async def admin_put_setting(key: str, request: Request):
+    """Update a system setting (admin only)."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    body = await request.json()
+    value = str(body.get("value", ""))
+    description = body.get("description", _SYSTEM_SETTING_DEFAULTS.get(key, ("", ""))[1])
+    async with db_conn() as db:
+        await db.execute(
+            """INSERT INTO system_settings (key, value, description, updated_at)
+               VALUES (?, ?, ?, datetime('now','localtime'))
+               ON CONFLICT(key) DO UPDATE SET value=excluded.value,
+               description=excluded.description, updated_at=excluded.updated_at""",
+            (key, value, description))
+        await db.commit()
+    return {"ok": True, "key": key, "value": value}
+
+
+@app.delete("/admin/settings/{key}")
+async def admin_delete_setting(key: str, request: Request):
+    """Reset a system setting to default (admin only)."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    async with db_conn() as db:
+        await db.execute("DELETE FROM system_settings WHERE key=?", (key,))
+        await db.commit()
+    default = _SYSTEM_SETTING_DEFAULTS.get(key, ("", ""))[0]
+    return {"ok": True, "key": key, "reset_to_default": default}
+
+
+# ── Feedback / Error Log system ─────────────────────────────────────────
+async def _log_feedback(category: str, source: str, message: str,
+                        context: dict = None, user_id: str = "", session_id: str = ""):
+    """Log feedback/error to DB for self-healing."""
+    try:
+        async with db_conn() as db:
+            await db.execute(
+                """INSERT INTO feedback_logs (category, source, message, context, user_id, session_id)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (category, source, message[:2000], json.dumps(context or {}, ensure_ascii=False)[:4000],
+                 user_id, session_id))
+            await db.commit()
+    except Exception as e:
+        log.warning(f"feedback_log write failed: {e}")
+
+
+@app.post("/feedback/log")
+async def feedback_log_endpoint(request: Request):
+    """Client-side error/feedback reporting."""
+    body = await request.json()
+    user = await _get_user_from_session(_extract_session_token(request))
+    uid = (user or {}).get("id", "")
+    await _log_feedback(
+        category=body.get("category", "error"),
+        source="client",
+        message=body.get("message", ""),
+        context=body.get("context"),
+        user_id=uid,
+        session_id=body.get("session_id", ""),
+    )
+    return {"ok": True}
+
+
+@app.get("/admin/feedback-logs")
+async def admin_get_feedback_logs(request: Request):
+    """List recent feedback logs (admin only)."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    limit = int(request.query_params.get("limit", "50"))
+    unresolved_only = request.query_params.get("unresolved", "0") == "1"
+    async with db_conn() as db:
+        q = "SELECT * FROM feedback_logs"
+        if unresolved_only:
+            q += " WHERE resolved=0"
+        q += " ORDER BY created_at DESC LIMIT ?"
+        async with db.execute(q, (limit,)) as c:
+            rows = [dict(r) for r in await c.fetchall()]
+    return {"logs": rows, "total": len(rows)}
+
+
+@app.post("/admin/feedback-logs/{log_id}/resolve")
+async def admin_resolve_feedback(log_id: int, request: Request):
+    """Mark a feedback log as resolved (admin only)."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    async with db_conn() as db:
+        await db.execute(
+            "UPDATE feedback_logs SET resolved=1, resolved_at=datetime('now','localtime') WHERE id=?",
+            (log_id,))
+        await db.commit()
+    return {"ok": True}
 
 
 @app.post("/admin/route-test")
