@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>About — chatweb.ai</title>
+<meta name="description" content="chatweb.aiのプロダクトビジョン、チーム、技術スタックについて">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090b;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.7;min-height:100vh}
+a{color:#8b5cf6;text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+.back{display:inline-flex;align-items:center;gap:6px;color:#71717a;font-size:13px;margin-bottom:32px}
+.back:hover{color:#fafafa}
+h1{font-size:36px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{font-size:18px;color:#a1a1aa;margin-bottom:40px}
+h2{font-size:20px;font-weight:700;margin:36px 0 12px;color:#e4e4e7}
+p,li{color:#a1a1aa;font-size:15px}
+ul{padding-left:20px;margin:8px 0 16px}
+li{margin-bottom:6px}
+.vision-box{border:1px solid rgba(139,92,246,0.2);border-radius:16px;padding:24px;margin:24px 0;background:rgba(139,92,246,0.04)}
+.vision-box p{color:#d4d4d8;font-size:16px;font-weight:500}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0}
+.feature{border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px;background:#18181b}
+.feature-icon{font-size:24px;margin-bottom:8px}
+.feature-title{font-weight:600;font-size:14px;color:#e4e4e7;margin-bottom:4px}
+.feature-desc{font-size:12px;color:#71717a}
+.tech{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tech span{padding:4px 12px;border-radius:20px;font-size:12px;border:1px solid rgba(255,255,255,0.08);color:#a1a1aa;background:rgba(255,255,255,0.02)}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:#52525b;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">&larr; chatweb.ai に戻る</a>
+
+  <h1>chatweb.ai</h1>
+  <div class="subtitle">AI agents that actually do the work.</div>
+
+  <h2>Vision</h2>
+  <div class="vision-box">
+    <p>「聞くだけ」のAIチャットから、「実行する」AIワークフォースへ。</p>
+    <p style="margin-top:8px">chatweb.aiは、30以上の専門AIエージェントが自律的に連携し、調査・分析・コーディング・メール送信・デプロイまでを一気通貫で実行するプラットフォームです。ユーザーが指示を出すと、最適なエージェントが自動的に選ばれ、必要に応じて複数エージェントが協力して複雑なタスクを完了します。</p>
+  </div>
+
+  <h2>何が違うのか</h2>
+  <ul>
+    <li><strong>マルチエージェント自律実行</strong> — 1つの指示で複数の専門エージェントが協力。調査→分析→レポート→送信を一括処理。</li>
+    <li><strong>カスタムエージェント</strong> — 自分だけの専用AIエージェントを作成可能。定期実行やWebhook連携で業務を自動化。</li>
+    <li><strong>実行力</strong> — ブラウザ操作、Gmail送信、Googleカレンダー登録、Slack通知、Fly.ioデプロイ、Git操作まで実際に実行。</li>
+    <li><strong>長期記憶</strong> — ユーザーの好みや過去の会話を記憶し、使うほどパーソナライズされる。</li>
+    <li><strong>Webサイト公開</strong> — HTMLを生成して yourname.chatweb.ai ドメインで即座に公開可能。</li>
+  </ul>
+
+  <h2>主な機能</h2>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">🧩</div>
+      <div class="feature-title">カスタムエージェント</div>
+      <div class="feature-desc">業務専用のAIエージェントを自由に作成・共有・販売</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">A2A連携</div>
+      <div class="feature-desc">エージェント間の自律的な委譲と協力でタスクを完了</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔌</div>
+      <div class="feature-title">MCP統合</div>
+      <div class="feature-desc">Gmail・Calendar・Drive・Slack・GitHub等との直接連携</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">長期記憶</div>
+      <div class="feature-desc">会話から自動的に重要情報を記憶し、次回以降に活用</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🌐</div>
+      <div class="feature-title">サイト公開</div>
+      <div class="feature-desc">生成したHTMLを独自サブドメインで即公開</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">LINE / Telegram</div>
+      <div class="feature-desc">お使いのメッセンジャーからエージェントにアクセス</div>
+    </div>
+  </div>
+
+  <h2>技術スタック</h2>
+  <div class="tech">
+    <span>Python / FastAPI</span>
+    <span>Claude (Anthropic)</span>
+    <span>Playwright</span>
+    <span>SQLite</span>
+    <span>Fly.io</span>
+    <span>Cloudflare Workers</span>
+    <span>Stripe</span>
+    <span>Google Workspace API</span>
+  </div>
+
+  <h2>ロードマップ</h2>
+  <ul>
+    <li>エージェントマーケットプレイス — ユーザーが作成したエージェントの公開・販売</li>
+    <li>トークンベース課金 — 使った分だけ支払う公平な料金体系</li>
+    <li>API提供 — 外部アプリからchatweb.aiのエージェントを呼び出し</li>
+    <li>チーム機能 — 組織内でエージェント・記憶・設定を共有</li>
+    <li>オンプレミス版 — セキュリティ要件が厳しい企業向けの自社運用版</li>
+  </ul>
+
+  <h2>関連プロダクト</h2>
+  <p><a href="https://elio.love">Elio</a> — オフラインで動作するP2P分散型AIチャット（iOS）。プライバシー重視でインターネット接続不要。</p>
+
+  <div class="footer">
+    &copy; 2024-2026 chatweb.ai &middot;
+    <a href="/static/terms.html">利用規約</a> &middot;
+    <a href="/static/privacy.html">プライバシーポリシー</a> &middot;
+    <a href="/">ホームに戻る</a>
+  </div>
+</div>
+</body>
+</html>

@@ -25,6 +25,9 @@
 <meta name="twitter:title" content="chatweb.ai — Multi-Agent AI Platform">
 <meta name="twitter:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。">
 <meta name="twitter:image" content="https://chatweb.ai/static/og-image.svg">
+<!-- Preconnect for faster API calls -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://api.qrserver.com">
 <!-- Favicon -->
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/static/icon-192.png" type="image/png">
@@ -56,7 +59,7 @@
   }
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -527,6 +530,14 @@ body {
 }
 .chip:hover { border-color: var(--border2); color: var(--text); background: rgba(255,255,255,0.06); }
 .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip-skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, rgba(255,255,255,0.04) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-color: transparent;
+  pointer-events: none;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 .input-row {
   display: flex; gap: 8px; align-items: flex-end;
@@ -962,7 +973,7 @@ body {
 
 <!-- PWA Install Banner -->
 <div id="install-banner" hidden>
-  <span>📱 ホーム画面に追加してオフラインでも使えます</span>
+  <span>📱 ホーム画面に追加してすぐアクセス</span>
   <button onclick="installApp()">インストール</button>
   <button onclick="this.parentElement.hidden=true">✕</button>
 </div>
@@ -1099,6 +1110,8 @@ body {
         <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機タスク削除 (<span id="hitlPendingCount">0</span>件)</button>
         <button class="dropdown-item" onclick="installApp();toggleMoreMenu()">📲 <span data-i18n="menu_install">アプリをインストール</span></button>
         <button class="dropdown-item" onclick="sendFeedback();toggleMoreMenu()">💬 <span data-i18n="menu_feedback">フィードバックを送る</span></button>
+        <button class="dropdown-item" onclick="window.open('/static/about.html')">💡 chatweb.ai について</button>
+        <button class="dropdown-item" onclick="window.open('https://elio.love')" style="opacity:0.7">📱 Elio — オフラインAIチャット</button>
         <button class="dropdown-item" onclick="window.open('/static/features.html')">✨ 機能一覧</button>
         <button class="dropdown-item" onclick="window.open('/static/terms.html')">📜 <span data-i18n="menu_terms">利用規約</span></button>
         <button class="dropdown-item" onclick="window.open('/static/privacy.html')">🔒 <span data-i18n="menu_privacy">プライバシーポリシー</span></button>
@@ -1179,7 +1192,13 @@ body {
         <div class="templates-grid" id="templates-grid"></div>
       </div>
       <!-- Quick chips -->
-      <div class="quick-chips" id="quickChips"></div>
+      <div class="quick-chips" id="quickChips">
+        <span class="chip chip-skeleton" style="width:180px">&nbsp;</span>
+        <span class="chip chip-skeleton" style="width:220px">&nbsp;</span>
+        <span class="chip chip-skeleton" style="width:160px">&nbsp;</span>
+        <span class="chip chip-skeleton" style="width:200px">&nbsp;</span>
+        <span class="chip chip-skeleton" style="width:190px">&nbsp;</span>
+      </div>
       <!-- File chips -->
       <div id="file-chips"></div>
       <!-- Input row -->
@@ -1806,142 +1825,146 @@ function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
 }
-// ── 100 Quick Chips (実際に使える具体的な質問) ──────────────────────────
+// ── Quick Chips — カスタムエージェント＋実用例 ──────────────────────────
 const ALL_CHIPS = [
-  // 🚀 今すぐ試せる — インパクト大
-  "🚀 「うちのサービスをXでバズらせたい」→ 今日投稿できるXスレッドを3パターン作って",
-  "🚀 昨日の営業MTGメモ「山田さん、予算100万、来月決裁」を元にフォローメールを書いて",
-  "🚀 フリーランス契約書の雛形を今すぐ作って（月60万・3ヶ月・NDA付き）",
-  "🚀 NVDAの今週の株価とアナリスト評価を調べて買い時か教えて",
-  "🚀 「AI×業務効率化」の社内勉強会スライド10枚を作ってURLで公開して",
-  "🚀 競合3社（Notion・Asana・Trello）の料金と機能を比較表にして",
+  // 🧩 カスタムエージェント作成（目玉機能）
+  "🧩 毎朝Slackに業界ニュースを自動投稿するエージェントを作って",
+  "🧩 問い合わせメールを自動で分類して担当者に振り分けるエージェントを作って",
+  "🧩 GitHubのPRが来たら自動でコードレビューするエージェントを作って",
+  "🧩 営業の商談メモを入力したら自動でCRMに登録するエージェントを作って",
+  "🧩 社内wikiを検索して質問に答えるカスタマーサポートエージェントを作って",
+  "🧩 毎週金曜にKPIをまとめてレポートを送るエージェントを作って",
+  "🧩 受信メールの内容に応じて返信ドラフトを自動生成するエージェントを作って",
+  "🧩 競合のWebサイトを毎日チェックして変更があったら通知するエージェントを作って",
+  "🧩 採用候補者の職務経歴書をスクリーニングするエージェントを作って",
+  "🧩 ECサイトの在庫が少なくなったら自動発注するエージェントを作って",
 
-  // 📣 SNS投稿 — コピペして即使える
-  "📣 「新機能リリース！AIが自動で議事録を作成します」のX投稿を絵文字多めで書いて",
-  "📣 スタートアップ創業者らしいLinkedIn自己紹介文を書いて（フォロワーが増える型）",
-  "📣 Instagramのフォロワー増やすための1週間コンテンツカレンダーを作って",
-  "📣 「サービスの料金が上がります」を好意的に受け取ってもらえるXポストの文を書いて",
-  "📣 採用広告のコピーを10案作って（エンジニア向け・カジュアルな雰囲気）",
-  "📣 メルマガの件名「開封率30%超え」の型を5パターン教えて例も書いて",
-  "📣 「先日のウェビナーありがとう」フォローDMをInstagramとLinkedIn両方書いて",
-  "📣 会社の5周年記念投稿をX・Instagram・LinkedInの3プラットフォーム分作って",
+  // ⚡ マルチエージェント連携（複数が協力する例）
+  "⚡ 競合サイトをスクショ撮影 → 分析 → 改善提案 → スライドにまとめて",
+  "⚡ 最新AI論文を検索 → 要約 → 社内向け解説記事を書いて → Slackに投稿して",
+  "⚡ 求人票を書いて → 法務チェック → 採用サイトのHTMLを作って公開して",
+  "⚡ 株価を調べて → チャートを作って → 投資判断レポートを書いて → メールで送って",
+  "⚡ バグ報告を分析 → 原因コードを特定 → 修正パッチを書いて → テストして",
 
-  // 📝 議事録・ドキュメント — 即完成
-  "📝 「決定: 9/15リリース、佐藤さんフロント、鈴木さんAPI、予算120万」→ 議事録にして",
-  "📝 週次定例MTGのアジェンダと議事録テンプレートを作って（毎週使い回せるやつ）",
-  "📝 「売上未達・原因は商談数不足・来月からSDR採用」を役員報告書にして",
-  "📝 1on1の会話メモを成長支援シート（強み・課題・90日アクションプラン）にして",
-  "📝 プロダクトのPRD（製品要件定義書）のテンプレートを作って",
+  // 🌐 Webサイト公開（即URL発行）
+  "🌐 ポートフォリオサイトを作って myname.chatweb.ai で公開して",
+  "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
+  "🌐 会社の採用LP（ミッション・福利厚生・募集職種）を作って公開して",
+  "🌐 リアルタイムカウントダウンタイマーを作って公開して",
+  "🌐 レストランのメニュー表をスマホ対応で作って公開して",
 
-  // 💼 営業・CRM — 送るだけ
-  "💼 2週間前にデモした顧客が無反応 → 価値を再提示する「最後の1通」を書いて",
-  "💼 展示会で名刺交換した相手への翌日フォローメールを書いて（覚えてもらえる型）",
-  "💼 「高い」と言われたときの切り返しトーク5パターンを書いて",
-  "💼 失注後のお礼メール＋半年後に再アプローチする仕込みメールを書いて",
-  "💼 新規開拓の初回アプローチ〜クロージングまでの営業フローチャートを作って",
-  "💼 月次営業レポートを自動集計できるGoogleシートのテンプレートを作って",
+  // 📊 調査・分析
+  "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
+  "📊 うちのサービスの競合5社をSWOT分析して差別化戦略を提案して",
+  "📊 先月の売上CSV（添付）を分析して「何が落ちているか」を特定して",
+  "📊 A/Bテスト結果（A:CVR 2.9%, B:3.6%, 各n=800）の有意差を検定して",
+  "📊 日本のSaaS市場規模と成長率を調べてレポートにして",
 
-  // ⚖️ 法務 — 雛形すぐ作成
-  "⚖️ SaaS利用規約の雛形を作って（月額課金・解約・免責条項すべて含む・日本法準拠）",
-  "⚖️ 受け取ったNDAの英語を日本語訳して問題ある条項をハイライトして",
-  "⚖️ プライバシーポリシーを作って（個人情報保護法・GDPR・Cookie通知対応）",
-  "⚖️ 副業・競業避止義務の確認 — 会社員が副業するときに気をつける法的ポイントを教えて",
-  "⚖️ 業務委託 vs 正社員雇用のメリット・デメリットを法的観点から比較して",
+  // 💹 金融・株式
+  "💹 NVDA・Apple・MSFTの今週の株価と決算予測を調べてまとめて",
+  "💹 新NISAで今買うべきETFをランキングで教えて理由も",
+  "💹 ビットコインとS&P500の過去5年のパフォーマンスを比較して",
+  "💹 円安が続く場合の資産配分をどう変えるべきか分析して",
 
-  // 💹 投資・金融 — リアルデータで分析
-  "💹 今週のApple・Microsoft・NVDA・Googleの株価と決算予測を調べてまとめて",
-  "💹 ビットコインとS&P500の過去5年のパフォーマンス比較チャートを作って",
-  "💹 日経平均が今後3ヶ月で上がるか下がるか — 主要指標を調べて予測して",
-  "💹 新NISAの成長投資枠で今買うべきETFをランキングで教えて理由も",
-  "💹 円安150円台が続く場合に海外投資家はどう動くか分析して",
+  // 💼 営業・メール
+  "💼 デモ後2週間無反応の顧客への再アプローチメールを書いて",
+  "💼 「高い」と言われた時の切り返しトークを5パターン考えて",
+  "💼 展示会で交換した名刺への翌日フォローメールを書いて",
+  "💼 月次営業レポートのテンプレートをGoogleシート用に作って",
 
-  // 🎤 プレゼン・スライド — URLですぐ共有
-  "🎤 投資家向けピッチデック10枚（課題・解決策・市場規模・収益モデル・チーム）を作って公開して",
-  "🎤 新機能の顧客向けウェビナー資料を作って公開URLを教えて",
-  "🎤 「生成AIの業務活用入門」の社内研修スライドを作って公開して",
-  "🎤 四半期の事業進捗ダッシュボード（グラフ付き）HTMLページを作って公開して",
-  "🎤 採用説明会のカルチャーデック（会社・ミッション・チーム・制度）を作って公開して",
+  // ⚖️ 法務・契約
+  "⚖️ SaaS利用規約を作って（月額課金・解約・免責・日本法準拠）",
+  "⚖️ 英語のNDAを日本語訳して問題ある条項をハイライトして",
+  "⚖️ 業務委託契約書の雛形を作って（月60万・3ヶ月・NDA付き）",
+  "⚖️ プライバシーポリシーを作って（個人情報保護法・GDPR対応）",
 
-  // 📊 データ・分析
-  "📊 先月比売上-18%の原因を「ファネル分析」で仮説立てしてMECEに整理して",
-  "📊 A/Bテスト（A:CVR 2.9%, B:CVR 3.6%, 各n=800）の有意差をt検定して",
-  "📊 SaaSのMRR・ARR・チャーン率・NRR・LTVの計算と改善施策をまとめて",
-  "📊 ユーザーインタビュー12件のフィードバックをカテゴリ分けしてペインポイントを整理して",
-  "📊 PM向けの北極星指標（NSM）とOKR設計のフレームワークを教えて例も作って",
+  // 📝 ドキュメント
+  "📝 「9/15リリース、佐藤:フロント、鈴木:API、予算120万」→ 議事録にして",
+  "📝 PRD（製品要件定義書）のテンプレートを実例付きで作って",
+  "📝 1on1メモから90日成長プラン（強み・課題・アクション）を作って",
 
-  // 🌐 サイト・ツール公開 — 即URL
-  "🌐 自分のポートフォリオサイトを作って myname.chatweb.ai で公開して",
-  "🌐 リアルタイムで動くカウントダウンタイマーページを作って公開して",
-  "🌐 会社の採用LPを作って（ミッション・福利厚生・募集職種・応募フォーム付き）公開して",
-  "🌐 イベント告知ページ（日時・場所・申し込みフォーム付き）を作って公開して",
-  "🌐 BMI・体脂肪率計算ツールをダークテーマで作って公開して",
-  "🌐 ランダムな格言を毎日1つ表示するサイトを作って公開して",
+  // 🎤 プレゼン
+  "🎤 投資家向けピッチデック10枚を作ってURLで公開して",
+  "🎤 「生成AIの業務活用入門」社内研修スライドを作って公開して",
+  "🎤 四半期の事業進捗ダッシュボード（グラフ付き）を作って公開して",
 
-  // ⚙️ コード — 書いて即実行
-  "⚙️ PythonでTwitterの自分のツイートをスクレイピングしてCSV保存するコードを書いて実行して",
-  "⚙️ FastAPI + JWT認証 + SQLiteのCRUD APIを書いてエンドポイント一覧を教えて",
-  "⚙️ React+TypeScript+Zodでリアルタイムバリデーション付きフォームを書いて",
-  "⚙️ SQLでコホート別のチャーン率を計算するクエリを書いてサンプルデータで実行して",
-  "⚙️ Docker Compose で Python+PostgreSQL+Redisの開発環境を構築して",
-  "⚙️ GitHub Actions で test→build→deployのCI/CDパイプラインを書いて",
-  "⚙️ Pythonで売上CSVをMatplotlibで月次グラフにして画像保存するコードを書いて実行して",
+  // 📣 SNS
+  "📣 新機能リリースのX投稿を3パターン作って（バズる型・堅実型・エモい型）",
+  "📣 LinkedIn用の創業者プロフィールを「フォロワーが増える型」で書いて",
+  "📣 Instagram 1週間コンテンツカレンダーを作って",
 
-  // 📄 ファイル解析 — アップロードして分析
-  "📄 アップロードしたPDFの契約書から問題になりそうな条項だけ抜き出して",
-  "📄 アップロードしたExcelの売上データを分析して「何が伸びて何が落ちているか」を教えて",
-  "📄 アップロードしたCSVでユーザーのLTVとチャーン率を計算して",
-  "📄 アップロードした議事録PDFからTODO・決定事項・次回アジェンダを抽出して",
+  // ⚙️ コーディング
+  "⚙️ FastAPI + JWT認証 + SQLiteのCRUD APIを書いて",
+  "⚙️ GitHub Actionsでtest→build→deployのCI/CDを構築して",
+  "⚙️ Pythonで売上CSVをグラフ化して画像保存するスクリプトを書いて実行して",
+  "⚙️ React+TypeScriptでリアルタイムバリデーション付きフォームを書いて",
 
-  // 📅 Google連携 — 実際に実行
-  "📅 今日15:00に「山田さんとクロージングMTG」をGoogleカレンダーに追加して",
-  "📧 「提案書をお送りします、ご検討よろしくお願いします」をGmailで田中さんに送って",
-  "📊 今週の作業ログをGoogleスプレッドシートに記録する表を作ってシェアURLを教えて",
-  "📝 今日の会議メモをGoogle Docsに議事録として保存してURLを教えて",
+  // 📅 Google連携
+  "📅 今日15:00に「山田さんとMTG」をGoogleカレンダーに追加して",
+  "📧 提案書の送付メールをGmailで田中さんに送って",
+  "📊 今週の作業ログをGoogleスプレッドシートに記録して共有URLを教えて",
 
-  // 📨 通知・Slack連携
-  "📨 「デプロイ完了しました v2.3.1 — 変更点: バグ修正3件」をSlack #devに送って",
-  "📨 チーム全員に「今月のOKR達成率85%！来月の目標を共有します」メールを書いて送って",
+  // 🔍 リサーチ
+  "🔍 AI導入で業務時間30%削減した企業の成功事例を5つ調べて",
+  "🔍 PMの転職市場 — スキル・年収相場・求人トレンドを調べて",
 
-  // 🔍 リサーチ・調査
-  "🔍 Claude・GPT-4o・Gemini 1.5 Proの最新性能・料金・制限を比較表で教えて",
-  "🔍 日本のSaaS市場2024年の規模・成長率・注目スタートアップを調べてレポートにして",
-  "🔍 生成AI導入で「業務時間30%削減」した企業の成功事例を5つ調べて",
-  "🔍 プロダクトマネージャーの転職市場 — 必要スキル・年収相場・求人を調べて",
-  "🔍 競合3社の製品・価格・強み・弱みをSWOT分析して差別化戦略を提案して",
+  // 🚄 旅行
+  "🚄 来週月曜の東京→大阪 新幹線の時刻と料金を比較して",
+  "✈️ 来月の東京→バンコク往復の最安フライトを調べて",
 
-  // 🚄 旅行・予定
-  "🚄 来週月曜の東京→大阪 新幹線の時刻・料金・座席種類を調べて比較して",
-  "✈️ 来月の東京→バンコク往復の最安値フライトを調べて",
-  "🏨 京都の温泉付き旅館3軒を「価格・評価・アクセス」で比較して",
+  // 🎨 画像生成
+  "🎨 テックスタートアップ向けのロゴ（紫系・ミニマル）を生成して",
+  "🎨 「AI×未来」テーマのXヘッダー画像を作って",
 
-  // 🤖 日常・汎用
-  "🤖 英語の長文メールを「3行の日本語要約＋重要な依頼事項のリスト」にして",
-  "🤖 上司への遅延報告メールを「誠実さが伝わる丁寧な敬語」で書き直して",
-  "🤖 来週やるべきタスク一覧から優先順位をつけてスケジュール表にして",
-  "🤖 「この機能をなぜ作るのか」を説明するプロダクトビジョン文を3パターン書いて",
-  "🤖 社内向けAI活用ポリシー（使っていいこと・禁止事項・管理ルール）の雛形を作って",
-  "🤖 退職の挨拶メールを社内向けと社外取引先向けの2バージョン書いて",
-
-  // 🏢 経営・戦略
-  "🏢 30分で書けるOne-Page Business Planのテンプレートと記入例を作って",
-  "🏢 新規事業アイデア「AIを使った〇〇」を5個ブレストして実現可能性でランク付けして",
-  "🏢 スタートアップの採用面接で聞くべき質問リストをカルチャーフィット重視で作って",
-  "🏢 月次の損益計算書（P&L）のシンプルなテンプレートをGoogleシート用に作って",
-
-  // 🎨 クリエイティブ
-  "🎨 テックスタートアップのブランドカラー（紫系）でロゴデザインを生成して",
-  "🎨 「AI×未来」をテーマにしたXのヘッダー画像（1500×500）を作って",
-  "🎨 飲食店のInstagram用バナー（和風モダン・夜の雰囲気）を作って",
+  // 📄 ファイル解析
+  "📄 添付PDFの契約書から問題になりそうな条項だけ抜き出して",
+  "📄 添付Excelの売上データを分析してトレンドを教えて",
 ];
 
 function initQuickChips() {
   const chips = document.getElementById('quickChips');
   if (!chips) return;
-  // Shuffle and pick 20
-  const shuffled = [...ALL_CHIPS].sort(() => Math.random() - 0.5);
-  chips.innerHTML = shuffled.slice(0, 20).map(c =>
+  // Time-seeded shuffle: changes every 30 minutes so returning users see fresh chips
+  const seed = Math.floor(Date.now() / 1800000);
+  const rng = (i) => { let x = (seed * 9301 + 49297 + i * 233) % 233280; return x / 233280; };
+  const shuffled = [...ALL_CHIPS].map((v,i) => ({v, r: rng(i)})).sort((a,b) => a.r - b.r).map(x => x.v);
+  // Always show 1-2 agent creation chips first, then mix
+  const agentChips = shuffled.filter(c => c.startsWith('🧩'));
+  const otherChips = shuffled.filter(c => !c.startsWith('🧩'));
+  const picked = [...agentChips.slice(0,2), ...otherChips.slice(0,13)];
+  chips.innerHTML = picked.map(c =>
     `<button class="chip" onclick="useChip(this)" type="button">${c}</button>`
   ).join('');
+}
+
+let _lastUserMsg = '';
+async function updateFollowUpChips(aiResponse, agentId) {
+  const chips = document.getElementById('quickChips');
+  if (!chips) return;
+  const userMsg = _lastUserMsg || '';
+  if (!userMsg && !aiResponse) { initQuickChips(); return; }
+  // Show loading state
+  chips.innerHTML = '<span class="chip chip-skeleton" style="width:200px">&nbsp;</span><span class="chip chip-skeleton" style="width:180px">&nbsp;</span><span class="chip chip-skeleton" style="width:160px">&nbsp;</span>';
+  try {
+    const r = await fetch('/chat/suggest', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        user_message: userMsg.slice(0, 300),
+        ai_response: (aiResponse || '').slice(0, 500),
+        agent_id: agentId || '',
+      }),
+    });
+    if (!r.ok) throw new Error('suggest failed');
+    const d = await r.json();
+    const suggestions = d.suggestions || [];
+    if (suggestions.length === 0) { initQuickChips(); return; }
+    chips.innerHTML = suggestions.map(s =>
+      `<button class="chip" onclick="useChip(this)" type="button">💬 ${s}</button>`
+    ).join('');
+  } catch {
+    initQuickChips();
+  }
 }
 
 function useChip(el) {
@@ -1956,6 +1979,7 @@ async function sendMessage() {
   const input = document.getElementById('chatInput');
   const msg = input.value.trim();
   if (!msg) return;
+  _lastUserMsg = msg;
   isStreaming = true;
   document.getElementById('sendBtn').disabled = true;
   input.value = ''; input.style.height = 'auto';
@@ -2080,6 +2104,8 @@ async function sendMessage() {
         _userScrolled = false;
         document.getElementById('scroll-to-bottom')?.classList.remove('visible');
         scrollToBottom(true);
+        // Update chips to follow-up suggestions
+        updateFollowUpChips(data.response, data.agent_id);
         break;
 
       // ── Multi-agent plan ────────────────────────────────────────────────────
@@ -2111,6 +2137,7 @@ async function sendMessage() {
 
       case 'plan_done':
         if (data.screenshots?.length) appendScreenshots(data.screenshots);
+        updateFollowUpChips('', '');
         break;
 
       // ── Memory ─────────────────────────────────────────────────────────────
@@ -6223,7 +6250,8 @@ updateAuthUI = function(user) {
   padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
   <div style="flex:1;min-width:200px;font-size:13px;color:#a1a1aa;line-height:1.5">
     🍪 このサービスはCookieおよびローカルストレージを使用して、会話履歴・設定・セッション情報を保存します。
-    <a href="/static/privacy.html" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a>
+    <a href="/static/privacy.html" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a> ·
+    <a href="/static/about.html" style="color:#8b5cf6;text-decoration:none">About</a>
   </div>
   <div style="display:flex;gap:8px;flex-shrink:0">
     <button onclick="cookieDecline()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#71717a;cursor:pointer;font-size:13px">拒否</button>
