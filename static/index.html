@@ -673,6 +673,119 @@ body {
   display: none;
 }
 #modal-backdrop.open { display: block; }
+
+/* ── Mobile / iPhone responsive ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Topbar: shrink padding, hide cost display, compact buttons */
+  #topbar { padding: 0 10px; height: 50px; gap: 6px; }
+  .logo span { display: none; } /* hide "Synapse" text, keep icon */
+  .topbar-center { position: static; transform: none; flex: 1; display: flex; justify-content: center; }
+  #agent-pill { padding: 5px 10px; font-size: 12px; }
+  #agent-pill-name { max-width: 120px; }
+  #cost-display { display: none; }
+  .topbar-right { gap: 5px; }
+  /* Hide lang button label, keep icon only */
+  #lang-btn { padding: 5px 7px; }
+  #lang-label { display: none; }
+  /* Tier button: compact */
+  #tier-btn { padding: 5px 8px; font-size: 11px; }
+
+  /* Chat messages: reduce side padding */
+  #chatMessages { padding-bottom: 0; }
+  .msg-container { padding: 0 8px; }
+  .msg-ai { padding: 10px 8px 6px; }
+  .msg-user { margin: 4px 8px 4px auto; }
+
+  /* Bubbles: full width on mobile */
+  .msg-user-bubble { max-width: 88%; font-size: 14px; padding: 10px 13px; }
+  .msg-ai-bubble { font-size: 13.5px; padding: 12px 14px; }
+  .msg-ai-avatar { width: 26px; height: 26px; font-size: 12px; flex-shrink: 0; }
+
+  /* Input area: tighter padding, larger tap targets */
+  .quick-chips { padding: 8px 10px 0; gap: 5px; }
+  .chip { font-size: 11.5px; padding: 5px 11px; }
+  .input-row { padding: 8px 10px 12px; gap: 6px; }
+  #chatInput { font-size: 16px; /* prevent iOS zoom */ padding: 10px 14px; min-height: 44px; border-radius: 12px; }
+  #plus-btn { width: 44px; height: 44px; font-size: 22px; }
+  #send-btn  { width: 44px; height: 44px; font-size: 18px; border-radius: 12px; }
+  #mic-btn   { width: 44px; height: 44px; }
+  #plus-popup { left: 10px; min-width: 150px; }
+
+  /* Modals: full-screen on mobile */
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 18px 18px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal { align-items: flex-end !important; padding: 0 !important; }
+
+  /* Agent selector modal */
+  #agent-selector-modal {
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important;
+    top: auto !important; transform: none !important;
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 75vh; overflow-y: auto;
+    width: 100% !important;
+  }
+  .agent-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 6px !important; }
+  .agent-pill { padding: 8px 8px !important; font-size: 11px !important; }
+  .agent-pill-emoji { font-size: 18px !important; }
+
+  /* Plan/workflow steps: reduce padding */
+  .plan-card { padding: 10px 12px; }
+  .plan-step-task { font-size: 10.5px; }
+
+  /* HITL card */
+  .hitl-card { padding: 12px; }
+  .hitl-btn { padding: 8px 14px !important; font-size: 13px !important; }
+
+  /* Workflow detail (step list) compact */
+  .step-wrap { padding: 3px 10px; }
+  .step-label { font-size: 11px; }
+
+  /* Dashboard modal */
+  #dashboard-box {
+    width: 100% !important; max-width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+    margin: 0 !important;
+    position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+    max-height: 90vh; overflow-y: auto;
+  }
+
+  /* Message footer actions: smaller icons */
+  .msg-ai-footer button { font-size: 15px; }
+
+  /* Templates grid: 1 column on mobile */
+  .templates-grid { grid-template-columns: 1fr !important; }
+
+  /* Image previews */
+  .screenshot-img { max-width: 100% !important; }
+
+  /* Status bar */
+  #statusBar { font-size: 11px; padding: 4px 10px; }
+
+  /* Safe area for iPhone notch/home indicator */
+  #inputAreaOuter {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* ── iPad / tablet ─────────────────────────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .topbar-center { position: static; transform: none; flex: 1; display: flex; justify-content: center; }
+  .quick-chips { padding: 8px 16px 0; }
+  .input-row { padding: 8px 16px 12px; }
+  #agent-pill-name { max-width: 200px; }
+}
 </style>
 </head>
 <body>
@@ -818,6 +931,7 @@ body {
         <button class="dropdown-item" onclick="stopTTS();toggleMoreMenu()">🔇 TTS停止</button>
         <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ エージェント作成</button>
         <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 記憶 (<span id="memCount">0</span>件)</button>
+        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機タスク全削除 (<span id="hitlPendingCount">0</span>件)</button>
         <div class="dropdown-sep"></div>
         <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 ログイン</button>
         <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none">👤 <span id="user-email-display"></span> (ログアウト)</button>
@@ -1782,9 +1896,14 @@ async function loadHistory() {
   try {
     const r = await fetch('/hitl/history/list?limit=50');
     const d = await r.json();
+    // Update pending count badge in more menu
+    const pendingCount = (d.tasks||[]).filter(t => !t.resolved).length;
+    const clearBtnEl = document.getElementById('hitl-clear-btn');
+    const countEl = document.getElementById('hitlPendingCount');
+    if (clearBtnEl) clearBtnEl.style.display = pendingCount > 0 ? '' : 'none';
+    if (countEl) countEl.textContent = pendingCount;
     const el = document.getElementById('historyList');
     if (!d.tasks?.length) { el.innerHTML = '<div class="mem-empty">履歴なし</div>'; return; }
-    const pendingCount = d.tasks.filter(t => !t.resolved).length;
     const clearBtn = pendingCount > 0
       ? `<button onclick="clearAllHitl()" style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red);cursor:pointer;margin-bottom:6px;">⏳ 待機 ${pendingCount}件を全削除</button>`
       : '';
