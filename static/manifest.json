@@ -1,16 +1,35 @@
 {
-  "name": "Synapse — Multi-Agent AI",
-  "short_name": "Synapse",
-  "description": "マルチエージェントAIプラットフォーム",
+  "name": "chatweb.ai — Multi-Agent AI",
+  "short_name": "chatweb.ai",
+  "description": "30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行するマルチエージェントAIプラットフォーム",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "background_color": "#09090b",
   "theme_color": "#7c6aff",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "scope": "/",
+  "lang": "ja",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "business"],
   "icons": [
-    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/static/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["productivity", "utilities"],
-  "lang": "ja"
+  "screenshots": [
+    { "src": "/static/og-image.svg", "sizes": "1200x630", "type": "image/svg+xml", "form_factor": "wide" }
+  ],
+  "shortcuts": [
+    {
+      "name": "新しいチャット",
+      "short_name": "チャット",
+      "description": "新しい会話を開始",
+      "url": "/",
+      "icons": [{ "src": "/static/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }

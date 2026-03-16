@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /chat/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /user/
+Disallow: /static/screenshots/
+
+Sitemap: https://chatweb.ai/sitemap.xml

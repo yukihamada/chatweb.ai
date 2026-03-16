@@ -3,14 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Synapse — Multi-Agent AI</title>
+<title>chatweb.ai — Multi-Agent AI Platform</title>
+<!-- SEO -->
+<meta name="description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで対応するマルチエージェントAIプラットフォーム。">
+<meta name="keywords" content="AI,エージェント,マルチエージェント,自動化,ChatAI,Claude,chatweb.ai,人工知能">
+<meta name="author" content="chatweb.ai">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://chatweb.ai/">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chatweb.ai/">
+<meta property="og:site_name" content="chatweb.ai">
+<meta property="og:title" content="chatweb.ai — Multi-Agent AI Platform">
+<meta property="og:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで。">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.svg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ja_JP">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="chatweb.ai — Multi-Agent AI Platform">
+<meta name="twitter:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。">
+<meta name="twitter:image" content="https://chatweb.ai/static/og-image.svg">
+<!-- Favicon -->
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#7c6aff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/static/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "chatweb.ai",
+  "url": "https://chatweb.ai/",
+  "description": "30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行するマルチエージェントAIプラットフォーム",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "chatweb.ai"
+  }
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -197,6 +243,7 @@ body {
 }
 .dropdown-item:hover { background: rgba(255,255,255,0.06); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
+.dropdown-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 6px 12px 2px; pointer-events: none; }
 
 /* ── Agent Selector Modal ─────────────────────────────────────────────── */
 #agent-selector-modal {
@@ -263,6 +310,24 @@ body {
   transition: all 0.15s;
 }
 .agent-selector-footer button:hover { border-color: rgba(139,92,246,0.4); color: var(--text); }
+#agent-search {
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px; font-size: 13px; color: var(--text);
+  outline: none; margin-bottom: 10px; transition: border-color 0.15s;
+}
+#agent-search:focus { border-color: rgba(139,92,246,0.5); }
+#agent-search::placeholder { color: var(--muted); }
+.agent-cat-tabs {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.agent-cat-tab {
+  padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--border); color: var(--muted);
+  background: none; transition: all 0.15s; white-space: nowrap;
+}
+.agent-cat-tab:hover { border-color: rgba(139,92,246,0.4); color: var(--text); }
+.agent-cat-tab.active { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.5); color: #c4b5fd; }
 
 /* ── Main Layout ──────────────────────────────────────────────────────── */
 #main { flex: 1; display: flex; overflow: hidden; position: relative; }
@@ -943,13 +1008,13 @@ body {
 <div id="topbar">
   <div class="logo">
     <div class="logo-icon">◈</div>
-    <span>Synapse</span>
+    <span>chatweb.ai</span>
   </div>
 
   <div class="topbar-center">
     <button id="agent-pill" onclick="toggleAgentSelector()">
       <span id="agent-pill-emoji">◈</span>
-      <span id="agent-pill-name">エージェントを選択</span>
+      <span id="agent-pill-name" data-i18n="select_agent">エージェントを選択</span>
       <span class="pill-chevron">▾</span>
     </button>
   </div>
@@ -971,6 +1036,8 @@ body {
         <button class="dropdown-item" onclick="setLanguage('ko','KO','한국어')">🇰🇷 한국어</button>
         <button class="dropdown-item" onclick="setLanguage('fr','FR','Français')">🇫🇷 Français</button>
         <button class="dropdown-item" onclick="setLanguage('es','ES','Español')">🇪🇸 Español</button>
+        <button class="dropdown-item" onclick="setLanguage('de','DE','Deutsch')">🇩🇪 Deutsch</button>
+        <button class="dropdown-item" onclick="setLanguage('pt','PT','Português')">🇧🇷 Português</button>
       </div>
     </div>
     <!-- Model tier toggle -->
@@ -986,48 +1053,50 @@ body {
     <div style="position:relative;">
       <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
       <div id="more-dropdown" class="dropdown">
-        <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 ダッシュボード</button>
-        <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 使用状況</button>
-        <button class="dropdown-item" onclick="openRankingPanel();toggleMoreMenu()">🏆 エージェントランキング</button>
-        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 会話をエクスポート (MD)</button>
-        <button class="dropdown-item" onclick="exportConversation('json');toggleMoreMenu()">📋 会話をエクスポート (JSON)</button>
-        <button class="dropdown-item" onclick="sendFeedback();toggleMoreMenu()">💬 フィードバック</button>
-        <button class="dropdown-item" onclick="installApp();toggleMoreMenu()">📲 インストール</button>
+        <!-- ── アカウント ── -->
+        <div class="dropdown-label">アカウント</div>
+        <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 <span data-i18n="menu_login">ログイン</span></button>
+        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none">👤 <span id="user-email-display"></span> · <span data-i18n="menu_logout">ログアウト</span></button>
+        <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 <span data-i18n="menu_billing">プラン・課金</span></button>
+        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 <span data-i18n="menu_api_keys">APIキー管理</span></button>
+        <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">🔗 <span data-i18n="menu_link_code">LINE/Telegram連携コード</span></button>
+        <!-- ── データ ── -->
         <div class="dropdown-sep"></div>
-        <button class="dropdown-item" onclick="openRAGPanel();toggleMoreMenu()">📚 ナレッジベース</button>
-        <button class="dropdown-item" onclick="openSchedulePanel();toggleMoreMenu()">⏰ スケジュール自動化</button>
-        <button class="dropdown-item" onclick="openMarketplacePanel();toggleMoreMenu()">🛒 エージェントマーケット</button>
-        <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 ワークフロービルダー</button>
-        <button class="dropdown-item" onclick="openBrowserPanel();toggleMoreMenu()">🌐 ブラウザ操作</button>
-        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 会話を検索</button>
-        <button class="dropdown-item" onclick="openFilesModal();toggleMoreMenu()">📁 ファイル管理</button>
-        <button class="dropdown-item" onclick="openWebhooksModal();toggleMoreMenu()">🔗 Webhooks</button>
-        <button class="dropdown-item" onclick="openABTestModal();toggleMoreMenu()">⚖️ A/Bテスト</button>
-        <button class="dropdown-item" onclick="openImageGenModal();toggleMoreMenu()">🎨 画像生成</button>
-        <button class="dropdown-item" onclick="openCustomToolsModal();toggleMoreMenu()">🔧 カスタムツール</button>
-        <button class="dropdown-item" onclick="openNotificationSettings();toggleMoreMenu()">🔔 通知設定</button>
+        <div class="dropdown-label">データ・記憶</div>
+        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 <span data-i18n="menu_memory">長期記憶</span> (<span id="memCount">0</span><span data-i18n="unit_items">件</span>)</button>
+        <button class="dropdown-item" onclick="openFilesModal();toggleMoreMenu()">📁 <span data-i18n="menu_files">ファイル管理</span></button>
+        <button class="dropdown-item" onclick="openRAGPanel();toggleMoreMenu()">📚 <span data-i18n="menu_knowledge">ナレッジベース</span></button>
+        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 <span data-i18n="menu_search">会話を検索</span></button>
+        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 エクスポート (MD)</button>
+        <!-- ── ツール ── -->
         <div class="dropdown-sep"></div>
-        <button class="dropdown-item" onclick="stopTTS();toggleMoreMenu()">🔇 TTS停止</button>
-        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ エージェント作成</button>
-        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 記憶 (<span id="memCount">0</span>件)</button>
-        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機タスク全削除 (<span id="hitlPendingCount">0</span>件)</button>
-        <!-- Mobile-only: lang/tier/theme controls hidden from topbar -->
-        <button class="dropdown-item mobile-only" onclick="toggleLangMenu();toggleMoreMenu()">🌐 言語切り替え</button>
-        <button class="dropdown-item mobile-only" onclick="toggleTier();toggleMoreMenu()">💰 <span id="tier-menu-label">モデル切り替え</span></button>
-        <button class="dropdown-item mobile-only" onclick="toggleTheme();toggleMoreMenu()">🌙 ダーク/ライト</button>
-        <div class="dropdown-sep mobile-only"></div>
-        <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 プラン・課金</button>
+        <div class="dropdown-label">ツール・自動化</div>
+        <button class="dropdown-item" onclick="openSitesModal();toggleMoreMenu()">🌐 <span data-i18n="menu_my_sites">マイサイト</span></button>
+        <button class="dropdown-item" onclick="openSchedulePanel();toggleMoreMenu()">⏰ <span data-i18n="menu_schedule">スケジュール自動化</span></button>
+        <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 <span data-i18n="menu_workflow">ワークフロー</span></button>
         <button class="dropdown-item" onclick="openWebhookModal();toggleMoreMenu()">🔗 Webhook URL</button>
+        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ <span data-i18n="menu_create_agent">エージェント作成</span></button>
+        <!-- ── 分析 ── -->
         <div class="dropdown-sep"></div>
-        <button class="dropdown-item" onclick="window.open('/static/landing.html')">🏠 ランディングページ</button>
-        <button class="dropdown-item" onclick="window.open('/static/terms.html')">📜 利用規約</button>
-        <button class="dropdown-item" onclick="window.open('/static/privacy.html')">🔒 プライバシーポリシー</button>
+        <div class="dropdown-label">分析・統計</div>
+        <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 <span data-i18n="menu_usage">使用状況</span></button>
+        <button class="dropdown-item" onclick="openRankingPanel();toggleMoreMenu()">🏆 <span data-i18n="menu_ranking">エージェントランキング</span></button>
+        <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 <span data-i18n="menu_dashboard">ダッシュボード</span></button>
+        <!-- ── 設定 ── -->
         <div class="dropdown-sep"></div>
-        <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 ログイン</button>
-        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none">👤 <span id="user-email-display"></span> (ログアウト)</button>
-        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 APIキー管理</button>
-        <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 チームワークスペース</button>
+        <div class="dropdown-label">設定・その他</div>
+        <button class="dropdown-item mobile-only" onclick="toggleLangMenu();toggleMoreMenu()">🌐 <span data-i18n="menu_language">言語切り替え</span></button>
+        <button class="dropdown-item mobile-only" onclick="toggleTier();toggleMoreMenu()">⚡ <span id="tier-menu-label" data-i18n="menu_model_switch">モデル切り替え</span></button>
+        <button class="dropdown-item mobile-only" onclick="toggleTheme();toggleMoreMenu()">🌙 <span data-i18n="menu_theme">ダーク/ライト</span></button>
+        <button class="dropdown-item" onclick="openNotificationSettings();toggleMoreMenu()">🔔 <span data-i18n="menu_notifications">通知設定</span></button>
+        <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 <span data-i18n="menu_team">チームワークスペース</span></button>
         <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API設定</button>
+        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機タスク削除 (<span id="hitlPendingCount">0</span>件)</button>
+        <button class="dropdown-item" onclick="installApp();toggleMoreMenu()">📲 <span data-i18n="menu_install">アプリをインストール</span></button>
+        <button class="dropdown-item" onclick="sendFeedback();toggleMoreMenu()">💬 <span data-i18n="menu_feedback">フィードバックを送る</span></button>
+        <button class="dropdown-item" onclick="window.open('/static/features.html')">✨ 機能一覧</button>
+        <button class="dropdown-item" onclick="window.open('/static/terms.html')">📜 <span data-i18n="menu_terms">利用規約</span></button>
+        <button class="dropdown-item" onclick="window.open('/static/privacy.html')">🔒 <span data-i18n="menu_privacy">プライバシーポリシー</span></button>
       </div>
     </div>
   </div>
@@ -1036,11 +1105,19 @@ body {
 <!-- ── Agent Selector Modal ────────────────────────────────────────────── -->
 <div id="modal-backdrop" onclick="closeAgentSelector()"></div>
 <div id="agent-selector-modal">
-  <h3>AIエージェント</h3>
+  <h3 data-i18n="ai_agents">AIエージェント</h3>
+  <input id="agent-search" type="text" placeholder="🔍 エージェントを検索…" oninput="filterAgents()" autocomplete="off">
+  <div class="agent-cat-tabs" id="agent-cat-tabs">
+    <button class="agent-cat-tab active" data-cat="all" onclick="selectAgentCat('all')">全て</button>
+    <button class="agent-cat-tab" data-cat="business" onclick="selectAgentCat('business')">💼 ビジネス</button>
+    <button class="agent-cat-tab" data-cat="creative" onclick="selectAgentCat('creative')">🎨 クリエイティブ</button>
+    <button class="agent-cat-tab" data-cat="tech" onclick="selectAgentCat('tech')">⚙️ 技術</button>
+    <button class="agent-cat-tab" data-cat="google" onclick="selectAgentCat('google')">🔵 Google</button>
+  </div>
   <div class="agent-grid" id="agent-grid-pills"></div>
   <div class="agent-selector-footer">
-    <span style="font-size:11px;color:var(--muted)">クリックで切り替え</span>
-    <button onclick="closeAgentSelector()">閉じる</button>
+    <span style="font-size:11px;color:var(--muted)" data-i18n="click_to_switch">クリックで切り替え</span>
+    <button onclick="closeAgentSelector()" data-i18n="close">閉じる</button>
   </div>
 </div>
 
@@ -1048,15 +1125,15 @@ body {
 <div id="memory-modal" class="modal" hidden onclick="if(event.target===this)closeMemoryModal()">
   <div class="modal-box" style="max-height:80vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0">🧠 長期記憶</h3>
-      <button onclick="clearAllMemories()" style="background:none;border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--red);cursor:pointer;">全削除</button>
+      <h3 style="margin:0">🧠 <span data-i18n="long_term_memory">長期記憶</span></h3>
+      <button onclick="clearAllMemories()" style="background:none;border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--red);cursor:pointer;" data-i18n="delete_all">全削除</button>
     </div>
-    <input class="mem-search" id="memSearchModal" type="text" placeholder="記憶を検索…" oninput="searchMemories(this.value)">
+    <input class="mem-search" id="memSearchModal" type="text" placeholder="記憶を検索…" data-i18n-placeholder="search_memories" oninput="searchMemories(this.value)">
     <div id="memoryListModal">
-      <div class="mem-empty">記憶なし<br>会話すると自動的に保存されます</div>
+      <div class="mem-empty" data-i18n="memory_empty">記憶なし<br>会話すると自動的に保存されます</div>
     </div>
     <div class="modal-btns">
-      <button onclick="closeMemoryModal()">閉じる</button>
+      <button onclick="closeMemoryModal()" data-i18n="close">閉じる</button>
     </div>
   </div>
 </div>
@@ -1064,7 +1141,7 @@ body {
 <!-- ── Main ────────────────────────────────────────────────────────────── -->
 <div id="main">
   <div id="chatWrap">
-    <div id="drop-overlay">📂 ここにドロップ</div>
+    <div id="drop-overlay">📂 <span data-i18n="drop_here">ここにドロップ</span></div>
 
     <div id="chatMessages">
       <!-- Welcome message -->
@@ -1072,9 +1149,9 @@ body {
         <div class="msg-ai" style="margin-top:8px;">
           <div class="msg-ai-avatar" style="background:rgba(139,92,246,0.12);">◈</div>
           <div class="msg-ai-body">
-            <div class="msg-ai-name">Synapse</div>
-            <div class="msg-ai-bubble">
-              <strong>Synapse — Multi-Agent AI</strong> へようこそ。<br><br>
+            <div class="msg-ai-name">chatweb.ai</div>
+            <div class="msg-ai-bubble" id="welcome-bubble">
+              <strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>
               複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br>
               <span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;
               <span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;
@@ -1093,22 +1170,11 @@ body {
     <div id="inputAreaOuter">
       <!-- Templates panel -->
       <div id="templates-panel">
-        <div id="templates-panel-title">📋 会話テンプレート</div>
+        <div id="templates-panel-title">📋 <span data-i18n="conversation_templates">会話テンプレート</span></div>
         <div class="templates-grid" id="templates-grid"></div>
       </div>
       <!-- Quick chips -->
-      <div class="quick-chips" id="quickChips">
-        <span class="chip" onclick="useChip(this)">🔍 Synapseとは何か教えて</span>
-        <span class="chip" onclick="useChip(this)">⚙️ Rustで非同期HTTPサーバーを書いて</span>
-        <span class="chip" onclick="useChip(this)">🌐 https://example.com をテストして</span>
-        <span class="chip" onclick="useChip(this)">📨 田中さんにSlackで進捗報告を送って</span>
-        <span class="chip" onclick="useChip(this)">💹 NVDAの財務分析してメールで送って</span>
-        <span class="chip" onclick="useChip(this)">⚖️ NDA契約の法的リスクを確認して</span>
-        <span class="chip" onclick="useChip(this)">🌐 https://chatweb.ai をスクリーンショットして品質チェック</span>
-        <span class="chip" onclick="useChip(this)">🚀 synapse-demoをFly.ioにデプロイして</span>
-        <span class="chip" onclick="useChip(this)">🛠️ gitステータスを確認して</span>
-        <span class="chip" onclick="useChip(this)">🌐 A2Aプロトコルテスト</span>
-      </div>
+      <div class="quick-chips" id="quickChips"></div>
       <!-- File chips -->
       <div id="file-chips"></div>
       <!-- Input row -->
@@ -1116,16 +1182,16 @@ body {
         <div style="position:relative;">
           <button id="plus-btn" onclick="togglePlusPopup()" title="添付・テンプレート">+</button>
           <div id="plus-popup">
-            <button class="plus-popup-item" onclick="document.getElementById('file-input').click();closePlusPopup()">📎 ファイルを添付</button>
-            <button class="plus-popup-item" onclick="document.getElementById('image-file-input').click();closePlusPopup()">🖼️ 画像を添付</button>
-            <button class="plus-popup-item" onclick="closePlusPopup();toggleTemplates()">📋 テンプレート</button>
+            <button class="plus-popup-item" onclick="document.getElementById('file-input').click();closePlusPopup()">📎 <span data-i18n="attach_file">ファイルを添付</span></button>
+            <button class="plus-popup-item" onclick="document.getElementById('image-file-input').click();closePlusPopup()">🖼️ <span data-i18n="attach_image">画像を添付</span></button>
+            <button class="plus-popup-item" onclick="closePlusPopup();toggleTemplates()">📋 <span data-i18n="template">テンプレート</span></button>
           </div>
         </div>
         <textarea id="chatInput" rows="1"
           placeholder="メッセージを入力…  Shift+Enter で改行"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"></textarea>
-        <button id="mic-btn" title="音声入力" onclick="toggleVoice()">🎤</button>
+        <button id="mic-btn" title="音声入力" data-i18n-title="voice_input" onclick="toggleVoice()">🎤</button>
         <button id="sendBtn" onclick="sendMessage()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -1209,25 +1275,65 @@ function renderAgents() {
   });
 
   // New agent grid pills in selector modal
-  const grid = document.getElementById('agent-grid-pills');
-  if (grid) {
-    grid.innerHTML = '';
-    Object.entries(agents).forEach(([id, ag]) => {
-      const emoji = getAgentEmoji(id);
-      const btn = document.createElement('button');
-      btn.className = 'agent-grid-pill' + (id === _selectedAgentId ? ' selected' : '');
-      btn.dataset.agentId = id;
-      // Strip leading emoji from name to avoid duplication
-      const cleanName = ag.name.replace(/^[\p{Emoji}\s]+/u, '').trim();
-      btn.innerHTML = `<span>${emoji}</span><span>${cleanName}</span>`;
-      btn.onclick = () => { selectAgent(id); openAgentDetail(id); };
-      grid.appendChild(btn);
-    });
-  }
+  renderAgentPills();
 
   // If nothing selected yet and agents exist, update pill label
   if (!_selectedAgentId && Object.keys(agents).length > 0) {
     updateAgentPill(null, 'エージェント自動選択');
+  }
+}
+
+// Category mapping (agent id → category)
+const AGENT_CATEGORIES = {
+  analyst:'business', legal:'business', finance:'business', schedule:'business',
+  sql:'business', crm:'business', meeting:'business', sns:'business',
+  image:'creative', site_publisher:'creative', presentation:'creative',
+  code:'tech', coder:'tech', deployer:'tech', devops:'tech', mobile:'tech', qa:'tech',
+  gmail:'google', calendar:'google', drive:'google', sheets:'google',
+  docs:'google', contacts:'google', tasks:'google',
+};
+
+let _activeCat = 'all';
+
+function selectAgentCat(cat) {
+  _activeCat = cat;
+  document.querySelectorAll('.agent-cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === cat);
+  });
+  renderAgentPills();
+}
+
+function filterAgents() {
+  renderAgentPills();
+}
+
+function renderAgentPills() {
+  const grid = document.getElementById('agent-grid-pills');
+  if (!grid) return;
+  const query = (document.getElementById('agent-search')?.value || '').toLowerCase();
+  grid.innerHTML = '';
+  Object.entries(agents).forEach(([id, ag]) => {
+    // Category filter
+    if (_activeCat !== 'all') {
+      const cat = AGENT_CATEGORIES[id] || 'other';
+      if (cat !== _activeCat) return;
+    }
+    // Search filter
+    if (query) {
+      const haystack = (ag.name + ' ' + (ag.description || '') + ' ' + id).toLowerCase();
+      if (!haystack.includes(query)) return;
+    }
+    const emoji = getAgentEmoji(id);
+    const btn = document.createElement('button');
+    btn.className = 'agent-grid-pill' + (id === _selectedAgentId ? ' selected' : '');
+    btn.dataset.agentId = id;
+    const cleanName = ag.name.replace(/^[\p{Emoji}\s]+/u, '').trim();
+    btn.innerHTML = `<span>${emoji}</span><span>${cleanName}</span>`;
+    btn.onclick = () => { selectAgent(id); openAgentDetail(id); };
+    grid.appendChild(btn);
+  });
+  if (!grid.hasChildNodes()) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;width:100%;text-align:center;">見つかりませんでした</div>';
   }
 }
 
@@ -1261,6 +1367,11 @@ function toggleAgentSelector() {
   } else {
     modal.classList.add('open');
     backdrop.classList.add('open');
+    // Reset search & category on open
+    const s = document.getElementById('agent-search');
+    if (s) s.value = '';
+    selectAgentCat('all');
+    setTimeout(() => s?.focus(), 50);
   }
 }
 
@@ -1672,6 +1783,147 @@ function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
 }
+// ── 100 Quick Chips (実際に使える具体的な質問) ──────────────────────────
+const ALL_CHIPS = [
+  // 📣 SNS/マーケティング — すぐ使える投稿文
+  "📣 「AIで業務効率化」をテーマにX投稿を絵文字多めで3パターン書いて",
+  "📣 新サービスのInstagramキャプション＋ハッシュタグ30個を作って",
+  "📣 エンジニア採用のLinkedIn投稿を書いて（カジュアルな雰囲気で）",
+  "📣 「○○さん、先日のウェビナーありがとうございました」のフォローDM文を書いて",
+  "📣 メルマガ件名を開封率が上がる5パターン考えて",
+  "📣 SaaSサービスの料金改定を告知するXスレッドを書いて",
+  "📣 「創業5周年」の感謝ポストをXとLinkedIn用に書いて",
+  "📣 来週のコンテンツカレンダー（月〜金 各SNS）を作って",
+  "📣 自社サービスのキャッチコピーを10案考えて（簡潔・刺さるもの）",
+  "📣 LINE公式アカウントの友達追加後の初回あいさつメッセージを作って",
+
+  // 📝 会議メモ — 即議事録に変換
+  "📝 「決定: 来月15日リリース。田中さんUI担当、山田さんAPI担当。予算80万」を議事録にして",
+  "📝 週次定例MTGの議事録テンプレート（決定事項・TODO・議題欄あり）を作って",
+  "📝 「売上目標未達、原因は営業リソース不足、来月採用強化で対応」を取締役会報告書にして",
+  "📝 1on1メモを振り返りシート（成果・課題・ネクストアクション）にまとめて",
+  "📝 プロジェクトキックオフのアジェンダと議事録フォーマットを作って",
+
+  // 💼 CRM/営業 — そのまま送れるメール
+  "💼 先週デモした顧客に「検討状況いかがでしょうか」のフォローメールを書いて",
+  "💼 初回飛び込み営業メールを書いて（ITツール導入支援・中小企業向け）",
+  "💼 提案後2週間音沙汰なし → 価値を再提示するメールを書いて",
+  "💼 失注した案件のお礼＋今後の関係継続メールを書いて",
+  "💼 月次営業レポートのテンプレート（目標・実績・達成率・来月の戦略）を作って",
+  "💼 クロージングで「高い」と言われた時の返し方スクリプトを作って",
+  "💼 新規リード獲得後の最初のアプローチ〜契約までの営業フロー図を作って",
+
+  // ⚖️ 法務 — 使える雛形をすぐ作成
+  "⚖️ フリーランス業務委託契約書の雛形を作って（報酬月50万・3ヶ月・秘密保持あり）",
+  "⚖️ SaaSサービスの利用規約の雛形を作って（日本法準拠）",
+  "⚖️ 英語のNDAを日本語に翻訳して法的リスクを確認して",
+  "⚖️ プライバシーポリシーの雛形を作って（個人情報保護法・GDPR対応）",
+  "⚖️ 従業員との秘密保持・競業避止契約書の雛形を作って",
+  "⚖️ 外部委託先との基本契約書の注意点を教えて",
+
+  // 💹 金融 — リアルデータ分析
+  "💹 NVDAの直近決算を分析して投資判断を教えて",
+  "💹 AppleとMicrosoftの過去1年の株価パフォーマンスを比較して",
+  "💹 日経平均が3万円台を維持できるか今の要因を分析して",
+  "💹 ビットコインの半減期後の価格推移パターンを分析して",
+  "💹 S&P500インデックス投資 vs 個別株の長期リターン比較をして",
+  "💹 円安が中小企業に与える影響を分析して対策を提案して",
+
+  // 🎤 プレゼン — 作ってそのまま公開
+  "🎤 「AIを使った業務効率化」の社内勉強会スライド5枚を作って公開して",
+  "🎤 スタートアップのシードラウンド投資家向けピッチデック（10枚）を作って公開して",
+  "🎤 新機能リリースの顧客向け説明資料を作って公開して",
+  "🎤 四半期の事業進捗報告スライドのテンプレートを作って公開して",
+  "🎤 チーム採用説明会用のカルチャーデック（会社紹介スライド）を作って公開して",
+
+  // 📊 データ分析
+  "📊 「先月比売上-20%」の原因を仮説立てしてMECEに整理して",
+  "📊 SaaSビジネスのMRR・ARR・チャーン率・LTVの計算方法と改善施策を教えて",
+  "📊 A/Bテストの結果（A: CVR 3.2%, B: CVR 3.8%, n=1000）が有意差あるか検定して",
+  "📊 ユーザーインタビュー10件のフィードバックをカテゴリ分けして課題を整理して",
+  "📊 競合5社の機能比較マトリクスを作って（価格・機能・対象ユーザー）",
+
+  // 🌐 サイト公開 — 今すぐ使えるツール
+  "🌐 ポートフォリオサイトを作って [自分の名前].chatweb.aiで公開して",
+  "🌐 プロジェクト進捗管理ダッシュボードアプリを作って公開して",
+  "🌐 カウントダウンタイマーサイト（日付設定できる）を作って公開して",
+  "🌐 会社の採用ランディングページを作って公開して",
+  "🌐 イベント参加登録フォーム付きページを作って公開して",
+  "🌐 シンプルなBMI計算ツールを作って公開して",
+  "🌐 英語→日本語 瞬時翻訳ツールサイトを作って公開して",
+  "🌐 日替わりランダム名言サイトを作って公開して",
+
+  // 🎨 画像生成
+  "🎨 テックスタートアップらしい紫グラデーションのロゴを生成して",
+  "🎨 「AIとビジネス」をテーマにしたXのヘッダー画像を作って",
+  "🎨 和風モダンな飲食店のSNSバナーを作って",
+  "🎨 プレゼン表紙用のシンプルでプロフェッショナルな背景画像を作って",
+
+  // ⚙️ コード — 実行まで
+  "⚙️ PythonでWebスクレイピングしてCSVに保存するコードを書いて実行して",
+  "⚙️ FastAPIで認証付きCRUD APIを書いて動作確認して",
+  "⚙️ SQLでユーザーテーブルのコホート分析クエリを書いて",
+  "⚙️ TypeScriptでZodバリデーション付きのフォームを書いて",
+  "⚙️ Pythonでスプレッドシートのデータをmatplotlibでグラフ化して",
+  "⚙️ Dockerで開発環境を構築するdocker-compose.ymlを書いて",
+  "⚙️ GitHubActionsのCI/CDパイプラインのyamlを書いて",
+
+  // 📅 Google連携
+  "📅 明日14:00に「田中さんとの営業MTG」をGoogleカレンダーに追加して",
+  "📧 「先日はありがとうございました。提案書を添付します」のメールを田中さんに送って",
+  "📊 今週の作業時間をGoogleシートに記録するテンプレートを作って入力して",
+  "📝 「今日の会議まとめ」をGoogle Docsに議事録として保存して",
+  "📂 Googleドライブの契約書フォルダのファイル一覧を確認して",
+
+  // 🚀 DevOps
+  "🚀 fly deploy --app myapp で本番デプロイして結果を教えて",
+  "🛠️ GitHubの最新PRを確認してマージして",
+  "🛠️ 本番サーバーのエラーログを確認して原因を教えて",
+
+  // 📄 ファイル解析（アップロード後）
+  "📄 アップロードしたPDFを要約して重要なポイントを3つ教えて",
+  "📄 アップロードしたExcelの売上データを分析して前月比と傾向を教えて",
+  "📄 アップロードした契約書PDFから重要条項とリスクを抽出して",
+  "📄 アップロードしたCSVデータでチャーン率を計算して",
+
+  // 📚 知識ベース活用
+  "📚 社内マニュアルから有給申請の手順を教えて",
+  "📚 アップロードした仕様書から実装すべき機能一覧を抽出して",
+
+  // 🚄 旅行
+  "🚄 来週月曜の東京発→大阪着の新幹線の時刻と料金を調べて",
+  "✈️ 来月の東京→台北の往復航空券の相場を調べて",
+  "🏨 京都の4つ星以上の温泉旅館を3軒比較して",
+
+  // 📨 通知・連絡
+  "📨 「今日のデプロイ完了しました」とSlackのdevチャンネルに送って",
+  "📨 チームメンバー全員に週次目標達成のお知らせメールを送って",
+
+  // 🔍 リサーチ
+  "🔍 ChatGPT・Claude・Geminiの最新モデルの性能と料金を比較して",
+  "🔍 日本のSaaS市場規模と成長率トレンドを調べてレポートにして",
+  "🔍 競合3社の強み弱みをSWOT分析して",
+  "🔍 生成AIの業務活用で効果が出た事例を5つ調べて",
+  "🔍 プロダクトマネージャーに必要なスキルセットと学習リソースを調べて",
+
+  // 🤖 汎用・日常
+  "🤖 この長い英語メールを日本語に翻訳して要点を3行でまとめて",
+  "🤖 上司へのお詫びメールを丁寧な敬語に書き直して",
+  "🤖 来週の仕事の優先順位を付けてスケジュールを組んで",
+  "🤖 プレゼンの冒頭30秒の掴みトークを3パターン書いて",
+  "🤖 社内向けAI活用ガイドライン（禁止事項・推奨事項付き）の雛形を作って",
+];
+
+function initQuickChips() {
+  const chips = document.getElementById('quickChips');
+  if (!chips) return;
+  // Shuffle and pick 20
+  const shuffled = [...ALL_CHIPS].sort(() => Math.random() - 0.5);
+  chips.innerHTML = shuffled.slice(0, 20).map(c =>
+    `<span class="chip" onclick="useChip(this)">${c}</span>`
+  ).join('');
+}
+
 function useChip(el) {
   const text = el.textContent.replace(/^[^\s]+\s/,'');
   document.getElementById('chatInput').value = text;
@@ -1775,8 +2027,10 @@ async function sendMessage() {
       // ── Streaming ──────────────────────────────────────────────────────────
       case 'stream_start': {
         document.getElementById(typingId)?.closest('.msg-container')?.remove();
-        const agName = agents[currentAgentId]?.name || 'AI';
-        startStreamBubble(currentAgentId || 'research', agName);
+        const _sid = data.agent_id || currentAgentId || 'research';
+        const agName = data.agent_name || agents[_sid]?.name || 'AI';
+        if (data.agent_id) currentAgentId = data.agent_id;
+        startStreamBubble(_sid, agName);
         setStatus(agName + ' が生成中…');
         break;
       }
@@ -2111,7 +2365,8 @@ function _applyMarkdown(text) {
     }).join('');
     return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
   });
-  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => `<img src="${url.replace(/&amp;/g,'&')}" alt="${alt}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;">`);
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, url) => `<a href="${url.replace(/&amp;/g,'&')}" target="_blank" rel="noopener">${txt}</a>`);
   t = t.replace(/^[\*\-]\s(.+)$/gm, '<li>$1</li>');
   t = t.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
   t = t.replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>');
@@ -2210,9 +2465,9 @@ function getAgentBg(id) {
 
 // ── Persona Feedback ──────────────────────────────────────────────────────────
 const PERSONAS = [
-  { id:'exec',     label:'👔 経営者・CTO',    prompt:'あなたは経営者またはCTOです。このSynapseデモを投資・導入検討の視点で使ってみて、率直なフィードバックを3点挙げてください。良い点・改善点・「これがあれば使う」条件を含めてください。' },
-  { id:'dev',      label:'⚙️ エンジニア',      prompt:'あなたはバックエンドエンジニアです。このSynapseデモの技術的な実装を評価してください。アーキテクチャ・スケーラビリティ・セキュリティ上の懸念、「実際に使えるか」の観点でフィードバックをください。' },
-  { id:'marketer', label:'📣 マーケター',      prompt:'あなたはBtoB SaaSのマーケターです。このSynapseデモを評価してください。訴求力・改善すべきUX・「刺さる」ユーザー像を教えてください。' },
+  { id:'exec',     label:'👔 経営者・CTO',    prompt:'あなたは経営者またはCTOです。このchatweb.aiデモを投資・導入検討の視点で使ってみて、率直なフィードバックを3点挙げてください。良い点・改善点・「これがあれば使う」条件を含めてください。' },
+  { id:'dev',      label:'⚙️ エンジニア',      prompt:'あなたはバックエンドエンジニアです。このchatweb.aiデモの技術的な実装を評価してください。アーキテクチャ・スケーラビリティ・セキュリティ上の懸念、「実際に使えるか」の観点でフィードバックをください。' },
+  { id:'marketer', label:'📣 マーケター',      prompt:'あなたはBtoB SaaSのマーケターです。このchatweb.aiデモを評価してください。訴求力・改善すべきUX・「刺さる」ユーザー像を教えてください。' },
   { id:'investor', label:'💰 投資家',          prompt:'あなたはAIスタートアップ専門の投資家です。このデモのビジネスポテンシャルを評価してください。市場規模・差別化・リスク・投資判断を率直に教えてください。' },
   { id:'enduser',  label:'👤 一般ユーザー',    prompt:'あなたはITに詳しくない一般のビジネスユーザーです。このA2Aチャットを初めて使った感想を率直に教えてください。わかりにくい点・怖いと感じた点・日常業務で使えるかを教えてください。' },
 ];
@@ -2240,7 +2495,7 @@ function runPersonaFB(id) {
   document.getElementById('fbOverlay')?.remove();
   const p = PERSONAS.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('chatInput').value = p.prompt + '\n\n【デモ概要】Synapse: FastAPI+Claude API製マルチエージェントチャット。トークンストリーミング・Playwrightブラウザ・A2A委譲・長期記憶・HITL・Agentループ実装済み。';
+  document.getElementById('chatInput').value = p.prompt + '\n\n【デモ概要】chatweb.ai: FastAPI+Claude API製マルチエージェントチャット。トークンストリーミング・Playwrightブラウザ・A2A委譲・長期記憶・HITL・Agentループ実装済み。';
   sendMessage();
 }
 
@@ -2293,7 +2548,7 @@ function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) return;
   _recognition = new SpeechRecognition();
-  _recognition.lang = 'ja-JP';
+  _recognition.lang = (LANG_META[_currentLang]||LANG_META.ja).speech;
   _recognition.continuous = false;
   _recognition.interimResults = true;
   _recognition.onresult = (e) => {
@@ -2647,10 +2902,11 @@ window.fetch = _patchedFetch;
 function speakText(text) {
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text.replace(/[#*`|]/g, ''));
-  utt.lang = 'ja-JP';
+  const ttsLang = window._ttsLang || (LANG_META[_currentLang]||LANG_META.ja).speech;
+  utt.lang = ttsLang;
   utt.rate = 1.1;
   const voices = speechSynthesis.getVoices();
-  const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+  const jaVoice = voices.find(v => v.lang.startsWith(ttsLang.split('-')[0]));
   if (jaVoice) utt.voice = jaVoice;
   utt.onstart = () => { document.getElementById('tts-stop-btn')?.classList.add('speaking'); };
   utt.onend = utt.onerror = () => { document.getElementById('tts-stop-btn')?.classList.remove('speaking'); };
@@ -2683,10 +2939,11 @@ function addTTSButton(bubbleEl) {
       document.querySelectorAll('.tts-btn.speaking').forEach(b => b.classList.remove('speaking'));
       btn.classList.add('speaking');
       const utt = new SpeechSynthesisUtterance(txt.replace(/[#*`|]/g, ''));
-      utt.lang = 'ja-JP';
+      const ttsLang2 = window._ttsLang || (LANG_META[_currentLang]||LANG_META.ja).speech;
+      utt.lang = ttsLang2;
       utt.rate = 1.1;
       const voices = speechSynthesis.getVoices();
-      const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+      const jaVoice = voices.find(v => v.lang.startsWith(ttsLang2.split('-')[0]));
       if (jaVoice) utt.voice = jaVoice;
       utt.onstart = () => { document.getElementById('tts-stop-btn')?.classList.add('speaking'); };
       utt.onend = utt.onerror = () => {
@@ -3011,6 +3268,28 @@ async function sendMagicLink() {
   } finally { btn.disabled = false; }
 }
 
+async function showLinkCode() {
+  try {
+    const r = await fetch('/link/code');
+    const d = await r.json();
+    const code = d.code;
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:32px;width:360px;max-width:90vw;text-align:center">
+      <h3 style="margin-bottom:12px">🔗 LINE / Telegram 連携</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">以下のコードをLINEまたはTelegramで入力してください（10分間有効）</p>
+      <div style="font-size:36px;font-weight:700;letter-spacing:8px;color:var(--accent);margin-bottom:8px;font-family:monospace">${code}</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">LINE: <code>/link ${code}</code><br>Telegram: <code>/link ${code}</code></p>
+      <button onclick="navigator.clipboard.writeText('/link ${code}');this.textContent='✅ コピー済み'" style="padding:8px 20px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:14px;margin-right:8px">📋 コピー</button>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:14px">閉じる</button>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } catch(e) {
+    alert('ログインが必要です');
+  }
+}
+
 async function doLogout() {
   await fetch('/auth/logout', {method:'POST'});
   currentUser = null;
@@ -3027,13 +3306,18 @@ function updateAuthUI(user) {
     lb.style.display = 'none';
     ob.style.display = '';
     sb.style.display = '';
+    const lcb = document.getElementById('link-code-btn');
+    if (lcb) lcb.style.display = '';
     if (ued) ued.textContent = user.email;
     hideLoginGate();
     closeLoginModal();
+    syncConsentFromServer();
   } else {
     lb.style.display = '';
     ob.style.display = 'none';
     sb.style.display = 'none';
+    const lcb = document.getElementById('link-code-btn');
+    if (lcb) lcb.style.display = 'none';
     showLoginGate();
   }
 }
@@ -3048,13 +3332,41 @@ async function checkAuth() {
 }
 
 function showLoginGate() {
-  // Disable input
+  // Disable input and show login button inline
   const inp = document.getElementById('msgInput');
   const btn = document.getElementById('sendBtn');
   if (inp) { inp.disabled = true; inp.placeholder = 'ログインしてから使えます'; }
   if (btn) btn.disabled = true;
-  // Show login modal immediately
-  openLoginModal();
+  // Inject Google login button above input
+  let gateEl = document.getElementById('login-gate-bar');
+  if (!gateEl) {
+    gateEl = document.createElement('div');
+    gateEl.id = 'login-gate-bar';
+    gateEl.style.cssText = 'padding:10px 28px;max-width:780px;margin:0 auto;display:flex;align-items:center;gap:10px;justify-content:center;';
+    gateEl.innerHTML = `
+      <span style="font-size:13px;color:var(--muted)">ログインが必要です</span>
+      <a href="/auth/google" style="display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:8px;background:#fff;color:#3c4043;border:1px solid #dadce0;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;">
+        <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.51 10.52A4.8 4.8 0 0 1 4.26 9c0-.53.09-1.04.25-1.52V5.41H1.83A8 8 0 0 0 .98 9c0 1.3.31 2.52.85 3.59l2.68-2.07z"/><path fill="#EA4335" d="M8.98 3.58c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 .98 9l2.68 2.07c.63-1.89 2.39-3.29 4.47-3.29z"/></svg>
+        Googleでログイン
+      </a>
+      <button onclick="openLoginModal()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text);font-size:13px;cursor:pointer;">メールで登録</button>
+    `;
+    const inputOuter = document.getElementById('inputAreaOuter');
+    if (inputOuter) inputOuter.prepend(gateEl);
+  }
+}
+
+// Generic inline login prompt for modals
+function loginRequiredHTML(message = 'この機能にはログインが必要です') {
+  return `<div style="text-align:center;padding:32px 16px;">
+    <div style="font-size:36px;margin-bottom:12px;">🔑</div>
+    <p style="color:var(--muted);margin-bottom:20px;font-size:14px;">${message}</p>
+    <a href="/auth/google" style="display:inline-flex;align-items:center;gap:10px;padding:12px 24px;border-radius:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;font-size:15px;font-weight:500;text-decoration:none;">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.51 10.52A4.8 4.8 0 0 1 4.26 9c0-.53.09-1.04.25-1.52V5.41H1.83A8 8 0 0 0 .98 9c0 1.3.31 2.52.85 3.59l2.68-2.07z"/><path fill="#EA4335" d="M8.98 3.58c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 .98 9l2.68 2.07c.63-1.89 2.39-3.29 4.47-3.29z"/></svg>
+      Googleでログイン（1クリック）
+    </a>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted)">または <button onclick="openLoginModal()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;text-decoration:underline;">メールアドレスで登録</button></div>
+  </div>`;
 }
 
 function hideLoginGate() {
@@ -3567,7 +3879,8 @@ async function loadRanking() {
   const tbody = document.getElementById('ranking-tbody');
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">読み込み中…</td></tr>';
   try {
-    const r = await fetch(`/stats/usage`);
+    const r = await fetch(`/stats/agents`, { credentials: 'include' });
+    if (r.status === 401) { tbody.innerHTML = `<tr><td colspan="5">${loginRequiredHTML('ランキングを見るにはログインが必要です')}</td></tr>`; return; }
     const d = await r.json();
     const agts = (d.agents || []).sort((a,b) => (b.run_count||0) - (a.run_count||0));
     if (agts.length === 0) {
@@ -3575,12 +3888,13 @@ async function loadRanking() {
       return;
     }
     tbody.innerHTML = agts.map((a, i) => {
-      const avgCost = a.run_count ? ((a.total_cost||0)/a.run_count).toFixed(5) : '—';
+      const rawAvg = a.run_count ? (a.total_cost||0)/a.run_count : 0;
+      const avgCost = a.run_count ? (rawAvg < 0.00001 ? '< $0.00001' : `$${rawAvg.toFixed(5)}`) : '—';
       const ag = agents[a.agent_id] || {};
       const emoji = getAgentEmoji(a.agent_id);
       return `<tr style="border-top:1px solid var(--border)">
         <td style="padding:8px 4px;text-align:center;font-weight:700;color:${i<3?'var(--amber)':'var(--muted)'}">${i+1}</td>
-        <td style="padding:8px">${emoji} ${escHtml(ag.name||a.agent_id)}</td>
+        <td style="padding:8px">${escHtml(ag.name||a.agent_id)}</td>
         <td style="padding:8px;text-align:right;color:var(--muted)">${a.run_count||0}</td>
         <td style="padding:8px;text-align:right;color:#34d399">$${avgCost}</td>
         <td style="padding:8px;text-align:right;font-size:11px;color:var(--muted)">${a.last_used ? new Date(a.last_used).toLocaleDateString('ja-JP') : '—'}</td>
@@ -3755,35 +4069,547 @@ async function runToolTest() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// FEATURE: MULTI-LANGUAGE UI
+// FEATURE: MULTI-LANGUAGE UI (i18n)
 // ══════════════════════════════════════════════════════════════════════════════
-const LANG_STRINGS = {
-  ja: { placeholder: 'メッセージを入力…  Shift+Enter で改行', send: '送信' },
-  en: { placeholder: 'Type a message…  Shift+Enter for newline', send: 'Send' },
-  zh: { placeholder: '输入消息…  Shift+Enter 换行', send: '发送' },
-  ko: { placeholder: '메시지 입력…  Shift+Enter 줄바꿈', send: '전송' },
-  fr: { placeholder: 'Tapez un message…  Shift+Enter pour nouvelle ligne', send: 'Envoyer' },
-  es: { placeholder: 'Escribe un mensaje…  Shift+Enter para nueva línea', send: 'Enviar' },
+const LANG_META = {
+  ja: { label: 'JA', speech: 'ja-JP', dir: 'ltr' },
+  en: { label: 'EN', speech: 'en-US', dir: 'ltr' },
+  zh: { label: 'ZH', speech: 'zh-CN', dir: 'ltr' },
+  ko: { label: 'KO', speech: 'ko-KR', dir: 'ltr' },
+  fr: { label: 'FR', speech: 'fr-FR', dir: 'ltr' },
+  es: { label: 'ES', speech: 'es-ES', dir: 'ltr' },
+  de: { label: 'DE', speech: 'de-DE', dir: 'ltr' },
+  pt: { label: 'PT', speech: 'pt-BR', dir: 'ltr' },
 };
-let _currentLang = localStorage.getItem('synapse_lang') || 'ja';
+const LANG_STRINGS = {
+  ja: {
+    select_agent: 'エージェントを選択',
+    input_placeholder: 'メッセージを入力…  Shift+Enter で改行',
+    send: '送信',
+    voice_input: '音声入力',
+    close: '閉じる',
+    delete_all: '全削除',
+    ai_agents: 'AIエージェント',
+    click_to_switch: 'クリックで切り替え',
+    long_term_memory: '長期記憶',
+    search_memories: '記憶を検索…',
+    memory_empty: '記憶なし\n会話すると自動的に保存されます',
+    drop_here: 'ここにドロップ',
+    conversation_templates: '会話テンプレート',
+    attach_file: 'ファイルを添付',
+    attach_image: '画像を添付',
+    template: 'テンプレート',
+    unit_items: '件',
+    tier_economy: 'エコノミー',
+    tier_premium: 'プレミアム',
+    menu_dashboard: 'ダッシュボード',
+    menu_usage: '使用状況',
+    menu_ranking: 'エージェントランキング',
+    menu_export_md: '会話をエクスポート (MD)',
+    menu_export_json: '会話をエクスポート (JSON)',
+    menu_feedback: 'フィードバック',
+    menu_install: 'インストール',
+    menu_knowledge: 'ナレッジベース',
+    menu_schedule: 'スケジュール自動化',
+    menu_marketplace: 'エージェントマーケット',
+    menu_workflow: 'ワークフロービルダー',
+    menu_browser: 'ブラウザ操作',
+    menu_my_sites: 'マイサイト',
+    menu_search: '会話を検索',
+    menu_files: 'ファイル管理',
+    menu_abtest: 'A/Bテスト',
+    menu_imagegen: '画像生成',
+    menu_custom_tools: 'カスタムツール',
+    menu_notifications: '通知設定',
+    menu_tts_stop: 'TTS停止',
+    menu_create_agent: 'エージェント作成',
+    menu_memory: '記憶',
+    menu_hitl_clear: '待機タスク全削除',
+    menu_language: '言語切り替え',
+    menu_model_switch: 'モデル切り替え',
+    menu_theme: 'ダーク/ライト',
+    menu_billing: 'プラン・課金',
+    menu_landing: 'ランディングページ',
+    menu_terms: '利用規約',
+    menu_privacy: 'プライバシーポリシー',
+    menu_login: 'ログイン',
+    menu_logout: 'ログアウト',
+    menu_api_keys: 'APIキー管理',
+    menu_team: 'チームワークスペース',
+    welcome_html: '<strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br><span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 長期記憶</span>',
+    quick_chips: ['🔍 chatweb.aiとは何か教えて','⚙️ Rustで非同期HTTPサーバーを書いて','🌐 https://example.com をテストして','📨 Slackで進捗報告を送って','💹 NVDAの財務分析してメールで送って','⚖️ NDA契約の法的リスクを確認して','🚀 fly.ioにデプロイして','🛠️ gitステータスを確認して'],
+  },
+  en: {
+    select_agent: 'Select agent',
+    input_placeholder: 'Type a message…  Shift+Enter for newline',
+    send: 'Send',
+    voice_input: 'Voice input',
+    close: 'Close',
+    delete_all: 'Delete all',
+    ai_agents: 'AI Agents',
+    click_to_switch: 'Click to switch',
+    long_term_memory: 'Long-term Memory',
+    search_memories: 'Search memories…',
+    memory_empty: 'No memories yet\nThey are saved automatically from conversations',
+    drop_here: 'Drop here',
+    conversation_templates: 'Conversation Templates',
+    attach_file: 'Attach file',
+    attach_image: 'Attach image',
+    template: 'Templates',
+    unit_items: '',
+    tier_economy: 'Economy',
+    tier_premium: 'Premium',
+    menu_dashboard: 'Dashboard',
+    menu_usage: 'Usage',
+    menu_ranking: 'Agent Ranking',
+    menu_export_md: 'Export Conversation (MD)',
+    menu_export_json: 'Export Conversation (JSON)',
+    menu_feedback: 'Feedback',
+    menu_install: 'Install',
+    menu_knowledge: 'Knowledge Base',
+    menu_schedule: 'Schedule Automation',
+    menu_marketplace: 'Agent Marketplace',
+    menu_workflow: 'Workflow Builder',
+    menu_browser: 'Browser Control',
+    menu_my_sites: 'My Sites',
+    menu_search: 'Search Conversations',
+    menu_files: 'File Manager',
+    menu_abtest: 'A/B Test',
+    menu_imagegen: 'Image Generation',
+    menu_custom_tools: 'Custom Tools',
+    menu_notifications: 'Notification Settings',
+    menu_tts_stop: 'Stop TTS',
+    menu_create_agent: 'Create Agent',
+    menu_memory: 'Memory',
+    menu_hitl_clear: 'Clear Pending Tasks',
+    menu_language: 'Change Language',
+    menu_model_switch: 'Switch Model',
+    menu_theme: 'Dark / Light',
+    menu_billing: 'Plans & Billing',
+    menu_landing: 'Landing Page',
+    menu_terms: 'Terms of Service',
+    menu_privacy: 'Privacy Policy',
+    menu_login: 'Login',
+    menu_logout: 'Logout',
+    menu_api_keys: 'API Key Management',
+    menu_team: 'Team Workspace',
+    welcome_html: 'Welcome to <strong>chatweb.ai — Multi-Agent AI</strong>.<br><br>Multiple specialized AI agents work together to handle your requests.<br><br><span style="color:#a78bfa">⚡ Token Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwright Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A Delegation</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Long-term Memory</span>',
+    quick_chips: ['🔍 What is chatweb.ai?','⚙️ Write an async HTTP server in Rust','🌐 Test https://example.com','📨 Send a progress report on Slack','💹 Analyze NVDA financials and email me','⚖️ Review legal risks in this NDA','🚀 Deploy to fly.io','🛠️ Check git status'],
+  },
+  zh: {
+    select_agent: '选择代理',
+    input_placeholder: '输入消息…  Shift+Enter 换行',
+    send: '发送',
+    voice_input: '语音输入',
+    close: '关闭',
+    delete_all: '全部删除',
+    ai_agents: 'AI 代理',
+    click_to_switch: '点击切换',
+    long_term_memory: '长期记忆',
+    search_memories: '搜索记忆…',
+    memory_empty: '暂无记忆\n对话后会自动保存',
+    drop_here: '拖放到此处',
+    conversation_templates: '对话模板',
+    attach_file: '附加文件',
+    attach_image: '附加图片',
+    template: '模板',
+    unit_items: '条',
+    tier_economy: '经济',
+    tier_premium: '高级',
+    menu_dashboard: '仪表板',
+    menu_usage: '使用情况',
+    menu_ranking: '代理排名',
+    menu_export_md: '导出对话 (MD)',
+    menu_export_json: '导出对话 (JSON)',
+    menu_feedback: '反馈',
+    menu_install: '安装',
+    menu_knowledge: '知识库',
+    menu_schedule: '定时自动化',
+    menu_marketplace: '代理市场',
+    menu_workflow: '工作流构建器',
+    menu_browser: '浏览器控制',
+    menu_my_sites: '我的网站',
+    menu_search: '搜索对话',
+    menu_files: '文件管理',
+    menu_abtest: 'A/B 测试',
+    menu_imagegen: '图像生成',
+    menu_custom_tools: '自定义工具',
+    menu_notifications: '通知设置',
+    menu_tts_stop: '停止语音',
+    menu_create_agent: '创建代理',
+    menu_memory: '记忆',
+    menu_hitl_clear: '清除待处理任务',
+    menu_language: '切换语言',
+    menu_model_switch: '切换模型',
+    menu_theme: '深色/浅色',
+    menu_billing: '计划与计费',
+    menu_landing: '主页',
+    menu_terms: '服务条款',
+    menu_privacy: '隐私政策',
+    menu_login: '登录',
+    menu_logout: '退出登录',
+    menu_api_keys: 'API密钥管理',
+    menu_team: '团队工作区',
+    welcome_html: '欢迎使用 <strong>chatweb.ai — 多代理 AI</strong>。<br><br>多个专业AI代理协同工作，处理您的请求。<br><br><span style="color:#a78bfa">⚡ 流式输出</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 浏览器控制</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委托</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 长期记忆</span>',
+    quick_chips: ['🔍 什么是chatweb.ai?','⚙️ 用Rust写异步HTTP服务器','🌐 测试 https://example.com','📨 发送进度报告到Slack','💹 分析NVDA财务并发邮件','⚖️ 审查NDA法律风险','🚀 部署到fly.io','🛠️ 检查git状态'],
+  },
+  ko: {
+    select_agent: '에이전트 선택',
+    input_placeholder: '메시지 입력…  Shift+Enter 줄바꿈',
+    send: '전송',
+    voice_input: '음성 입력',
+    close: '닫기',
+    delete_all: '전체 삭제',
+    ai_agents: 'AI 에이전트',
+    click_to_switch: '클릭하여 전환',
+    long_term_memory: '장기 기억',
+    search_memories: '기억 검색…',
+    memory_empty: '기억 없음\n대화하면 자동으로 저장됩니다',
+    drop_here: '여기에 드롭',
+    conversation_templates: '대화 템플릿',
+    attach_file: '파일 첨부',
+    attach_image: '이미지 첨부',
+    template: '템플릿',
+    unit_items: '건',
+    tier_economy: '이코노미',
+    tier_premium: '프리미엄',
+    menu_dashboard: '대시보드',
+    menu_usage: '사용 현황',
+    menu_ranking: '에이전트 랭킹',
+    menu_export_md: '대화 내보내기 (MD)',
+    menu_export_json: '대화 내보내기 (JSON)',
+    menu_feedback: '피드백',
+    menu_install: '설치',
+    menu_knowledge: '지식 베이스',
+    menu_schedule: '스케줄 자동화',
+    menu_marketplace: '에이전트 마켓',
+    menu_workflow: '워크플로우 빌더',
+    menu_browser: '브라우저 제어',
+    menu_my_sites: '내 사이트',
+    menu_search: '대화 검색',
+    menu_files: '파일 관리',
+    menu_abtest: 'A/B 테스트',
+    menu_imagegen: '이미지 생성',
+    menu_custom_tools: '커스텀 도구',
+    menu_notifications: '알림 설정',
+    menu_tts_stop: 'TTS 중지',
+    menu_create_agent: '에이전트 만들기',
+    menu_memory: '기억',
+    menu_hitl_clear: '대기 중인 작업 삭제',
+    menu_language: '언어 변경',
+    menu_model_switch: '모델 전환',
+    menu_theme: '다크/라이트',
+    menu_billing: '플랜 및 결제',
+    menu_landing: '랜딩 페이지',
+    menu_terms: '이용약관',
+    menu_privacy: '개인정보처리방침',
+    menu_login: '로그인',
+    menu_logout: '로그아웃',
+    menu_api_keys: 'API 키 관리',
+    menu_team: '팀 워크스페이스',
+    welcome_html: '<strong>chatweb.ai — 멀티 에이전트 AI</strong>에 오신 것을 환영합니다.<br><br>여러 전문 AI 에이전트가 협력하여 요청을 처리합니다.<br><br><span style="color:#a78bfa">⚡ 스트리밍</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 브라우저</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 장기 기억</span>',
+    quick_chips: ['🔍 chatweb.ai란?','⚙️ Rust로 비동기 HTTP 서버 작성','🌐 https://example.com 테스트','📨 Slack에 진행 보고서 전송','💹 NVDA 재무분석 및 이메일 전송','⚖️ NDA 법적 위험 검토','🚀 fly.io에 배포','🛠️ git 상태 확인'],
+  },
+  fr: {
+    select_agent: 'Choisir un agent',
+    input_placeholder: 'Tapez un message…  Shift+Enter pour nouvelle ligne',
+    send: 'Envoyer',
+    voice_input: 'Entrée vocale',
+    close: 'Fermer',
+    delete_all: 'Tout supprimer',
+    ai_agents: 'Agents IA',
+    click_to_switch: 'Cliquer pour changer',
+    long_term_memory: 'Mémoire à long terme',
+    search_memories: 'Rechercher des souvenirs…',
+    memory_empty: 'Aucun souvenir\nIls sont sauvegardés automatiquement',
+    drop_here: 'Déposer ici',
+    conversation_templates: 'Modèles de conversation',
+    attach_file: 'Joindre un fichier',
+    attach_image: 'Joindre une image',
+    template: 'Modèles',
+    unit_items: '',
+    tier_economy: 'Économique',
+    tier_premium: 'Premium',
+    menu_dashboard: 'Tableau de bord',
+    menu_usage: 'Utilisation',
+    menu_ranking: 'Classement des agents',
+    menu_export_md: 'Exporter la conversation (MD)',
+    menu_export_json: 'Exporter la conversation (JSON)',
+    menu_feedback: 'Commentaires',
+    menu_install: 'Installer',
+    menu_knowledge: 'Base de connaissances',
+    menu_schedule: 'Automatisation planifiée',
+    menu_marketplace: 'Marché des agents',
+    menu_workflow: 'Créateur de flux',
+    menu_browser: 'Contrôle du navigateur',
+    menu_my_sites: 'Mes sites',
+    menu_search: 'Rechercher des conversations',
+    menu_files: 'Gestion des fichiers',
+    menu_abtest: 'Test A/B',
+    menu_imagegen: 'Génération d\'images',
+    menu_custom_tools: 'Outils personnalisés',
+    menu_notifications: 'Paramètres de notification',
+    menu_tts_stop: 'Arrêter TTS',
+    menu_create_agent: 'Créer un agent',
+    menu_memory: 'Mémoire',
+    menu_hitl_clear: 'Effacer les tâches en attente',
+    menu_language: 'Changer de langue',
+    menu_model_switch: 'Changer de modèle',
+    menu_theme: 'Sombre / Clair',
+    menu_billing: 'Plans & Facturation',
+    menu_landing: 'Page d\'accueil',
+    menu_terms: 'Conditions d\'utilisation',
+    menu_privacy: 'Politique de confidentialité',
+    menu_login: 'Connexion',
+    menu_logout: 'Déconnexion',
+    menu_api_keys: 'Gestion des clés API',
+    menu_team: 'Espace de travail d\'équipe',
+    welcome_html: 'Bienvenue sur <strong>chatweb.ai — IA Multi-Agent</strong>.<br><br>Plusieurs agents IA spécialisés collaborent pour traiter vos demandes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navigateur</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Délégation A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Mémoire</span>',
+    quick_chips: ['🔍 Qu\'est-ce que chatweb.ai?','⚙️ Écrire un serveur HTTP async en Rust','🌐 Tester https://example.com','📨 Envoyer un rapport sur Slack','💹 Analyser les finances NVDA par email','⚖️ Vérifier les risques juridiques NDA','🚀 Déployer sur fly.io','🛠️ Vérifier le statut git'],
+  },
+  es: {
+    select_agent: 'Seleccionar agente',
+    input_placeholder: 'Escribe un mensaje…  Shift+Enter para nueva línea',
+    send: 'Enviar',
+    voice_input: 'Entrada de voz',
+    close: 'Cerrar',
+    delete_all: 'Eliminar todo',
+    ai_agents: 'Agentes IA',
+    click_to_switch: 'Clic para cambiar',
+    long_term_memory: 'Memoria a largo plazo',
+    search_memories: 'Buscar recuerdos…',
+    memory_empty: 'Sin recuerdos\nSe guardan automáticamente en las conversaciones',
+    drop_here: 'Soltar aquí',
+    conversation_templates: 'Plantillas de conversación',
+    attach_file: 'Adjuntar archivo',
+    attach_image: 'Adjuntar imagen',
+    template: 'Plantillas',
+    unit_items: '',
+    tier_economy: 'Económico',
+    tier_premium: 'Premium',
+    menu_dashboard: 'Panel de control',
+    menu_usage: 'Uso',
+    menu_ranking: 'Ranking de agentes',
+    menu_export_md: 'Exportar conversación (MD)',
+    menu_export_json: 'Exportar conversación (JSON)',
+    menu_feedback: 'Comentarios',
+    menu_install: 'Instalar',
+    menu_knowledge: 'Base de conocimiento',
+    menu_schedule: 'Automatización programada',
+    menu_marketplace: 'Mercado de agentes',
+    menu_workflow: 'Constructor de flujos',
+    menu_browser: 'Control del navegador',
+    menu_my_sites: 'Mis sitios',
+    menu_search: 'Buscar conversaciones',
+    menu_files: 'Gestión de archivos',
+    menu_abtest: 'Prueba A/B',
+    menu_imagegen: 'Generación de imágenes',
+    menu_custom_tools: 'Herramientas personalizadas',
+    menu_notifications: 'Configuración de notificaciones',
+    menu_tts_stop: 'Detener TTS',
+    menu_create_agent: 'Crear agente',
+    menu_memory: 'Memoria',
+    menu_hitl_clear: 'Borrar tareas pendientes',
+    menu_language: 'Cambiar idioma',
+    menu_model_switch: 'Cambiar modelo',
+    menu_theme: 'Oscuro / Claro',
+    menu_billing: 'Planes y Facturación',
+    menu_landing: 'Página de inicio',
+    menu_terms: 'Términos de servicio',
+    menu_privacy: 'Política de privacidad',
+    menu_login: 'Iniciar sesión',
+    menu_logout: 'Cerrar sesión',
+    menu_api_keys: 'Gestión de claves API',
+    menu_team: 'Espacio de trabajo del equipo',
+    welcome_html: 'Bienvenido a <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Múltiples agentes IA especializados colaboran para procesar tus solicitudes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegación A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memoria</span>',
+    quick_chips: ['🔍 ¿Qué es chatweb.ai?','⚙️ Escribir servidor HTTP async en Rust','🌐 Probar https://example.com','📨 Enviar informe de progreso en Slack','💹 Analizar finanzas NVDA y enviar email','⚖️ Revisar riesgos legales del NDA','🚀 Desplegar en fly.io','🛠️ Verificar estado de git'],
+  },
+  de: {
+    select_agent: 'Agent auswählen',
+    input_placeholder: 'Nachricht eingeben…  Shift+Enter für neue Zeile',
+    send: 'Senden',
+    voice_input: 'Spracheingabe',
+    close: 'Schließen',
+    delete_all: 'Alle löschen',
+    ai_agents: 'KI-Agenten',
+    click_to_switch: 'Klicken zum Wechseln',
+    long_term_memory: 'Langzeitgedächtnis',
+    search_memories: 'Erinnerungen suchen…',
+    memory_empty: 'Keine Erinnerungen\nSie werden automatisch gespeichert',
+    drop_here: 'Hier ablegen',
+    conversation_templates: 'Gesprächsvorlagen',
+    attach_file: 'Datei anhängen',
+    attach_image: 'Bild anhängen',
+    template: 'Vorlagen',
+    unit_items: '',
+    tier_economy: 'Günstig',
+    tier_premium: 'Premium',
+    menu_dashboard: 'Dashboard',
+    menu_usage: 'Nutzung',
+    menu_ranking: 'Agenten-Ranking',
+    menu_export_md: 'Gespräch exportieren (MD)',
+    menu_export_json: 'Gespräch exportieren (JSON)',
+    menu_feedback: 'Feedback',
+    menu_install: 'Installieren',
+    menu_knowledge: 'Wissensdatenbank',
+    menu_schedule: 'Zeitplanung',
+    menu_marketplace: 'Agenten-Marktplatz',
+    menu_workflow: 'Workflow-Builder',
+    menu_browser: 'Browser-Steuerung',
+    menu_my_sites: 'Meine Seiten',
+    menu_search: 'Gespräche suchen',
+    menu_files: 'Dateiverwaltung',
+    menu_abtest: 'A/B-Test',
+    menu_imagegen: 'Bildgenerierung',
+    menu_custom_tools: 'Benutzerdefinierte Tools',
+    menu_notifications: 'Benachrichtigungseinstellungen',
+    menu_tts_stop: 'TTS stoppen',
+    menu_create_agent: 'Agent erstellen',
+    menu_memory: 'Gedächtnis',
+    menu_hitl_clear: 'Ausstehende Aufgaben löschen',
+    menu_language: 'Sprache ändern',
+    menu_model_switch: 'Modell wechseln',
+    menu_theme: 'Dunkel / Hell',
+    menu_billing: 'Pläne & Abrechnung',
+    menu_landing: 'Startseite',
+    menu_terms: 'Nutzungsbedingungen',
+    menu_privacy: 'Datenschutzerklärung',
+    menu_login: 'Anmelden',
+    menu_logout: 'Abmelden',
+    menu_api_keys: 'API-Schlüsselverwaltung',
+    menu_team: 'Team-Arbeitsbereich',
+    welcome_html: 'Willkommen bei <strong>chatweb.ai — Multi-Agent KI</strong>.<br><br>Mehrere spezialisierte KI-Agenten arbeiten zusammen, um Ihre Anfragen zu bearbeiten.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Gedächtnis</span>',
+    quick_chips: ['🔍 Was ist chatweb.ai?','⚙️ Async HTTP-Server in Rust schreiben','🌐 https://example.com testen','📨 Fortschrittsbericht auf Slack senden','💹 NVDA-Finanzen analysieren','⚖️ Rechtliche Risiken im NDA prüfen','🚀 Auf fly.io deployen','🛠️ Git-Status prüfen'],
+  },
+  pt: {
+    select_agent: 'Selecionar agente',
+    input_placeholder: 'Digite uma mensagem…  Shift+Enter para nova linha',
+    send: 'Enviar',
+    voice_input: 'Entrada de voz',
+    close: 'Fechar',
+    delete_all: 'Apagar tudo',
+    ai_agents: 'Agentes IA',
+    click_to_switch: 'Clique para trocar',
+    long_term_memory: 'Memória de longo prazo',
+    search_memories: 'Pesquisar memórias…',
+    memory_empty: 'Sem memórias\nSão salvas automaticamente nas conversas',
+    drop_here: 'Soltar aqui',
+    conversation_templates: 'Modelos de conversa',
+    attach_file: 'Anexar arquivo',
+    attach_image: 'Anexar imagem',
+    template: 'Modelos',
+    unit_items: '',
+    tier_economy: 'Econômico',
+    tier_premium: 'Premium',
+    menu_dashboard: 'Painel',
+    menu_usage: 'Uso',
+    menu_ranking: 'Ranking de agentes',
+    menu_export_md: 'Exportar conversa (MD)',
+    menu_export_json: 'Exportar conversa (JSON)',
+    menu_feedback: 'Feedback',
+    menu_install: 'Instalar',
+    menu_knowledge: 'Base de conhecimento',
+    menu_schedule: 'Automação agendada',
+    menu_marketplace: 'Mercado de agentes',
+    menu_workflow: 'Construtor de fluxo',
+    menu_browser: 'Controle do navegador',
+    menu_my_sites: 'Meus sites',
+    menu_search: 'Pesquisar conversas',
+    menu_files: 'Gerenciamento de arquivos',
+    menu_abtest: 'Teste A/B',
+    menu_imagegen: 'Geração de imagens',
+    menu_custom_tools: 'Ferramentas personalizadas',
+    menu_notifications: 'Configurações de notificação',
+    menu_tts_stop: 'Parar TTS',
+    menu_create_agent: 'Criar agente',
+    menu_memory: 'Memória',
+    menu_hitl_clear: 'Limpar tarefas pendentes',
+    menu_language: 'Mudar idioma',
+    menu_model_switch: 'Trocar modelo',
+    menu_theme: 'Escuro / Claro',
+    menu_billing: 'Planos & Cobrança',
+    menu_landing: 'Página inicial',
+    menu_terms: 'Termos de serviço',
+    menu_privacy: 'Política de privacidade',
+    menu_login: 'Entrar',
+    menu_logout: 'Sair',
+    menu_api_keys: 'Gerenciamento de chaves API',
+    menu_team: 'Espaço de trabalho da equipe',
+    welcome_html: 'Bem-vindo ao <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Vários agentes de IA especializados colaboram para processar seus pedidos.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegação A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memória</span>',
+    quick_chips: ['🔍 O que é o chatweb.ai?','⚙️ Escrever servidor HTTP async em Rust','🌐 Testar https://example.com','📨 Enviar relatório de progresso no Slack','💹 Analisar finanças da NVDA por email','⚖️ Revisar riscos legais do NDA','🚀 Deploy no fly.io','🛠️ Verificar status do git'],
+  },
+};
+let _currentLang = localStorage.getItem('chatweb_lang') || 'ja';
+
 function toggleLangMenu() {
   const dd = document.getElementById('lang-dropdown');
   dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
 }
+
 function setLanguage(code, label, nativeName) {
   _currentLang = code;
-  localStorage.setItem('synapse_lang', code);
-  document.getElementById('lang-label').textContent = label;
+  localStorage.setItem('chatweb_lang', code);
+  const meta = LANG_META[code] || LANG_META.ja;
+  document.getElementById('lang-label').textContent = meta.label;
   document.getElementById('lang-dropdown').style.display = 'none';
   applyLanguage(code);
 }
+
+function t(key) {
+  const s = LANG_STRINGS[_currentLang] || LANG_STRINGS.ja;
+  return s[key] ?? (LANG_STRINGS.ja[key] ?? key);
+}
+
 function applyLanguage(code) {
   const s = LANG_STRINGS[code] || LANG_STRINGS.ja;
+  const meta = LANG_META[code] || LANG_META.ja;
+
+  // Update html lang attr
+  document.documentElement.lang = code;
+
+  // Update all data-i18n elements (textContent)
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (s[key] !== undefined) el.textContent = s[key];
+  });
+
+  // Update all data-i18n-placeholder elements
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (s[key] !== undefined) el.placeholder = s[key];
+  });
+
+  // Update all data-i18n-title elements
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (s[key] !== undefined) el.title = s[key];
+  });
+
+  // Input placeholder
   const input = document.getElementById('chatInput');
-  if (input) input.placeholder = s.placeholder;
-  const sendBtn = document.getElementById('sendBtn');
-  if (sendBtn) sendBtn.title = s.send;
+  if (input) input.placeholder = s.input_placeholder || s.placeholder || '';
+
+  // Welcome message
+  const wb = document.getElementById('welcome-bubble');
+  if (wb && s.welcome_html) wb.innerHTML = s.welcome_html;
+
+  // Quick chips
+  const chips = document.getElementById('quickChips');
+  if (chips && s.quick_chips) {
+    chips.innerHTML = s.quick_chips.map(c =>
+      `<span class="chip" onclick="useChip(this)">${c}</span>`
+    ).join('');
+  }
+
+  // Speech recognition lang
+  if (typeof _recognition !== 'undefined' && _recognition) {
+    _recognition.lang = meta.speech;
+  }
+
+  // TTS lang
+  window._ttsLang = meta.speech;
 }
+
 // Close lang dropdown on outside click
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#lang-btn') && !e.target.closest('#lang-dropdown')) {
@@ -3792,11 +4618,11 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Patch fetch to add X-Language header for chat requests
+// Patch fetch to add X-Language header for all API requests
 (function() {
   const _origFetchLang = window.fetch;
   window.fetch = function(url, opts) {
-    if (typeof url === 'string' && url.includes('/chat/stream/') && _currentLang && _currentLang !== 'ja') {
+    if (typeof url === 'string' && (url.includes('/chat/') || url.includes('/a2a'))) {
       opts = opts || {};
       opts.headers = { ...(opts.headers || {}), 'X-Language': _currentLang };
     }
@@ -3807,7 +4633,7 @@ document.addEventListener('click', (e) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // FEATURE: PWA PUSH NOTIFICATIONS
 // ══════════════════════════════════════════════════════════════════════════════
-let _notificationsEnabled = localStorage.getItem('synapse_notifications') === 'true';
+let _notificationsEnabled = localStorage.getItem('chatweb_notifications') === 'true';
 let _taskStartTime = null;
 
 function openNotificationSettings() {
@@ -3817,7 +4643,7 @@ function openNotificationSettings() {
     msg = _notificationsEnabled ? '通知は有効です。無効にしますか？' : '通知は許可済みです。有効にしますか？';
     if (confirm(msg)) {
       _notificationsEnabled = !_notificationsEnabled;
-      localStorage.setItem('synapse_notifications', _notificationsEnabled);
+      localStorage.setItem('chatweb_notifications', _notificationsEnabled);
       alert(_notificationsEnabled ? '✅ 通知を有効にしました' : '🔕 通知を無効にしました');
     }
   } else if (cur === 'denied') {
@@ -3834,7 +4660,7 @@ async function requestNotificationPermission() {
   const perm = await Notification.requestPermission();
   if (perm === 'granted') {
     _notificationsEnabled = true;
-    localStorage.setItem('synapse_notifications', 'true');
+    localStorage.setItem('chatweb_notifications', 'true');
     alert('✅ 通知が有効になりました');
     // Register service worker push handler
     if ('serviceWorker' in navigator) {
@@ -3848,7 +4674,7 @@ async function requestNotificationPermission() {
 function notifyTaskComplete() {
   if (!_notificationsEnabled || Notification.permission !== 'granted') return;
   try {
-    new Notification('Synapse', { body: 'タスクが完了しました', icon: '/static/icon-192.png' });
+    new Notification('chatweb.ai', { body: 'タスクが完了しました', icon: '/static/icon-192.png' });
   } catch(e) {}
 }
 
@@ -3877,47 +4703,158 @@ async function shareConversation(btn) {
 // ── Billing modal ─────────────────────────────────────────────────────────────
 async function openBillingModal() {
   let modal = document.getElementById('billing-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'billing-modal';
-    modal.className = 'modal';
-    modal.setAttribute('hidden', '');
-    modal.onclick = e => { if (e.target === modal) modal.setAttribute('hidden', ''); };
-    const r = await fetch('/billing/plans').then(r => r.json()).catch(() => ({ plans: [] }));
-    const cards = r.plans.map(p => `
-      <div style="flex:1;min-width:180px;background:var(--card);border:1px solid ${p.id==='pro'?'rgba(139,92,246,0.5)':'var(--border)'};border-radius:12px;padding:16px;position:relative">
-        ${p.id==='pro' ? '<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#8b5cf6;color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px">人気</div>' : ''}
-        <div style="font-size:16px;font-weight:700;margin-bottom:4px">${p.name}</div>
-        <div style="font-size:22px;font-weight:800;color:var(--accent);margin-bottom:8px">¥${p.price.toLocaleString()}<span style="font-size:12px;color:var(--muted)">/月</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${p.requests_per_month.toLocaleString()}回/月</div>
-        <ul style="list-style:none;font-size:11.5px;color:var(--muted2);line-height:1.8">
-          ${p.features.map(f=>`<li>✓ ${f}</li>`).join('')}
-        </ul>
-        ${p.id !== 'free' ? `<button onclick="startCheckout('${p.id}')" style="width:100%;margin-top:12px;padding:9px;border-radius:8px;background:${p.id==='pro'?'rgba(139,92,246,0.85)':'rgba(255,255,255,0.08)'};border:none;color:#fff;font-weight:700;cursor:pointer;font-size:13px">選択する</button>` : '<div style="margin-top:12px;padding:9px;text-align:center;font-size:12px;color:var(--muted)">現在のプラン</div>'}
-      </div>`).join('');
-    modal.innerHTML = `<div class="modal-box" style="max-width:680px;width:95%">
-      <h3 style="margin-bottom:4px">💰 プランを選択</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">いつでもキャンセル可能</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">${cards}</div>
-      <div class="modal-btns"><button onclick="document.getElementById('billing-modal').setAttribute('hidden','')">閉じる</button></div>
-    </div>`;
-    document.body.appendChild(modal);
-  }
+  if (modal) { modal.removeAttribute('hidden'); return; }
+  modal = document.createElement('div');
+  modal.id = 'billing-modal';
+  modal.className = 'modal';
+  modal.setAttribute('hidden', '');
+  modal.onclick = e => { if (e.target === modal) modal.setAttribute('hidden', ''); };
+
+  const PLANS = [
+    {
+      id: 'free', name: 'フリー', price: 0, period: '',
+      badge: '', badgeColor: '',
+      desc: '個人利用・お試しに最適',
+      requests: '月100回',
+      btnLabel: '現在のプラン', btnDisabled: true,
+      accentColor: '#64748b',
+      features: [
+        '33種類のAIエージェント',
+        '長期記憶 50件',
+        'ファイルアップロード (PDF/Excel/CSV)',
+        'サイト公開 3件まで',
+        'Slack / Discord 連携',
+      ]
+    },
+    {
+      id: 'pro', name: 'プロ', price: 2980, period: '/月',
+      badge: '🔥 最も人気', badgeColor: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
+      desc: 'ビジネス利用・本格活用に',
+      requests: '月2,000回',
+      btnLabel: 'プロにアップグレード', btnDisabled: false,
+      accentColor: '#8b5cf6',
+      features: [
+        '全33種類のエージェント (制限なし)',
+        '長期記憶 無制限',
+        'Proモデル優先処理',
+        'サイト公開 無制限',
+        'カスタムWebhook / API接続',
+        'Google Calendar / Gmail 連携',
+        '優先サポート',
+      ]
+    },
+    {
+      id: 'team', name: 'チーム', price: 9800, period: '/月',
+      badge: '🏢 法人向け', badgeColor: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
+      desc: 'チーム・企業での本格導入',
+      requests: '月10,000回',
+      btnLabel: 'チームプランを開始', btnDisabled: false,
+      accentColor: '#0ea5e9',
+      features: [
+        'プロの全機能',
+        'チームワークスペース共有',
+        'カスタムエージェント作成',
+        '管理者ダッシュボード',
+        'SLAサポート (営業日1日以内)',
+        '請求書払い対応',
+      ]
+    }
+  ];
+
+  const cards = PLANS.map(p => `
+    <div class="billing-card${p.id === 'pro' ? ' billing-card--featured' : ''}" id="bcard-${p.id}">
+      ${p.badge ? `<div class="billing-badge" style="background:${p.badgeColor}">${p.badge}</div>` : ''}
+      <div class="billing-plan-name" style="color:${p.accentColor}">${p.name}</div>
+      <div class="billing-price">
+        ${p.price === 0 ? '<span class="billing-price-num">無料</span>' :
+          `<span class="billing-price-num">¥${p.price.toLocaleString()}</span><span class="billing-price-period">${p.period}</span>`}
+      </div>
+      <div class="billing-desc">${p.desc}</div>
+      <div class="billing-requests" style="color:${p.accentColor}">⚡ ${p.requests}</div>
+      <ul class="billing-features">
+        ${p.features.map(f => `<li><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="7" cy="7" r="7" fill="${p.accentColor}" opacity="0.2"/><path d="M4 7l2 2 4-4" stroke="${p.accentColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${f}</li>`).join('')}
+      </ul>
+      <button class="billing-cta" onclick="startCheckout('${p.id}')"
+        style="background:${p.id === 'free' ? 'rgba(255,255,255,0.06)' : p.accentColor};${p.btnDisabled ? 'opacity:0.5;cursor:default' : 'cursor:pointer'}"
+        ${p.btnDisabled ? 'disabled' : ''}>${p.btnLabel}</button>
+    </div>`).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box billing-modal-box">
+      <button class="modal-close-x" onclick="document.getElementById('billing-modal').setAttribute('hidden','')">✕</button>
+      <div class="billing-header">
+        <div class="billing-header-eyebrow">💳 プランを選択</div>
+        <h2 class="billing-header-title">あなたに合ったプランで<br>AIを使い倒そう</h2>
+        <p class="billing-header-sub">いつでもキャンセル・プラン変更可能 · Stripe で安全に決済</p>
+      </div>
+      <div class="billing-cards">${cards}</div>
+      <div class="billing-footer">
+        <span>🔒 256-bit SSL暗号化</span>
+        <span>·</span>
+        <span>Stripe による安全な決済</span>
+        <span>·</span>
+        <span>いつでもキャンセル可能</span>
+        <span>·</span>
+        <span><a href="mailto:support@chatweb.ai" style="color:var(--accent2);text-decoration:none">お問い合わせ</a></span>
+      </div>
+    </div>
+    <style>
+      .billing-modal-box { max-width:860px;width:95%;padding:32px;position:relative }
+      .modal-close-x { position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:6px }
+      .modal-close-x:hover { background:rgba(255,255,255,0.08);color:var(--fg) }
+      .billing-header { text-align:center;margin-bottom:28px }
+      .billing-header-eyebrow { font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px }
+      .billing-header-title { font-size:24px;font-weight:800;line-height:1.3;margin:0 0 8px }
+      .billing-header-sub { font-size:12px;color:var(--muted);margin:0 }
+      .billing-cards { display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start }
+      @media(max-width:640px) { .billing-cards { grid-template-columns:1fr } }
+      .billing-card { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;display:flex;flex-direction:column;gap:8px;transition:transform .15s,box-shadow .15s }
+      .billing-card:hover { transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3) }
+      .billing-card--featured { border-color:rgba(139,92,246,.6);box-shadow:0 0 0 1px rgba(139,92,246,.3),0 4px 24px rgba(139,92,246,.15) }
+      .billing-badge { position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:3px 14px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap }
+      .billing-plan-name { font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:4px }
+      .billing-price { display:flex;align-items:baseline;gap:4px;margin:4px 0 }
+      .billing-price-num { font-size:32px;font-weight:800;line-height:1 }
+      .billing-price-period { font-size:13px;color:var(--muted) }
+      .billing-desc { font-size:12px;color:var(--muted);line-height:1.5 }
+      .billing-requests { font-size:13px;font-weight:700;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px }
+      .billing-features { list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px;flex:1 }
+      .billing-features li { display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--muted2);line-height:1.4 }
+      .billing-cta { width:100%;padding:11px;border-radius:10px;border:none;color:#fff;font-weight:700;font-size:13.5px;margin-top:16px;transition:opacity .15s,transform .15s }
+      .billing-cta:not(:disabled):hover { opacity:.88;transform:scale(1.01) }
+      .billing-footer { display:flex;align-items:center;justify-content:center;gap:10px;font-size:11px;color:var(--muted);margin-top:20px;flex-wrap:wrap }
+    </style>`;
+  document.body.appendChild(modal);
   modal.removeAttribute('hidden');
 }
 
 async function startCheckout(planId) {
-  showToast('Stripeチェックアウトを開いています...');
+  if (planId === 'free') return;
+  const btn = document.querySelector(`#bcard-${planId} .billing-cta`);
+  if (btn) { btn.textContent = '処理中…'; btn.disabled = true; }
   try {
+    const email = _currentUser?.email || '';
     const r = await fetch('/billing/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success_url: location.href + '?upgraded=1', cancel_url: location.href })
+      body: JSON.stringify({
+        plan_id: planId,
+        email,
+        success_url: location.origin + '/?upgraded=1',
+        cancel_url: location.href
+      })
     });
     const d = await r.json();
-    if (d.checkout_url) { window.location.href = d.checkout_url; }
-    else { showToast('Stripe未設定: ' + (d.error || '管理者にお問い合わせください')); }
-  } catch(e) { showToast('エラー: ' + e.message); }
+    if (d.checkout_url) {
+      window.location.href = d.checkout_url;
+    } else {
+      showToast('エラー: ' + (d.error || '管理者にお問い合わせください'));
+      if (btn) { btn.textContent = planId === 'team' ? 'チームプランを開始' : 'プロにアップグレード'; btn.disabled = false; }
+    }
+  } catch(e) {
+    showToast('エラー: ' + e.message);
+    if (btn) { btn.textContent = planId === 'team' ? 'チームプランを開始' : 'プロにアップグレード'; btn.disabled = false; }
+  }
 }
 
 // ── Webhook config modal ──────────────────────────────────────────────────────
@@ -3948,6 +4885,7 @@ function openWebhookModal() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadTheme();
 initVoice();
+initQuickChips();
 loadAgents();
 loadHistory();
 loadMemories();
@@ -3955,13 +4893,19 @@ initTemplates();
 checkAuth();
 loadTier();
 applyLanguage(_currentLang);
-_initScrollDetection();
-// Restore lang label if not default
-if (_currentLang !== 'ja') {
-  const labelMap = { en:'EN', zh:'ZH', ko:'KO', fr:'FR', es:'ES' };
-  const lbl = document.getElementById('lang-label');
-  if (lbl) lbl.textContent = labelMap[_currentLang] || _currentLang.toUpperCase();
+// Show upgrade success banner
+if (new URLSearchParams(location.search).get('upgraded') === '1') {
+  history.replaceState({}, '', location.pathname);
+  setTimeout(() => {
+    showToast('🎉 アップグレード完了！プロプランが有効になりました。');
+    confetti && confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+  }, 800);
 }
+// Restore lang label
+const _langMeta = LANG_META[_currentLang] || LANG_META.ja;
+const _langLbl = document.getElementById('lang-label');
+if (_langLbl) _langLbl.textContent = _langMeta.label;
+_initScrollDetection();
 setInterval(loadHistory,  30000);
 setInterval(loadMemories, 15000);
 
@@ -4760,9 +5704,6 @@ updateAuthUI = function(user) {
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.51 10.52A4.8 4.8 0 0 1 4.26 9c0-.53.09-1.04.25-1.52V5.41H1.83A8 8 0 0 0 .98 9c0 1.3.31 2.52.85 3.59l2.68-2.07z"/><path fill="#EA4335" d="M8.98 3.58c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 .98 9l2.68 2.07c.63-1.89 2.39-3.29 4.47-3.29z"/></svg>
       Googleでログイン
     </a>
-    <div style="margin:12px 0;text-align:center;color:var(--muted);font-size:11px">— または —</div>
-    <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID" data-callback="handleGoogleLogin" data-auto_prompt="false"></div>
-    <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black" data-text="signin_with" data-size="large" data-locale="ja" style="display:flex;justify-content:center;margin-bottom:16px"></div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
       <div style="flex:1;height:1px;background:var(--border)"></div>
       <span style="font-size:12px;color:var(--muted)">またはメールで</span>
@@ -5191,6 +6132,22 @@ updateAuthUI = function(user) {
   </div>
 </div>
 
+<!-- ── Cookie Consent Banner ────────────────────────────────────────────── -->
+<div id="cookie-banner" style="
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;
+  background:rgba(18,18,22,0.97);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:200px;font-size:13px;color:#a1a1aa;line-height:1.5">
+    🍪 このサービスはCookieおよびローカルストレージを使用して、会話履歴・設定・セッション情報を保存します。
+    <a href="/static/privacy.html" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="cookieDecline()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#71717a;cursor:pointer;font-size:13px">拒否</button>
+    <button onclick="cookieAccept()" style="padding:8px 18px;border-radius:8px;border:none;background:#7c6aff;color:#fff;cursor:pointer;font-size:13px;font-weight:600">同意する</button>
+  </div>
+</div>
+
 <!-- ── Command Palette (Cmd+K) ──────────────────────────────────────────── -->
 <div id="cmd-palette" onclick="if(event.target===this)closeCmdPalette()">
   <div id="cmd-box">
@@ -5199,5 +6156,206 @@ updateAuthUI = function(user) {
   </div>
 </div>
 
+<!-- ── Cookie Consent JS ── -->
+<script>
+(function() {
+  const COOKIE_KEY = 'chatweb_cookie_consent';
+  // migrate old key from synapse rebrand
+  const oldVal = localStorage.getItem('synapse_cookie_consent');
+  if (oldVal && !localStorage.getItem(COOKIE_KEY)) {
+    localStorage.setItem(COOKIE_KEY, oldVal);
+    localStorage.removeItem('synapse_cookie_consent');
+  }
+  const consent = localStorage.getItem(COOKIE_KEY);
+  if (!consent) {
+    const banner = document.getElementById('cookie-banner');
+    if (banner) { banner.style.display = 'flex'; }
+  }
+})();
+
+function cookieAccept() {
+  localStorage.setItem('chatweb_cookie_consent', 'accepted');
+  document.getElementById('cookie-banner').style.display = 'none';
+  fetch('/consent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: 'accepted' }) }).catch(() => {});
+  trackPageView();
+}
+
+function cookieDecline() {
+  localStorage.setItem('chatweb_cookie_consent', 'declined');
+  document.getElementById('cookie-banner').style.display = 'none';
+  fetch('/consent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: 'declined' }) }).catch(() => {});
+}
+
+async function syncConsentFromServer() {
+  try {
+    const r = await fetch('/consent');
+    const d = await r.json();
+    if (d.consent) {
+      localStorage.setItem('chatweb_cookie_consent', d.consent);
+      document.getElementById('cookie-banner').style.display = 'none';
+    }
+  } catch (e) {}
+}
+
+// ── Simple Analytics ──────────────────────────────────────────────────────
+function trackPageView() {
+  if (localStorage.getItem('chatweb_cookie_consent') !== 'accepted') return;
+  fetch('/analytics/pv', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ page: location.pathname, ref: document.referrer || '' }),
+  }).catch(() => {});
+}
+function trackEvent(name, data = {}) {
+  if (localStorage.getItem('chatweb_cookie_consent') !== 'accepted') return;
+  fetch('/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event: name, ...data }),
+  }).catch(() => {});
+}
+
+// Track page view on load (if already consented)
+if (localStorage.getItem('chatweb_cookie_consent') === 'accepted') {
+  trackPageView();
+}
+
+// ── マイサイト管理 ────────────────────────────────────────────────────────────
+let _sitesEditTarget = null; // subdomain being edited
+
+function openSitesModal() {
+  let m = document.getElementById('sitesModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'sitesModal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    m.innerHTML = `
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:860px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);">
+    <h2 style="margin:0;font-size:18px;">🌐 マイサイト</h2>
+    <button onclick="closeSitesModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+  </div>
+  <div id="sitesListView" style="flex:1;overflow-y:auto;padding:16px;">
+    <div id="sitesList" style="display:grid;gap:12px;">
+      <div style="text-align:center;color:var(--muted);padding:32px;">読み込み中…</div>
+    </div>
+  </div>
+  <div id="sitesEditorView" style="flex:1;overflow:hidden;display:none;flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border);">
+      <button onclick="backToSitesList()" style="background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 12px;cursor:pointer;">← 一覧へ</button>
+      <span id="siteEditorTitle" style="font-weight:600;flex:1;"></span>
+      <a id="siteEditorPreview" href="#" target="_blank" style="color:var(--accent);font-size:13px;text-decoration:none;">🔗 プレビュー</a>
+    </div>
+    <textarea id="siteEditorCode" style="flex:1;width:100%;border:none;background:var(--bg1);color:var(--text);font-family:monospace;font-size:13px;padding:16px;resize:none;outline:none;box-sizing:border-box;min-height:400px;"></textarea>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="backToSitesList()" style="padding:8px 20px;border:1px solid var(--border);background:none;color:var(--text);border-radius:8px;cursor:pointer;">キャンセル</button>
+      <button onclick="saveSiteEdit()" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">💾 保存・公開</button>
+    </div>
+  </div>
+</div>`;
+    m.addEventListener('click', e => { if (e.target === m) closeSitesModal(); });
+    document.body.appendChild(m);
+  }
+  m.style.display = 'flex';
+  loadSitesList();
+}
+
+function closeSitesModal() {
+  const m = document.getElementById('sitesModal');
+  if (m) m.style.display = 'none';
+  _sitesEditTarget = null;
+}
+
+async function loadSitesList() {
+  const container = document.getElementById('sitesList');
+  try {
+    const r = await fetch('/deploy/sites', { credentials: 'include' });
+    if (r.status === 401) { container.innerHTML = loginRequiredHTML('マイサイトを使うにはログインが必要です'); return; }
+    const data = await r.json();
+    if (!data.sites || data.sites.length === 0) {
+      container.innerHTML = `<div style="text-align:center;color:var(--muted);padding:48px;">
+        <div style="font-size:48px;margin-bottom:12px;">🌐</div>
+        <p>まだサイトがありません</p>
+        <p style="font-size:13px;">「サイト公開AI」エージェントに話しかけるとすぐに作れます！</p>
+      </div>`;
+      return;
+    }
+    container.innerHTML = data.sites.map(s => `
+<div style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;background:var(--bg1);">
+  <div style="flex:1;min-width:0;">
+    <div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(s.title || s.subdomain)}</div>
+    <a href="${escHtml(s.url)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);text-decoration:none;">${escHtml(s.url)}</a>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px;">${s.created_at ? new Date(s.created_at).toLocaleString('ja-JP') : ''}</div>
+  </div>
+  <div style="display:flex;gap:6px;flex-shrink:0;">
+    <button onclick="window.open('${escHtml(s.url)}','_blank')" style="padding:6px 10px;border:1px solid var(--border);background:none;color:var(--text);border-radius:7px;cursor:pointer;font-size:13px;" title="プレビュー">👁</button>
+    <button onclick="openSiteEditor('${escHtml(s.subdomain)}')" style="padding:6px 10px;border:1px solid var(--border);background:none;color:var(--text);border-radius:7px;cursor:pointer;font-size:13px;" title="編集">✏️</button>
+    <button onclick="deleteSite('${escHtml(s.subdomain)}')" style="padding:6px 10px;border:1px solid var(--border);background:none;color:#e55;border-radius:7px;cursor:pointer;font-size:13px;" title="削除">🗑</button>
+  </div>
+</div>`).join('');
+  } catch (e) {
+    container.innerHTML = `<div style="color:#e55;padding:16px;">読み込みエラー: ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function openSiteEditor(subdomain) {
+  _sitesEditTarget = subdomain;
+  document.getElementById('sitesListView').style.display = 'none';
+  const ev = document.getElementById('sitesEditorView');
+  ev.style.display = 'flex';
+  document.getElementById('siteEditorTitle').textContent = `✏️ 編集: ${subdomain}.chatweb.ai`;
+  document.getElementById('siteEditorPreview').href = `https://${subdomain}.chatweb.ai`;
+  document.getElementById('siteEditorCode').value = '読み込み中…';
+  try {
+    const r = await fetch(`/deploy/site/${encodeURIComponent(subdomain)}`, { credentials: 'include' });
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    document.getElementById('siteEditorCode').value = data.html;
+  } catch (e) {
+    document.getElementById('siteEditorCode').value = `// エラー: ${e.message}`;
+  }
+}
+
+function backToSitesList() {
+  _sitesEditTarget = null;
+  document.getElementById('sitesEditorView').style.display = 'none';
+  document.getElementById('sitesListView').style.display = '';
+}
+
+async function saveSiteEdit() {
+  if (!_sitesEditTarget) return;
+  const html = document.getElementById('siteEditorCode').value;
+  const btn = document.querySelector('#sitesEditorView button[onclick="saveSiteEdit()"]');
+  const orig = btn.textContent;
+  btn.textContent = '保存中…'; btn.disabled = true;
+  try {
+    const r = await fetch(`/deploy/site/${encodeURIComponent(_sitesEditTarget)}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html, subdomain: _sitesEditTarget }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    btn.textContent = '✅ 保存完了！';
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+  } catch (e) {
+    btn.textContent = '❌ エラー: ' + e.message;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+  }
+}
+
+async function deleteSite(subdomain) {
+  if (!confirm(`"${subdomain}.chatweb.ai" を削除しますか？この操作は元に戻せません。`)) return;
+  try {
+    const r = await fetch(`/deploy/site/${encodeURIComponent(subdomain)}`, {
+      method: 'DELETE', credentials: 'include'
+    });
+    if (!r.ok) throw new Error(await r.text());
+    await loadSitesList();
+  } catch (e) {
+    alert('削除エラー: ' + e.message);
+  }
+}
+</script>
 </body>
 </html>

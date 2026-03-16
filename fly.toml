@@ -1,4 +1,4 @@
-app = "synapse-demo"
+app = "chatweb-ai"
 primary_region = "nrt"
 
 [build]

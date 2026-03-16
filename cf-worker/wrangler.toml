@@ -1,0 +1,16 @@
+name = "chatweb-sites"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "SITES"
+id = "d67714d343da41efa022d6a02c81ff30"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-router-db"
+database_id = "d1debb28-75b3-49fe-9a50-b74be2728c06"
+
+[[routes]]
+pattern = "*.chatweb.ai/*"
+zone_name = "chatweb.ai"

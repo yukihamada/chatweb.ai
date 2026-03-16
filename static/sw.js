@@ -1,5 +1,5 @@
-// Synapse Service Worker — PWA support
-const CACHE = 'synapse-v1';
+// chatweb.ai Service Worker — PWA support
+const CACHE = 'chatweb-v1';
 const PRECACHE = ['/', '/static/index.html'];
 
 self.addEventListener('install', e => {

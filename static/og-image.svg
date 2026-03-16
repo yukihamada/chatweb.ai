@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#09090b"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Grid lines -->
+  <line x1="0" y1="210" x2="1200" y2="210" stroke="#ffffff" stroke-opacity="0.04"/>
+  <line x1="0" y1="420" x2="1200" y2="420" stroke="#ffffff" stroke-opacity="0.04"/>
+  <line x1="400" y1="0" x2="400" y2="630" stroke="#ffffff" stroke-opacity="0.04"/>
+  <line x1="800" y1="0" x2="800" y2="630" stroke="#ffffff" stroke-opacity="0.04"/>
+  <!-- Glow orb -->
+  <circle cx="600" cy="315" r="280" fill="#6366f1" fill-opacity="0.08" filter="url(#glow)"/>
+  <!-- Logo icon -->
+  <text x="600" y="240" text-anchor="middle" font-size="96" font-family="system-ui,sans-serif" fill="url(#accent)" filter="url(#glow)">◈</text>
+  <!-- Title -->
+  <text x="600" y="330" text-anchor="middle" font-size="64" font-weight="700" font-family="system-ui,-apple-system,sans-serif" fill="#fafafa" letter-spacing="-1">Synapse</text>
+  <!-- Subtitle -->
+  <text x="600" y="390" text-anchor="middle" font-size="26" font-family="system-ui,sans-serif" fill="#a1a1aa" letter-spacing="2">Multi-Agent AI Platform</text>
+  <!-- Pills -->
+  <rect x="280" y="440" width="160" height="38" rx="19" fill="#8b5cf6" fill-opacity="0.15" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="360" y="464" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif" fill="#a78bfa">⚡ Streaming</text>
+  <rect x="460" y="440" width="160" height="38" rx="19" fill="#22d3ee" fill-opacity="0.1" stroke="#22d3ee" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="540" y="464" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif" fill="#67e8f9">🌐 Browser</text>
+  <rect x="640" y="440" width="160" height="38" rx="19" fill="#34d399" fill-opacity="0.1" stroke="#34d399" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="720" y="464" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif" fill="#6ee7b7">🔗 A2A</text>
+  <rect x="820" y="440" width="160" height="38" rx="19" fill="#f472b6" fill-opacity="0.1" stroke="#f472b6" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="900" y="464" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif" fill="#f9a8d4">🧠 Memory</text>
+  <!-- Domain -->
+  <text x="600" y="570" text-anchor="middle" font-size="18" font-family="system-ui,sans-serif" fill="#52525b">chatweb.ai</text>
+</svg>
