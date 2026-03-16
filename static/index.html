@@ -1145,7 +1145,9 @@ function removeEl(id) {
 
 // ── Send ──────────────────────────────────────────────────────────────────────
 function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
+    e.preventDefault(); sendMessage();
+  }
 }
 function autoResize(ta) {
   ta.style.height = 'auto';
