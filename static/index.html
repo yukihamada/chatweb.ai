@@ -3225,21 +3225,47 @@ async function onboardDemo(msg) {
   setTimeout(() => onboardConnect(), 12000);
 }
 
-function onboardConnect() {
+async function onboardConnect() {
+  // Generate link code for instant connection
+  let code = '------';
+  let lineUrl = 'https://line.me/R/ti/p/@619jcqqh';
+  let tgUrl = 'https://t.me/chatweb_aichat_bot';
+  try {
+    const r = await fetch('/link/code');
+    const d = await r.json();
+    code = d.code;
+    const lineBotId = d.line_bot_basic_id || '@619jcqqh';
+    const tgBot = d.telegram_bot_username || 'chatweb_aichat_bot';
+    lineUrl = `https://line.me/R/oaMessage/${lineBotId}/?${encodeURIComponent('/link ' + code)}`;
+    tgUrl = `https://t.me/${tgBot}?start=link${code}`;
+  } catch {}
+
+  const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(lineUrl)}`;
+  const tgQr = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(tgUrl)}`;
+
   const q = document.createElement('div');
   q.className = 'msg-container';
   q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
     <strong>いい感じですね！🎉</strong><br><br>
     次は<strong>LINE / Telegram</strong>を連携しましょう。<br>
-    連携すると、スマホからいつでもAIに話しかけられます。<br>
-    さらに、気になるニュースや株価を<strong>毎朝自動で届ける</strong>こともできます。<br><br>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:#06c755;color:#fff;text-decoration:none;font-weight:600;font-size:14px">📱 LINEで友達追加</a>
-      <a href="https://t.me/chatweb_aichat_bot" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:#229ed9;color:#fff;text-decoration:none;font-weight:600;font-size:14px">✈️ Telegramで開く</a>
+    QRを読み取るだけで連携完了します。（${code}）<br><br>
+    <div style="display:flex;gap:20px;justify-content:center;margin:12px 0">
+      <div style="text-align:center">
+        <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="LINE QR"></a>
+        <div style="font-size:13px;color:#06c755;font-weight:600;margin-top:6px">📱 LINE</div>
+        <div style="font-size:10px;color:var(--muted)">読み取り→自動送信</div>
+      </div>
+      <div style="text-align:center">
+        <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="Telegram QR"></a>
+        <div style="font-size:13px;color:#229ed9;font-weight:600;margin-top:6px">✈️ Telegram</div>
+        <div style="font-size:10px;color:var(--muted)">読み取り→自動連携</div>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👆 タップして友達追加 → ボットに「こんにちは」と送ってみてください</div>
-    <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 追加した！次へ</button>
-    <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">連携コード: <code style="background:rgba(139,92,246,.1);padding:2px 8px;border-radius:4px;font-size:14px;font-weight:700;letter-spacing:2px">${code}</code>（10分間有効）</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 連携した！次へ</button>
+      <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
+    </div>
   </div></div>`;
   getMessages().appendChild(q);
   scrollToBottom();

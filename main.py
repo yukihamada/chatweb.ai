@@ -6664,12 +6664,22 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
         await emit("image_generate", "calling", real=True)
         results["image_generate"] = await tool_image_generate(prompt)
         await emit("image_generate", "done", real=True)
+        # Charge for image generation
+        _tool_uid = (_user_sessions.get(session_id) or {}).get("user_id")
+        if _tool_uid:
+            await _deduct_credit(_tool_uid, 0.01)  # $0.01 per image
+            results["_tool_cost"] = 0.01
 
     elif agent_id == "video":
         prompt = message
         await emit("video_generate", "calling", real=True)
         results["video_generate"] = await tool_video_generate(prompt)
         await emit("video_generate", "done", real=True)
+        # Charge for video generation
+        _tool_uid = (_user_sessions.get(session_id) or {}).get("user_id")
+        if _tool_uid:
+            await _deduct_credit(_tool_uid, 0.05)  # $0.05 per video
+            results["_tool_cost"] = 0.05
 
     elif agent_id == "mobile":
         # Parse lane and platform from message
@@ -7395,6 +7405,10 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
             e2b_output = await tool_e2b_execute(code_to_run)
             if queue:
                 await queue.put({"type": "tool", "tool": "e2b_execute", "status": "done", "real": True})
+            # Charge for E2B execution ($0.002 per run)
+            _e2b_uid = (_user_sessions.get(session_id) or {}).get("user_id")
+            if _e2b_uid:
+                await _deduct_credit(_e2b_uid, 0.002)
             if e2b_output and "error" not in e2b_output.lower():
                 draft += f"\n\n✅ **E2B実行確認済み**\n```\n{e2b_output[:500]}\n```"
             exec_info = {"ok": "error" not in e2b_output.lower(), "stdout": e2b_output, "stderr": ""}
