@@ -7670,7 +7670,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
             if _e2b_uid:
                 await _deduct_credit(_e2b_uid, 0.002)
             if e2b_output and "error" not in e2b_output.lower():
-                draft += f"\n\n✅ **E2B実行確認済み**\n```\n{e2b_output[:500]}\n```"
+                draft += f"\n\n✅ **E2Bサンドボックスで実行済み**（コスト: $0.002）\n```\n{e2b_output[:500]}\n```"
             exec_info = {"ok": "error" not in e2b_output.lower(), "stdout": e2b_output, "stderr": ""}
         else:
             # code_executor (local execution) — admin only for safety
