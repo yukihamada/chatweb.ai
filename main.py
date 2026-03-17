@@ -8799,6 +8799,43 @@ async def memory_delete(memory_id: str):
     return {"status": "deleted", "id": memory_id}
 
 
+@app.post("/onboarding/profile")
+async def onboarding_profile(request: Request):
+    """Research user's company from email domain and save to memory."""
+    user = await _require_user(request)
+    email = user.get("email", "")
+    domain = email.split("@")[1] if "@" in email else ""
+    if not domain or domain in ("gmail.com", "yahoo.co.jp", "outlook.com", "hotmail.com", "icloud.com",
+                                 "yahoo.com", "me.com", "protonmail.com", "live.com"):
+        return {"ok": True, "profile": None, "reason": "free_email"}
+
+    # Web search to learn about the company
+    try:
+        search_result = await tool_web_search(f"{domain} 会社 企業情報 what is")
+        # Ask AI to extract company info
+        r = await aclient.messages.create(
+            model="claude-haiku-4-5-20251001", max_tokens=300,
+            system="メールドメインとWeb検索結果から、この人の所属企業について簡潔にまとめてください。"
+                   "JSONで返してください: {\"company\":\"会社名\",\"industry\":\"業界\",\"description\":\"一文説明\",\"size\":\"規模感\"}",
+            messages=[{"role": "user",
+                       "content": f"メール: {email}\nドメイン: {domain}\n\n検索結果:\n{search_result[:2000]}"}],
+        )
+        text = r.content[0].text.strip()
+        if "```" in text:
+            text = text.split("```")[1].replace("json", "").strip()
+        profile = json.loads(text)
+
+        # Save to long-term memory
+        mem_content = f"ユーザー情報: {email} — 所属: {profile.get('company', domain)} ({profile.get('industry', '不明')}) — {profile.get('description', '')}"
+        await save_memory(mem_content, importance=9, user_id=user["id"])
+        return {"ok": True, "profile": profile}
+    except Exception as e:
+        # Fallback: just save domain
+        await save_memory(f"ユーザーのメールドメイン: {domain} ({email})", importance=5, user_id=user["id"])
+        log.warning(f"onboarding profile error: {e}")
+        return {"ok": True, "profile": {"company": domain, "industry": "不明", "description": ""}, "fallback": True}
+
+
 @app.post("/memory/add")
 async def memory_add(request: Request, body: dict):
     content = body.get("content", "").strip()

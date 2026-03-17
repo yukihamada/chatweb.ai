@@ -239,8 +239,8 @@ body {
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: 9px;
   cursor: pointer;
   font-size: 13px;
@@ -250,6 +250,9 @@ body {
   border: none;
   width: 100%;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dropdown-item:hover { background: rgba(255,255,255,0.06); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
@@ -1060,7 +1063,7 @@ body {
   <div class="topbar-center">
     <button id="agent-pill" onclick="toggleAgentSelector()">
       <span id="agent-pill-emoji">◈</span>
-      <span id="agent-pill-name" data-i18n="select_agent">エージェントを選択</span>
+      <span id="agent-pill-name" data-i18n="select_agent">エージェント自動選択</span>
       <span class="pill-chevron">▾</span>
     </button>
   </div>
@@ -1112,6 +1115,7 @@ body {
         <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機削除 <span id="hitlPendingCount">0</span></button>
         <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 チーム</button>
         <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API</button>
+        <button class="dropdown-item" onclick="localStorage.removeItem('onboarding_done');location.reload()" style="opacity:0.5;font-size:11px">🔄 チュートリアルをやり直す</button>
         <button class="dropdown-item" onclick="window.open('/static/about.html')" style="opacity:0.5;font-size:11px">About · 利用規約 · プライバシー</button>
       </div>
     </div>
@@ -1381,7 +1385,9 @@ function selectAgent(agentId) {
   _selectedAgentId = agentId;
   const ag = agents[agentId];
   if (ag) {
-    updateAgentPill(getAgentEmoji(agentId), ag.name);
+    // ag.name already contains emoji like "🔍 リサーチAI", so don't add another
+    const nameOnly = ag.name.replace(/^[\p{Emoji}\s]+/u, '').trim() || ag.name;
+    updateAgentPill(getAgentEmoji(agentId), nameOnly);
   }
   // Refresh grid selection state
   document.querySelectorAll('.agent-grid-pill').forEach(btn => {
@@ -2002,8 +2008,8 @@ async function sendMessage() {
         setAgentBusy(data.agent_id, true);
         stats.agent = data.agent_name;
         document.getElementById('s-agent').textContent = data.agent_name;
-        updateAgentPill(getAgentEmoji(data.agent_id), data.agent_name);
-        setStatus(`${data.agent_name} へルーティング中 (${Math.round(data.confidence*100)}%)`);
+        // Don't change pill — keep "エージェント自動選択" unless user explicitly chose
+        setStatus(`${data.agent_name} が処理中 (${Math.round(data.confidence*100)}%)`);
         addTraceRow(traceCardId, `→ ${data.agent_name} (信頼度 ${Math.round(data.confidence*100)}%)`, 'done');
         break;
 
@@ -2847,7 +2853,10 @@ function installApp() {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    // Force update check on every page load
+    reg.update().catch(() => {});
+  }).catch(() => {});
 }
 
 // ── Feature 6: Custom Agent Creation UI ───────────────────────────────────
@@ -2870,20 +2879,7 @@ async function startOnboarding(user) {
   const wb = document.getElementById('welcome-bubble');
   if (wb) wb.closest('.msg-container')?.remove();
 
-  // Infer company/role from email domain and save to memory
-  const email = user.email || '';
-  const domain = email.split('@')[1] || '';
-  if (domain && !['gmail.com','yahoo.co.jp','outlook.com','hotmail.com','icloud.com'].includes(domain)) {
-    // Corporate email — infer company name and save
-    const company = domain.replace(/\.(co\.jp|com|io|ai|dev|org|net)$/, '').replace(/\./g, ' ');
-    try {
-      await fetch('/memory/add', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({content: `ユーザーの所属: ${company} (${domain}) — メールアドレス: ${email}`})
-      });
-    } catch {}
-  }
+  // No background search — we'll ask the user directly in the onboarding flow
 
   // Step 1: Typewriter intro
   const name = (user.name || email.split('@')[0] || 'there');
@@ -2972,18 +2968,54 @@ async function onboardName(name) {
     });
   } catch {}
 
-  // Step 4: Demo — try a real query
+  // Step 4: Ask about the user
+  await new Promise(r => setTimeout(r, 300));
+  const aboutQ = document.createElement('div');
+  aboutQ.className = 'msg-container';
+  aboutQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>「${name}」ですね！よろしくお願いします 🎉</strong><br><br>
+    あなたのことも少し教えてください。何をされていますか？<br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="chip" onclick="onboardRole('エンジニア')" type="button" style="min-height:36px">⚙️ エンジニア</button>
+      <button class="chip" onclick="onboardRole('経営者・マネージャー')" type="button" style="min-height:36px">👔 経営・管理職</button>
+      <button class="chip" onclick="onboardRole('マーケター')" type="button" style="min-height:36px">📣 マーケター</button>
+      <button class="chip" onclick="onboardRole('営業')" type="button" style="min-height:36px">💼 営業</button>
+      <button class="chip" onclick="onboardRole('デザイナー')" type="button" style="min-height:36px">🎨 デザイナー</button>
+      <button class="chip" onclick="promptOnboardRole()" type="button" style="min-height:36px">✏️ その他</button>
+    </div>
+  </div></div>`;
+  getMessages().appendChild(aboutQ);
+  scrollToBottom();
+}
+
+function promptOnboardRole() {
+  const role = prompt('あなたの職種や役割を教えてください:');
+  if (role) onboardRole(role);
+}
+
+async function onboardRole(role) {
+  appendUserMsg(role);
+  // Save to long-term memory
+  try {
+    const email = currentUser?.email || '';
+    await fetch('/memory/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({content: `ユーザーの職種: ${role}（${email}）`})
+    });
+  } catch {}
+
+  // Step 5: Demo
   await new Promise(r => setTimeout(r, 300));
   const demoQ = document.createElement('div');
   demoQ.className = 'msg-container';
   demoQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>「${name}」ですね！よろしくお願いします 🎉</strong><br><br>
-    さっそく試してみましょう！<br>
-    下のボタンをタップすると、AIが実際に動くところを見られます。<br><br>
+    <strong>${role}ですね！</strong>ぴったりのエージェントがたくさんあります。<br><br>
+    さっそく試してみましょう！タップするとAIが実際に動きます。<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardDemo('今日のNVIDIAの株価を教えて')" type="button" style="min-height:40px">💹 NVIDIAの株価を調べる</button>
-      <button class="chip" onclick="onboardDemo('副業の業務委託契約で気をつけるポイントを3つ教えて')" type="button" style="min-height:40px">⚖️ 副業の法的リスクを聞く</button>
-      <button class="chip" onclick="onboardDemo('ポートフォリオサイトを作って公開して')" type="button" style="min-height:40px">🌐 Webサイトを作って公開する</button>
+      <button class="chip" onclick="onboardDemo('今日のNVIDIAの株価を教えて')" type="button" style="min-height:36px">💹 株価を調べる</button>
+      <button class="chip" onclick="onboardDemo('副業の業務委託契約で気をつけるポイントを3つ教えて')" type="button" style="min-height:36px">⚖️ 法的リスクを聞く</button>
+      <button class="chip" onclick="onboardDemo('ポートフォリオサイトを作って公開して')" type="button" style="min-height:36px">🌐 サイトを作る</button>
     </div>
   </div></div>`;
   getMessages().appendChild(demoQ);
@@ -3672,6 +3704,10 @@ async function checkAuth() {
     const d = await r.json();
     updateAuthUI(d);
     if (!d.logged_in) showLoginGate();
+    // Trigger onboarding if logged in but not done yet
+    if (d.logged_in && !localStorage.getItem('onboarding_done')) {
+      setTimeout(() => startOnboarding(d), 1000);
+    }
   } catch {}
 }
 
