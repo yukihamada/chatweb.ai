@@ -3417,6 +3417,48 @@ async def tool_github_pr_list(cwd: str = None) -> str:
 
 
 # ── Notification ──────────────────────────────────────────────────────────────
+async def send_to_chatweb_user(email: str, message: str, subject: str = "chatweb.aiからのメッセージ") -> dict:
+    """Send a message to another chatweb.ai user via their best available channel."""
+    results = {"email": email, "channels": []}
+    async with db_conn() as db:
+        async with db.execute(
+            "SELECT id, line_user_id, telegram_chat_id FROM users WHERE email=?", (email,)
+        ) as c:
+            row = await c.fetchone()
+
+    if row:
+        uid, line_uid, tg_chat = row[0], row[1], row[2]
+        clean = _clean_for_messenger(message)
+        # 1. LINE
+        if line_uid:
+            r = await line_push(line_uid, f"📩 {subject}\n\n{clean}")
+            if r.get("ok"):
+                results["channels"].append("LINE")
+        # 2. Telegram
+        if tg_chat:
+            await tg_send(tg_chat, f"📩 *{subject}*\n\n{clean}")
+            results["channels"].append("Telegram")
+        # 3. Web notification (save as message in their session)
+        try:
+            async with db_conn() as db:
+                await db.execute(
+                    "INSERT INTO messages(session_id, role, content, created_at) VALUES(?,?,?,datetime('now','localtime'))",
+                    (f"notify_{uid}", "assistant", f"📩 {subject}\n\n{message}"))
+                await db.commit()
+            results["channels"].append("Web")
+        except Exception:
+            pass
+
+    # 4. Email (always, as fallback or additional)
+    email_result = await tool_send_email(subject, message, to=email)
+    if email_result.get("ok"):
+        results["channels"].append("Email")
+
+    results["ok"] = len(results["channels"]) > 0
+    results["summary"] = f"送信先: {email} → {', '.join(results['channels'])}"
+    return results
+
+
 async def tool_send_email(subject: str, body: str, to: str = DEMO_EMAIL) -> dict:
     def _send():
         return resend.Emails.send({
@@ -3499,6 +3541,12 @@ async def execute_hitl_action(task: dict) -> dict:
     agent_id, draft, message = task["agent_id"], task["draft"], task["message"]
     if agent_id == "notify":
         p = parse_draft(draft)
+        # Extract recipient email if present
+        to_m = re.search(r"送信先[：:]\s*.*?([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z.]+)", draft)
+        to_email = to_m.group(1) if to_m else ""
+        # If recipient is a chatweb.ai user, use multi-channel delivery
+        if to_email:
+            return await send_to_chatweb_user(to_email, p["body"], p["subject"])
         if p["channel"] == "gmail":
             return await tool_send_email(p["subject"], p["body"])
         elif p["channel"] == "line":
@@ -11401,6 +11449,35 @@ async def get_team_members(team_id: str, request: Request):
             (team_id,)
         )
     return {"members": [dict(r) for r in rows]}
+
+
+@app.post("/teams/{team_id}/broadcast")
+async def team_broadcast(team_id: str, request: Request):
+    """Send a message to all team members via their best available channel."""
+    user = await _require_user(request)
+    body = await request.json()
+    message = body.get("message", "")
+    subject = body.get("subject", "チームメッセージ")
+    if not message:
+        raise HTTPException(400, "メッセージを入力してください")
+
+    # Get all team members
+    async with db_conn() as db:
+        rows = await db.execute_fetchall(
+            """SELECT u.email FROM team_members tm
+               JOIN users u ON tm.user_id = u.id
+               WHERE tm.team_id = ?""",
+            (team_id,))
+
+    results = []
+    for row in rows:
+        email = row[0]
+        if email == user.get("email"):
+            continue  # Skip sender
+        r = await send_to_chatweb_user(email, message, subject)
+        results.append({"email": email, **r})
+
+    return {"ok": True, "sent_to": len(results), "results": results}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
