@@ -709,7 +709,12 @@ async def setup_telegram_webhook(base_url: str) -> None:
         log.info(f"Telegram webhook registered: {webhook_url}")
     else:
         log.warning(f"Telegram webhook setup failed: {r}")
-    # Register bot commands menu
+    # Allow bot to work in groups (disable privacy mode for group access)
+    await tg_api("setMyCommands", scope={"type": "all_group_chats"}, commands=[
+        {"command": "ask", "description": "AIに質問する"},
+        {"command": "help", "description": "ヘルプ"},
+    ])
+    # Register bot commands menu (private chats)
     await tg_api("setMyCommands", commands=[
         {"command": "start", "description": "はじめる・ヘルプ"},
         {"command": "agents", "description": "エージェント一覧"},
@@ -9935,9 +9940,21 @@ async def telegram_webhook(request: Request):
         return {"ok": True}
 
     chat_id = message.get("chat", {}).get("id")
+    chat_type = message.get("chat", {}).get("type", "private")  # private, group, supergroup
     tg_user_id = str(message.get("from", {}).get("id", ""))
     username = message.get("from", {}).get("username", "")
     text = (message.get("text") or message.get("caption") or "").strip()
+
+    # In groups: only respond to @mentions, /commands, or replies to bot
+    if chat_type in ("group", "supergroup"):
+        bot_username = TELEGRAM_BOT_USERNAME.lower()
+        is_mention = f"@{bot_username}" in text.lower()
+        is_command = text.startswith("/")
+        is_reply_to_bot = message.get("reply_to_message", {}).get("from", {}).get("is_bot", False)
+        if not (is_mention or is_command or is_reply_to_bot):
+            return {"ok": True}  # Ignore non-addressed messages in groups
+        # Strip bot mention from text
+        text = re.sub(rf'@{re.escape(bot_username)}\s*', '', text, flags=re.IGNORECASE).strip()
 
     # ── successful_payment (Stars payment completed) ─────────────────────────
     sp = message.get("successful_payment")
@@ -10244,9 +10261,13 @@ async def line_webhook(request: Request):
         text = msg.get("text", "").strip()
         reply_token = event.get("replyToken", "")
         source = event.get("source", {})
+        source_type = source.get("type", "user")  # user, group, room
         user_id = source.get("userId", "")
-        if text and user_id:
-            asyncio.create_task(process_line_message(user_id, text, reply_token))
+        group_id = source.get("groupId", "") or source.get("roomId", "")
+        # For groups: use groupId as reply target, userId for user context
+        reply_target = group_id if source_type in ("group", "room") else user_id
+        if text and reply_target:
+            asyncio.create_task(process_line_message(reply_target, text, reply_token))
 
     return {"ok": True}
 
