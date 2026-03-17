@@ -1,8 +1,13 @@
+.git
+.env
+.env.*
+!.env.example
 __pycache__
 *.pyc
 *.db
 *.db-shm
 *.db-wal
-.git
-.gitignore
-static/screenshots/*.png
+.DS_Store
+cf-worker/.wrangler/
+node_modules/
+*.bak
