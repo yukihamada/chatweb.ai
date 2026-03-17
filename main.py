@@ -1,5 +1,5 @@
 """
-Synapse — Multi-Agent AI Platform
+chatweb.ai — Multi-Agent AI Platform
 Streaming + Browser QA + History + A2A Delegation
 Semantic Routing + MCP (ALL REAL) + HITL (REAL SEND) + Agentic Workflow
 """
@@ -926,7 +926,7 @@ async def tg_send_invoice(chat_id: int | str, plan_key: str) -> dict:
     return await tg_api(
         "sendInvoice",
         chat_id=chat_id,
-        title=f"Synapse {plan['name']}",
+        title=f"chatweb.ai {plan['name']}",
         description=plan["desc"],
         payload=plan["payload"],
         currency="XTR",           # Telegram Stars
@@ -3253,7 +3253,7 @@ async def tool_fastlane_run(lane: str, platform: str = "ios", project_path: str 
 async def tool_scaffold_and_deploy(
     app_name: str,
     html_content: str = "",
-    description: str = "Synapse generated site",
+    description: str = "chatweb.ai generated site",
 ) -> dict:
     """Create a static HTML site and deploy it to Fly.io.
 
@@ -3563,7 +3563,7 @@ async def tool_scaffold_and_deploy(
   <!-- Stats -->
   <section id="stats" style="padding-top:0">
     <div class="section-label">Stats</div>
-    <h2 class="section-title">数字で見る Synapse</h2>
+    <h2 class="section-title">数字で見る chatweb.ai</h2>
     <div class="stats">
       <div class="stat"><div class="stat-num" id="c-agents">0</div><div class="stat-label">専門エージェント</div></div>
       <div class="stat"><div class="stat-num" id="c-tools">0</div><div class="stat-label">実装済みツール</div></div>
@@ -3607,7 +3607,7 @@ async def tool_scaffold_and_deploy(
 
   <!-- CTA -->
   <div class="cta-section" id="contact">
-    <h2>今すぐ Synapse を試す</h2>
+    <h2>今すぐ chatweb.ai を試す</h2>
     <p>無料で始められます。クレジットカード不要。</p>
     <div class="cta-group" style="justify-content:center">
       <a href="https://chatweb.ai" class="btn btn-primary" target="_blank">デモを試す →</a>
@@ -3617,7 +3617,7 @@ async def tool_scaffold_and_deploy(
 
   <!-- Footer -->
   <footer>
-    <p>Deployed by <strong>◈ Synapse</strong> — Multi-Agent AI Platform &nbsp;·&nbsp; {safe_name}.fly.dev</p>
+    <p>Deployed by <strong>◈ chatweb.ai</strong> — Multi-Agent AI Platform &nbsp;·&nbsp; {safe_name}.fly.dev</p>
   </footer>
 
   <script>
@@ -4391,7 +4391,7 @@ async def slack_update(channel: str, ts: str, text: str) -> bool:
 
 
 async def process_slack_message(user_id: str, channel: str, text: str) -> None:
-    """Route a Slack message through Synapse agents and stream reply."""
+    """Route a Slack message through chatweb.ai agents and stream reply."""
     session_id = f"slack_{user_id}"
     # Send placeholder
     msg_ts = None
@@ -6443,6 +6443,15 @@ def _extract_session_token(request: Request) -> str:
         return auth[7:]
     return request.cookies.get("session", "")
 
+
+async def _require_auth(request: Request) -> dict:
+    """Extract and verify user from request. Raises 401 if not authenticated."""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
+    return user
+
+
 async def _require_user(request: Request) -> dict:
     token = _extract_session_token(request)
     user = await _get_user_from_session(token)
@@ -6479,11 +6488,11 @@ async def auth_register(req: RegisterRequest):
         try:
             from_addr = DEMO_EMAIL or "noreply@yukihamada.jp"
             resend.Emails.send({
-                "from": f"Synapse <{from_addr}>",
+                "from": f"chatweb.ai <{from_addr}>",
                 "to": email,
-                "subject": "ログインリンク — Synapse",
+                "subject": "ログインリンク — chatweb.ai",
                 "html": f"""<div style="font-family:sans-serif;max-width:480px;margin:40px auto;padding:32px;background:#111;border-radius:12px;color:#fff">
-<h2 style="margin:0 0 16px">Synapseへログイン</h2>
+<h2 style="margin:0 0 16px">chatweb.ai へログイン</h2>
 <p style="color:#aaa;margin:0 0 24px">以下のボタンをクリックしてログインしてください（15分間有効）</p>
 <a href="{magic_url}" style="display:inline-block;padding:12px 28px;background:#7c6aff;color:#fff;border-radius:8px;text-decoration:none;font-weight:600">ログインする</a>
 <p style="color:#666;font-size:12px;margin:24px 0 0">このメールに覚えがない場合は無視してください。</p>
@@ -7426,7 +7435,7 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
                 await emit("scaffold_deploy", "calling", real=True)
                 results["scaffold_deploy"] = await tool_scaffold_and_deploy(
                     app_name=gen_name,
-                    description="Synapse AIが生成したサイト"
+                    description="chatweb.ai AIが生成したサイト"
                 )
                 await emit("scaffold_deploy", "done", real=True)
             else:
@@ -7457,14 +7466,14 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
 
         if re.search(r'push|プッシュ|上げ|アップ', message, re.I):
             msg_match = re.search(r'(?:メッセージ|message|コメント|説明)[：:\s]+(.+)', message)
-            commit_msg = msg_match.group(1).strip() if msg_match else "Update via Synapse AI"
+            commit_msg = msg_match.group(1).strip() if msg_match else "Update via chatweb.ai"
             await emit("git_push", "calling", real=True)
             results["git_push"] = await tool_git_commit_push(commit_msg, push=True, cwd=wd)
             await emit("git_push", "done", real=True)
 
         elif re.search(r'commit|コミット', message, re.I):
             msg_match = re.search(r'(?:メッセージ|message|コメント)[：:\s]+(.+)', message)
-            commit_msg = msg_match.group(1).strip() if msg_match else "Update via Synapse AI"
+            commit_msg = msg_match.group(1).strip() if msg_match else "Update via chatweb.ai"
             await emit("git_commit", "calling", real=True)
             results["git_commit"] = await tool_git_commit_push(commit_msg, push=False, cwd=wd)
             await emit("git_commit", "done", real=True)
@@ -10479,7 +10488,8 @@ async def apply_referral_code(request: Request):
 
 
 @app.get("/usage/{session_id}")
-async def get_usage(session_id: str):
+async def get_usage(session_id: str, request: Request):
+    await _require_auth(request)
     async with db_conn() as db:
         cur = await db.execute(
             "SELECT COUNT(*) as cnt, SUM(cost_usd) as total_cost FROM messages WHERE session_id=? AND role='assistant'",
@@ -11509,7 +11519,7 @@ async def export_conversation(session_id: str, fmt: str = "markdown"):
 
     now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     lines = [
-        f"# Synapse 会話エクスポート",
+        f"# chatweb.ai 会話エクスポート",
         f"**セッション**: `{session_id}`",
         f"**日時**: {now_str}",
         "",
@@ -11557,8 +11567,9 @@ class RatingRequest(BaseModel):
 
 
 @app.post("/rate/{run_id}")
-async def rate_run(run_id: str, req: RatingRequest):
+async def rate_run(run_id: str, req: RatingRequest, request: Request):
     """Rate a run (👍 = 1, 👎 = -1)."""
+    await _require_auth(request)
     if req.rating not in (1, -1):
         raise HTTPException(400, "rating must be 1 or -1")
     async with db_conn() as db:
@@ -11603,8 +11614,9 @@ class ScheduledTaskCreate(BaseModel):
 
 
 @app.post("/schedule/tasks")
-async def create_scheduled_task(req: ScheduledTaskCreate):
+async def create_scheduled_task(req: ScheduledTaskCreate, request: Request):
     """Create a scheduled task."""
+    await _require_auth(request)
     task_id = str(uuid.uuid4())
     async with db_conn() as db:
         await db.execute(
@@ -11618,8 +11630,9 @@ async def create_scheduled_task(req: ScheduledTaskCreate):
 
 
 @app.get("/schedule/tasks")
-async def list_scheduled_tasks():
+async def list_scheduled_tasks(request: Request):
     """List all scheduled tasks."""
+    await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM scheduled_tasks ORDER BY created_at DESC") as c:
@@ -11628,8 +11641,9 @@ async def list_scheduled_tasks():
 
 
 @app.delete("/schedule/tasks/{task_id}")
-async def delete_scheduled_task(task_id: str):
+async def delete_scheduled_task(task_id: str, request: Request):
     """Delete a scheduled task."""
+    await _require_auth(request)
     async with db_conn() as db:
         await db.execute("DELETE FROM scheduled_tasks WHERE id=?", (task_id,))
         await db.commit()
@@ -11852,15 +11866,18 @@ class RAGIndexRequest(BaseModel):
 
 
 @app.post("/rag/index")
-async def rag_index(req: RAGIndexRequest):
+async def rag_index(req: RAGIndexRequest, request: Request):
     """Index an uploaded file into the RAG store for a session."""
+    await _require_auth(request)
     result = await tool_rag_index(req.file_id, req.session_id)
     return {"ok": True, "result": result}
 
 
 @app.get("/rag/search")
-async def rag_search(query: str, session_id: str, top_k: int = 3):
+async def rag_search(query: str, session_id: str, top_k: int = 3, request: Request = None):
     """Search the RAG store for relevant chunks."""
+    if request:
+        await _require_auth(request)
     result = await tool_rag_search(query, session_id, top_k)
     return {"ok": True, "result": result, "query": query, "session_id": session_id}
 
@@ -11875,8 +11892,9 @@ class SQLQueryRequest(BaseModel):
 
 
 @app.post("/sql/query")
-async def sql_query_endpoint(req: SQLQueryRequest):
+async def sql_query_endpoint(req: SQLQueryRequest, request: Request):
     """Execute a SELECT query against the session's SQLite DB."""
+    await _require_auth(request)
     result = await tool_sql_query(req.sql, req.session_id)
     return {"ok": True, "result": result}
 
@@ -11888,8 +11906,9 @@ class CSVToDBRequest(BaseModel):
 
 
 @app.post("/sql/csv_to_db")
-async def csv_to_db_endpoint(req: CSVToDBRequest):
+async def csv_to_db_endpoint(req: CSVToDBRequest, request: Request):
     """Load a CSV file into a session-local SQLite DB."""
+    await _require_auth(request)
     result = await tool_csv_to_db(req.file_id, req.table_name, req.session_id)
     return {"ok": True, "result": result}
 
@@ -12197,7 +12216,8 @@ class MCPCallRequest(BaseModel):
     input: dict = {}
 
 @app.post("/mcp/tools/{tool_name}/call")
-async def mcp_call_tool(tool_name: str, req: MCPCallRequest):
+async def mcp_call_tool(tool_name: str, req: MCPCallRequest, request: Request):
+    await _require_auth(request)
     # External tool registered via /mcp/tools/register
     if tool_name in _mcp_registry:
         entry = _mcp_registry[tool_name]
@@ -12236,8 +12256,9 @@ class ZapierTriggerRequest(BaseModel):
 
 
 @app.post("/zapier/trigger")
-async def zapier_trigger_endpoint(req: ZapierTriggerRequest):
+async def zapier_trigger_endpoint(req: ZapierTriggerRequest, request: Request):
     """Trigger a Zapier webhook with event + data."""
+    await _require_auth(request)
     result = await tool_zapier_trigger(req.event, req.data)
     return {"ok": True, "result": result}
 
@@ -12288,19 +12309,20 @@ async def webhook_inbound(event_type: str, request: Request):
 
 @app.get("/stats/usage")
 async def get_usage_stats(request: Request):
-    user = await _get_user_from_session(request)
+    user = await _get_user_from_session(_extract_session_token(request))
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         # Filter by user's sessions if logged in, otherwise by session header
         session_filter = request.headers.get("X-Session-Id", "")
         if user:
+            uid = user.get("id", "")
             rows = await db.execute_fetchall(
                 """SELECT agent_id, COUNT(*) as run_count,
                           SUM(input_tokens) as total_input, SUM(output_tokens) as total_output,
                           SUM(cost_usd) as total_cost, MAX(created_at) as last_run
-                   FROM runs WHERE session_id LIKE ?
+                   FROM runs WHERE user_id = ?
                    GROUP BY agent_id ORDER BY run_count DESC""",
-                (f"%",)
+                (uid,)
             )
         else:
             rows = await db.execute_fetchall(
@@ -12578,7 +12600,8 @@ class BrowserNavigateRequest(BaseModel):
 
 
 @app.post("/browser/navigate")
-async def browser_navigate(req: BrowserNavigateRequest):
+async def browser_navigate(req: BrowserNavigateRequest, request: Request):
+    await _require_auth(request)
     try:
         _, _, page = await _get_or_create_browser(req.session_id)
         if page is None:
@@ -13019,6 +13042,7 @@ async def ab_test(req: ABTestRequest, request: Request):
 @app.get("/runs/{run_id}")
 async def get_run(run_id: str, request: Request):
     """Fetch a specific run by ID."""
+    await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -13032,6 +13056,7 @@ async def get_run(run_id: str, request: Request):
 @app.post("/runs/{run_id}/replay")
 async def replay_run(run_id: str, request: Request, streaming: bool = False):
     """Re-run the same message through the same agent as a previous run."""
+    await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -13390,8 +13415,9 @@ class DetectLanguageRequest(BaseModel):
 
 
 @app.post("/detect/language")
-async def detect_language_endpoint(req: DetectLanguageRequest):
+async def detect_language_endpoint(req: DetectLanguageRequest, request: Request):
     """Detect the language of the given text using Claude Haiku."""
+    await _require_auth(request)
     lang = await _detect_language(req.text)
     lang_names = {
         "ja": "Japanese", "en": "English", "zh": "Chinese", "ko": "Korean",
