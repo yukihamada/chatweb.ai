@@ -20,6 +20,6 @@ google-auth>=2.0
 google-auth-oauthlib>=1.0
 aiosmtplib>=3.0
 tavily-python>=0.3
-e2b-code-interpreter>=0.0.10
+e2b-code-interpreter>=1.0
 stripe>=8.0
 cryptography>=42.0

@@ -1176,13 +1176,24 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
     """Execute code in E2B sandbox (real) or locally (fallback)."""
     if E2B_API_KEY:
         try:
-            from e2b_code_interpreter import Sandbox
+            # Try v1 API first, then v0
+            try:
+                from e2b_code_interpreter import Sandbox
+            except ImportError:
+                from e2b import Sandbox
             def _run():
                 with Sandbox(api_key=E2B_API_KEY) as sandbox:
                     execution = sandbox.run_code(code)
-                    output = "\n".join(str(r) for r in execution.results)
-                    logs = execution.logs.stdout + execution.logs.stderr
-                    return output + ("\n\nLogs:\n" + "\n".join(logs) if logs else "")
+                    output = ""
+                    if hasattr(execution, 'results'):
+                        output = "\n".join(str(r) for r in execution.results)
+                    if hasattr(execution, 'logs'):
+                        logs = getattr(execution.logs, 'stdout', []) + getattr(execution.logs, 'stderr', [])
+                        if logs:
+                            output += "\n\nLogs:\n" + "\n".join(str(l) for l in logs)
+                    if hasattr(execution, 'text'):
+                        output = execution.text
+                    return output or "(no output)"
             return await asyncio.get_event_loop().run_in_executor(None, _run)
         except ImportError:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
@@ -7281,11 +7292,26 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         model_name = "claude-sonnet-4-6"
 
     # Language instruction injection
-    _lang_names = {"ja":"日本語","en":"English","zh":"中文","ko":"한국어","fr":"Français","es":"Español","de":"Deutsch","pt":"Português"}
-    _effective_lang = lang  # from parameter
+    _lang_names = {"ja":"日本語","en":"English","zh":"中文","ko":"한국어","fr":"Français","es":"Español","de":"Deutsch","pt":"Português",
+                    "ar":"العربية","hi":"हिन्दी","th":"ไทย","vi":"Tiếng Việt","id":"Bahasa Indonesia","ru":"Русский","it":"Italiano","tr":"Türkçe"}
+    _effective_lang = lang
     if not _effective_lang:
-        # Fall back to X-Language logic handled in chat_stream; here default to ja
-        _effective_lang = "ja"
+        # Auto-detect language from user message
+        _msg_sample = (messages[-1]["content"] if messages and isinstance(messages[-1].get("content"), str) else "")[:100]
+        if re.search(r'[\u4e00-\u9fff]', _msg_sample) and not re.search(r'[\u3040-\u309f\u30a0-\u30ff]', _msg_sample):
+            _effective_lang = "zh"
+        elif re.search(r'[\uac00-\ud7af]', _msg_sample):
+            _effective_lang = "ko"
+        elif re.search(r'[\u0e00-\u0e7f]', _msg_sample):
+            _effective_lang = "th"
+        elif re.search(r'[\u0600-\u06ff]', _msg_sample):
+            _effective_lang = "ar"
+        elif re.search(r'[\u0900-\u097f]', _msg_sample):
+            _effective_lang = "hi"
+        elif re.search(r'[a-zA-Z]{10,}', _msg_sample) and not re.search(r'[\u3040-\u9fff]', _msg_sample):
+            _effective_lang = "en"
+        else:
+            _effective_lang = "ja"
     _lang_instruction = f"\n\n[必須] 回答は必ず {_lang_names.get(_effective_lang, _effective_lang)} で返してください。" if _effective_lang != "ja" else ""
     _clarify_instruction = "\n\n曖昧な場合でもまず最善の推測で回答を実行してください。本当に情報が足りない場合のみ、1つだけ質問してください。"
     _system_with_lang = agent["system"] + _clarify_instruction + _lang_instruction
