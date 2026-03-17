@@ -52,7 +52,11 @@
     .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
     .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
     .thread-label { color: #71717a; font-size: 0.8rem; margin-bottom: 0.3rem; }
+    .lang-label { display: inline-block; background: #27272a; color: #a1a1aa; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; margin-bottom: 0.3rem; }
     .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin-top: 0.75rem; font-size: 0.9rem; color: #a1a1aa; }
+    .ph-tagline { background: #18181b; border: 1px solid #f97316; border-radius: 12px; padding: 1.25rem; margin-bottom: 2.5rem; }
+    .ph-tagline .label { color: #f97316; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .ph-tagline pre { white-space: pre-wrap; word-wrap: break-word; font-family: inherit; font-size: 1rem; line-height: 1.6; color: #e4e4e7; }
     footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
     footer a { color: #8b5cf6; text-decoration: none; }
   </style>
@@ -76,173 +80,227 @@
     <h1><span class="accent">X / Twitter</span> 投稿文</h1>
     <p class="subtitle">5パターンのツイート/スレッド案。コピーボタンでそのまま使えます。</p>
 
-    <!-- Pattern 1 -->
+    <!-- Product Hunt Tagline -->
+    <div class="ph-tagline">
+      <div class="label">Product Hunt タグライン</div>
+      <pre>39 AI agents that send emails, publish sites & run code for you</pre>
+    </div>
+
+    <!-- Pattern 1: OMG moment -->
     <div class="pattern">
       <div class="pattern-header">
         <div class="pattern-num">1</div>
-        <div class="pattern-title">ローンチ告知</div>
+        <div class="pattern-title">OMG moment — 驚きの瞬間</div>
       </div>
-      <div class="thread-label">1/3</div>
-      <div class="tweet-block">
-        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>chatweb.ai をローンチしました。
 
-39の専門AIエージェントが、あなたの代わりにタスクを「実際に」実行します。
-
-- Gmailの送信・返信
-- Webサイトの公開
-- コードのデプロイ
-- ブラウザ操作での情報収集
-
-「AIに聞く」から「AIにやってもらう」へ。
-
-https://chatweb.ai</pre>
-      </div>
-      <div class="thread-label">2/3</div>
-      <div class="tweet-block">
-        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>技術的にこだわったポイント:
-
-- A2A v1.0プロトコル対応（JSON-RPC 2.0 + SSE）
-- 12のAIモデルを最適配分（Llama 4 Scout, Claude, GPT-4o, Gemini等）
-- 6時間ごとの自己改善ループ
-- LINE / Telegram連携
-
-将来的にオープンソース化します。</pre>
-      </div>
-      <div class="thread-label">3/3</div>
-      <div class="tweet-block">
-        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>プランは4つ:
-
-- Free: 毎月$2分のクレジット付き
-- Pro: ¥2,900/月（品質9/10、改善ループ5回）
-- Team: ¥9,800/月
-- Enterprise: ¥1M/月（限定10社）
-
-まずは無料で試してみてください。
-https://chatweb.ai
-
-#AI #AIAgent #chatweb</pre>
-      </div>
-      <div class="tip">画像: プロダクトのスクリーンショットかデモGIFを1枚目に添付すると効果的です。</div>
-    </div>
-
-    <!-- Pattern 2 -->
-    <div class="pattern">
-      <div class="pattern-header">
-        <div class="pattern-num">2</div>
-        <div class="pattern-title">ChatGPTとの比較</div>
-      </div>
-      <div class="tweet-block">
-        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>ChatGPTとchatweb.aiの違い:
-
-ChatGPT → テキストで「答え」を返す
-chatweb.ai → 39のエージェントが「実行」する
-
-例えば「来週の会議をリスケして」と言うと:
-- カレンダーを確認
-- 空き時間を探す
-- メールで参加者に連絡
-- 完了報告
-
-「考えるAI」と「動くAI」の差。
-
-https://chatweb.ai</pre>
-      </div>
-      <div class="tip">比較系ツイートはエンゲージメントが高い傾向。ただし競合批判は避け、ポジション違いを示す表現に。</div>
-    </div>
-
-    <!-- Pattern 3 -->
-    <div class="pattern">
-      <div class="pattern-header">
-        <div class="pattern-num">3</div>
-        <div class="pattern-title">メルカリ元CPOストーリー</div>
-      </div>
-      <div class="tweet-block">
-        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>メルカリでCPO/取締役をやっていた時、「テクノロジーで個人をエンパワメントする」をずっと考えていました。
-
-NOT A HOTELで不動産×テックをやった後、次に選んだのがAIエージェント。
-
-なぜか？
-
-LLMは賢くなったけど、まだ「実行」できない。
-ユーザーが結果を得るまでに何ステップもある。
-
-39のエージェントが連携して、ユーザーの代わりに動く。
-
-これがchatweb.aiです。
-https://chatweb.ai</pre>
-      </div>
-      <div class="tip">創業者のバックグラウンドが強い場合、ストーリーテリング型が最もシェアされやすいです。</div>
-    </div>
-
-    <!-- Pattern 4 -->
-    <div class="pattern">
-      <div class="pattern-header">
-        <div class="pattern-num">4</div>
-        <div class="pattern-title">技術解説</div>
-      </div>
+      <div class="lang-label">JP</div>
       <div class="thread-label">1/2</div>
       <div class="tweet-block">
         <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>chatweb.aiのアーキテクチャを公開します。
+        <pre>ChatGPTに「メール送って」って言ったことある？
 
-GoogleのA2A (Agent-to-Agent) v1.0プロトコルに準拠:
+テキストが出てくるだけ。自分でコピペしてGmail開いて送る。
 
-- JSON-RPC 2.0でエージェント間通信
-- SSEストリーミングでリアルタイム応答
-- Agent Cardで各エージェントの能力を宣言
-- フィードバックループで6時間ごとに自己改善
+chatweb.ai に同じこと言うと、本当にGmailから送信される。件名も本文も宛先も全部。
 
-12のAIモデルをタスクごとに最適配分しています。</pre>
+「AIが考える」と「AIが動く」は全然違う。
+
+[デモスクショ添付]</pre>
       </div>
       <div class="thread-label">2/2</div>
       <div class="tweet-block">
         <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>品質管理のアプローチ:
+        <pre>他にも:
+- 任意のURLのスクリーンショットを撮る
+- 5分でWebサイトを公開する
+- Pythonコードを実行して結果を返す
+- LINEやTelegramにメッセージを送る
+- 画像を生成する
 
-- Freeプラン: 品質7/10 目標
-- Proプラン: 品質9/10 目標、改善ループ最大5回
+全部チャットで指示するだけ。
 
-「動くけど品質が低い」AIエージェントが多い中、実用レベルの品質を保証する仕組みを入れました。
-
-将来的にオープンソース化予定。
-
-技術的な質問があればリプライください。
-https://chatweb.ai
-
-#A2A #AIAgent #LLM</pre>
+https://chatweb.ai</pre>
       </div>
+
+      <div class="lang-label">EN</div>
+      <div class="thread-label">1/2</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>Ever told ChatGPT to "send an email"?
+
+It gives you text. You still copy-paste it into Gmail yourself.
+
+Tell chatweb.ai the same thing and it actually sends the email from your Gmail. Subject, body, recipients — done.
+
+There's a huge gap between "AI that thinks" and "AI that acts."
+
+[attach demo screenshot]</pre>
+      </div>
+      <div class="thread-label">2/2</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>It also:
+- Takes screenshots of any URL
+- Publishes a website in 5 minutes
+- Runs Python code and shows results
+- Sends LINE and Telegram messages
+- Generates images
+
+All from a single chat interface.
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">1枚目にGmail送信のビフォーアフター（ChatGPT vs chatweb.ai）のスクショを添付すると効果的。</div>
     </div>
 
-    <!-- Pattern 5 -->
+    <!-- Pattern 2: Founder story -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">2</div>
+        <div class="pattern-title">Founder Story — 創業者の原体験</div>
+      </div>
+
+      <div class="lang-label">JP</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>メルカリでCPOをやっていた時、毎朝30分かけてメール返信・スケジュール調整・レポート確認をしていた。
+
+NOT A HOTELに移っても同じ。テクノロジーを作る側なのに、自分の雑務は全部手動。
+
+ある日「AIに頼んだら本当にメール送ってくれたら最高なのに」と思って、それをそのまま作った。
+
+chatweb.ai は僕自身が毎日使いたくて作ったプロダクトです。
+
+https://chatweb.ai</pre>
+      </div>
+
+      <div class="lang-label">EN</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>When I was CPO at Mercari, I spent 30 minutes every morning on emails, scheduling, and reports.
+
+Same at NOT A HOTEL. I was building technology for others while doing all my own busywork by hand.
+
+One day I thought: "What if I could just tell an AI to send that email — and it actually did it?"
+
+So I built exactly that.
+
+chatweb.ai is the product I wanted to use every day myself.
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">個人の具体的なエピソードが入ると共感されやすい。投稿は @yukihamada アカウントから。</div>
+    </div>
+
+    <!-- Pattern 3: 7 things listicle -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">3</div>
+        <div class="pattern-title">「ChatGPTにできない7つのこと」リスト</div>
+      </div>
+
+      <div class="lang-label">JP</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>ChatGPTにできなくて、chatweb.ai にできること7つ:
+
+1. Gmailでメールを実際に送信する
+2. 任意のWebサイトのスクリーンショットを撮る
+3. 5分でWebサイトを作って公開する
+4. Pythonコードを実行して結果を見せる
+5. LINEにメッセージを送る
+6. 画像を生成する
+7. 6時間ごとに自分自身を改善する
+
+全部チャットで日本語で指示するだけ。
+
+https://chatweb.ai</pre>
+      </div>
+
+      <div class="lang-label">EN</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>7 things ChatGPT can't do that chatweb.ai does today:
+
+1. Send a real email from your Gmail
+2. Take a screenshot of any URL
+3. Publish a website in 5 minutes
+4. Run Python code and show the output
+5. Send LINE messages
+6. Generate images on demand
+7. Auto-improve itself every 6 hours
+
+No plugins. No copy-paste. Just ask.
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">リスト系ツイートはブックマーク率が高い。各項目は1行に収めて読みやすく。</div>
+    </div>
+
+    <!-- Pattern 4: Dev-focused (EN only) -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">4</div>
+        <div class="pattern-title">Dev-focused — 開発者向け（EN only）</div>
+      </div>
+
+      <div class="lang-label">EN</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>We open-sourced chatweb.ai under AGPL-3.0.
+
+39 AI agents. Full A2A v1.0 protocol support (JSON-RPC 2.0 + SSE streaming). Self-improving feedback loop that runs every 6 hours.
+
+The agents don't just generate text — they execute: send emails, publish sites, run code, take screenshots.
+
+Everything is in the repo. PRs welcome.
+
+https://github.com/yukihamada/chatweb.ai</pre>
+      </div>
+      <div class="tip">開発者コミュニティは英語ファースト。GitHub URLを必ず含める。技術用語はこのパターンでのみ使用OK。</div>
+    </div>
+
+    <!-- Pattern 5: Demo tweet -->
     <div class="pattern">
       <div class="pattern-header">
         <div class="pattern-num">5</div>
-        <div class="pattern-title">デモ紹介</div>
+        <div class="pattern-title">Demo — デモ動画/GIF</div>
       </div>
+
+      <div class="lang-label">JP</div>
       <div class="tweet-block">
         <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
-        <pre>chatweb.ai のデモ動画です。
+        <pre>これ見て。
 
-「来週のミートアップの告知ページを作って、参加者にメールして」
+chatweb.ai に「来週のミートアップの告知ページ作って、参加者にメールして」と入力。
 
-と入力すると:
+30秒後 → Webサイト公開完了
+60秒後 → Gmail送信完了
 
-1. WebPublisherエージェントが告知ページを生成
-2. GmailAgentが参加者リストにメール送信
-3. 完了報告と公開URLを返す
+人間がやると30分。AIが実際に「動く」とこうなる。
 
-全部で約2分。人間がやると30分以上。
+[GIF/動画を添付]
 
-https://chatweb.ai
-
-#AI #自動化 #AIAgent</pre>
+https://chatweb.ai</pre>
       </div>
-      <div class="tip">動画を添付する場合は2:20以内に収めるとX上で自動再生されます。デモは「入力 -> 実行中 -> 結果」の3シーンに絞ると効果的。</div>
+
+      <div class="lang-label">EN</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>Watch this.
+
+I told chatweb.ai: "Create an event page for next week's meetup and email the attendees."
+
+30 seconds later — website published.
+60 seconds later — emails sent via Gmail.
+
+Takes a human 30+ minutes. This is what happens when AI actually acts.
+
+[attach GIF/video]
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">動画は2:20以内に収めるとX上で自動再生されます。「入力 → 実行中 → 結果」の3シーンに絞ると効果的。GIFなら15秒以内。</div>
     </div>
 
     <footer>
