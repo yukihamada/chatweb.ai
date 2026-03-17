@@ -1185,7 +1185,6 @@ _LINE_QUICK_ITEMS = [
     {"type": "action", "action": {"type": "message", "label": "🗑️ リセット", "text": "/clear"}},
     {"type": "action", "action": {"type": "message", "label": "🔗 連携", "text": "/link"}},
     {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai"}},
-    {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai/"}},
 ]
 
 
@@ -1834,8 +1833,8 @@ async def tool_deploy_self(message: str = "") -> str:
     if not _is_admin(_ctx_user_email.get()):
         return "⛔ Admin only"
     try:
-        proc = await asyncio.create_subprocess_shell(
-            "fly deploy -a chatweb-ai --detach 2>&1",
+        proc = await asyncio.create_subprocess_exec(
+            "fly", "deploy", "-a", "chatweb-ai", "--detach",
             cwd=_APP_SOURCE_ROOT,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=300)
@@ -3232,7 +3231,7 @@ async def tool_fastlane_run(lane: str, platform: str = "ios", project_path: str 
         return (
             f"## 📱 fastlane {platform} {lane}\n\n"
             f"**処理内容**: {desc}\n\n"
-            f"**実行コマンド**:\n```bash\n{cmd}\n```\n\n"
+            f"**実行コマンド**:\n```bash\nfastlane {platform} {lane}\n```\n\n"
             f"**前提条件**:\n"
             f"- `gem install fastlane` でインストール\n"
             f"- `fastlane init` でプロジェクト初期化\n"
@@ -3701,7 +3700,11 @@ primary_region = 'nrt'
     )
     result["app_name"] = safe_name
     result["url"] = f"https://{safe_name}.fly.dev"
-    result["tmpdir"] = tmpdir
+    # Clean up temp dir after deploy
+    try:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+    except Exception:
+        pass
     return result
 
 
@@ -8797,10 +8800,12 @@ async def _auto_backup_db():
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             dest = os.path.join(backup_dir, f"chatweb_{ts}.db")
             # Use SQLite's built-in backup API for safe hot backup
-            async with db_conn() as db:
-                await db.execute("BEGIN IMMEDIATE")
-                shutil.copy2(DB_PATH, dest)
-                await db.execute("COMMIT")
+            import sqlite3 as _sqlite3
+            src_conn = _sqlite3.connect(DB_PATH)
+            dst_conn = _sqlite3.connect(dest)
+            src_conn.backup(dst_conn)
+            dst_conn.close()
+            src_conn.close()
             size_mb = os.path.getsize(dest) / (1024 * 1024)
             log.info(f"DB backup saved: {dest} ({size_mb:.1f} MB)")
             # Keep only last 14 backups (2 weeks at daily)
@@ -9512,82 +9517,81 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                     await queue.put({"type": "step", "step": "sequential",
                                      "label": f"🔗 {len(plan_steps)}ステップを順次実行中..."})
 
-                # Always sequential — each step's output feeds into the next
-                if True:
-                    for i, step in enumerate(plan_steps):
-                        aid = step["agent_id"]
-                        task = step["task"]
-                        if context:
-                            task = task + f"\n\n【前のステップの結果サマリー】\n{context[:800]}"
+                # Sequential execution — each step's output feeds into the next
+                for i, step in enumerate(plan_steps):
+                    aid = step["agent_id"]
+                    task = step["task"]
+                    if context:
+                        task = task + f"\n\n【前のステップの結果サマリー】\n{context[:800]}"
 
-                        await queue.put({"type": "agent_start", "index": i,
-                                         "agent_id": aid, "agent_name": step["agent_name"],
-                                         "task": step["task"]})
-                        await queue.put({"type": "step", "step": "execute",
-                                         "label": f"{step['agent_name']} が処理中..."})
+                    await queue.put({"type": "agent_start", "index": i,
+                                     "agent_id": aid, "agent_name": step["agent_name"],
+                                     "task": step["task"]})
+                    await queue.put({"type": "step", "step": "execute",
+                                     "label": f"{step['agent_name']} が処理中..."})
 
-                        t0 = _time.monotonic()
-                        result = await execute_agent(aid, task, session_id, history,
-                                                     memory_context=memory_context if i == 0 else "",
-                                                     user_email=_user_email_val)
-                        latency = int((_time.monotonic() - t0) * 1000)
-                        step_response = result["response"]
-                        context = step_response
-                        all_screenshots.extend(result.get("screenshots", []))
-                        all_step_results.append((step, step_response))
+                    t0 = _time.monotonic()
+                    result = await execute_agent(aid, task, session_id, history,
+                                                 memory_context=memory_context if i == 0 else "",
+                                                 user_email=_user_email_val)
+                    latency = int((_time.monotonic() - t0) * 1000)
+                    step_response = result["response"]
+                    context = step_response
+                    all_screenshots.extend(result.get("screenshots", []))
+                    all_step_results.append((step, step_response))
 
-                        if result.get("hitl_task_id"):
-                            async with db_conn() as db:
-                                await db.execute("UPDATE hitl_tasks SET draft=? WHERE id=?",
-                                                 (step_response, result["hitl_task_id"]))
-                                await db.commit()
-                            await queue.put({"type": "agent_done", "index": i, "agent_id": aid,
-                                             "agent_name": step["agent_name"],
-                                             "response": step_response, "hitl": True,
-                                             "used_real_tools": result.get("used_real_tools", []),
-                                             "screenshots": result.get("screenshots", [])})
-                            await queue.put({"type": "hitl", "task_id": result["hitl_task_id"],
-                                             "agent_id": aid, "agent_name": AGENTS[aid]["name"],
-                                             "draft": step_response,
-                                             "label": "⚠️ 承認後に実際に送信します（HITL）"})
-                            await save_run(sid, aid, task, step_response,
-                                           is_multi_agent=True,
-                                           input_tokens=result.get("input_tokens", 0),
-                                           output_tokens=result.get("output_tokens", 0),
-                                           cost_usd=result.get("cost_usd", 0.0),
-                                           user_id=_uid,
-                                           model_name=result.get("model_name", ""))
-                        else:
-                            ev = await evaluate_draft(step_response, task)
-                            score, issues = ev.get("score", 8), ev.get("issues", [])
-                            await queue.put({"type": "eval", "score": score, "needs_improve": score < 7})
-                            if score < 7 and issues:
-                                await queue.put({"type": "step", "step": "reflect",
-                                                 "label": f"🔁 品質スコア {score}/10 — 改善中..."})
-                                step_response = await self_reflect(aid, step_response, task, issues)
-                            await queue.put({"type": "agent_done", "index": i, "agent_id": aid,
-                                             "agent_name": step["agent_name"],
-                                             "response": step_response, "hitl": False,
-                                             "used_real_tools": result.get("used_real_tools", []),
-                                             "screenshots": result.get("screenshots", []),
-                                             "quality_score": score})
-                            await save_message(sid, "assistant", step_response, aid)
-                            _step_cost = result.get("cost_usd", 0.0)
-                            await save_run(sid, aid, task, step_response,
-                                           eval_score=score, is_multi_agent=True,
-                                           input_tokens=result.get("input_tokens", 0),
-                                           output_tokens=result.get("output_tokens", 0),
-                                           cost_usd=_step_cost,
-                                           user_id=_uid,
-                                           model_name=result.get("model_name", ""))
-                            if _uid and _step_cost > 0:
-                                await _deduct_credit(_uid, _step_cost)
-
-                    # Synthesize sequential outputs if no HITL
-                    if not has_hitl:
-                        final_response = await run_synthesizer(all_step_results, req.message, queue)
+                    if result.get("hitl_task_id"):
+                        async with db_conn() as db:
+                            await db.execute("UPDATE hitl_tasks SET draft=? WHERE id=?",
+                                             (step_response, result["hitl_task_id"]))
+                            await db.commit()
+                        await queue.put({"type": "agent_done", "index": i, "agent_id": aid,
+                                         "agent_name": step["agent_name"],
+                                         "response": step_response, "hitl": True,
+                                         "used_real_tools": result.get("used_real_tools", []),
+                                         "screenshots": result.get("screenshots", [])})
+                        await queue.put({"type": "hitl", "task_id": result["hitl_task_id"],
+                                         "agent_id": aid, "agent_name": AGENTS[aid]["name"],
+                                         "draft": step_response,
+                                         "label": "⚠️ 承認後に実際に送信します（HITL）"})
+                        await save_run(sid, aid, task, step_response,
+                                       is_multi_agent=True,
+                                       input_tokens=result.get("input_tokens", 0),
+                                       output_tokens=result.get("output_tokens", 0),
+                                       cost_usd=result.get("cost_usd", 0.0),
+                                       user_id=_uid,
+                                       model_name=result.get("model_name", ""))
                     else:
-                        final_response = context  # Last step's output for HITL flows
+                        ev = await evaluate_draft(step_response, task)
+                        score, issues = ev.get("score", 8), ev.get("issues", [])
+                        await queue.put({"type": "eval", "score": score, "needs_improve": score < 7})
+                        if score < 7 and issues:
+                            await queue.put({"type": "step", "step": "reflect",
+                                             "label": f"🔁 品質スコア {score}/10 — 改善中..."})
+                            step_response = await self_reflect(aid, step_response, task, issues)
+                        await queue.put({"type": "agent_done", "index": i, "agent_id": aid,
+                                         "agent_name": step["agent_name"],
+                                         "response": step_response, "hitl": False,
+                                         "used_real_tools": result.get("used_real_tools", []),
+                                         "screenshots": result.get("screenshots", []),
+                                         "quality_score": score})
+                        await save_message(sid, "assistant", step_response, aid)
+                        _step_cost = result.get("cost_usd", 0.0)
+                        await save_run(sid, aid, task, step_response,
+                                       eval_score=score, is_multi_agent=True,
+                                       input_tokens=result.get("input_tokens", 0),
+                                       output_tokens=result.get("output_tokens", 0),
+                                       cost_usd=_step_cost,
+                                       user_id=_uid,
+                                       model_name=result.get("model_name", ""))
+                        if _uid and _step_cost > 0:
+                            await _deduct_credit(_uid, _step_cost)
+
+                # Synthesize sequential outputs if no HITL
+                if not has_hitl:
+                    final_response = await run_synthesizer(all_step_results, req.message, queue)
+                else:
+                    final_response = context  # Last step's output for HITL flows
 
                 # Background memory extraction from final exchange
                 asyncio.create_task(_background_memory_extract(
@@ -9796,14 +9800,20 @@ async def decide_hitl(task_id: str, decision: HITLDecision, request: Request):
 
 
 @app.get("/hitl/history/list")
-async def hitl_history(limit: int = 50):
+async def hitl_history(request: Request, limit: int = 50):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     tasks = await list_hitl_tasks(limit)
     return {"tasks": tasks, "total": len(tasks)}
 
 
 @app.delete("/hitl/clear")
-async def hitl_clear_all():
+async def hitl_clear_all(request: Request):
     """待機中のHITLタスクを全て削除"""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     async with db_conn() as db:
         await db.execute("DELETE FROM hitl_tasks WHERE status = 'pending'")
         await db.commit()
@@ -9814,8 +9824,11 @@ async def hitl_clear_all():
 
 
 @app.delete("/hitl/{task_id}")
-async def hitl_delete(task_id: str):
+async def hitl_delete(task_id: str, request: Request):
     """特定のHITLタスクを削除"""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     async with db_conn() as db:
         await db.execute("DELETE FROM hitl_tasks WHERE id = ?", (task_id,))
         await db.commit()
