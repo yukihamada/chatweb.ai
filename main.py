@@ -769,9 +769,10 @@ async def process_telegram_message(chat_id: int | str, user_text: str, username:
         await save_run(session_id, agent_id, user_text, final, routing_confidence=confidence)
         await save_message(session_id, "assistant", final)
 
-        # Final edit — clean version without cursor
+        # Final edit — clean version for Telegram
+        clean_final = _clean_for_messenger(final)
         header = f"*{agent_emoji} {agent_name}*\n"
-        final_text = header + final
+        final_text = header + clean_final
         if msg_id:
             try:
                 await tg_edit(chat_id, msg_id, final_text)
@@ -867,6 +868,22 @@ _LINE_QUICK_ITEMS = [
     {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai"}},
     {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai/"}},
 ]
+
+
+def _clean_for_messenger(text: str) -> str:
+    """Clean AI response for LINE/Telegram: remove <think> tags, trim length."""
+    # Remove <think>...</think> blocks
+    text = re.sub(r'<think>[\s\S]*?</think>', '', text, flags=re.IGNORECASE)
+    # Remove unclosed <think>
+    text = re.sub(r'<think>[\s\S]*$', '', text, flags=re.IGNORECASE)
+    # Remove markdown headers (# ## ###)
+    text = re.sub(r'^#{1,3}\s+', '', text, flags=re.MULTILINE)
+    # Clean up excessive newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # Trim to messenger limit (LINE=5000, TG=4096)
+    if len(text) > 3500:
+        text = text[:3497] + "..."
+    return text.strip()
 
 
 async def process_line_message(user_id: str, text: str, reply_token: str = "") -> None:
@@ -1073,7 +1090,9 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
         await save_run(session_id, agent_id, text, final, routing_confidence=confidence)
         await save_message(session_id, "assistant", final)
 
-        reply_text = f"{agent_emoji} {agent_name}\n\n{final}"
+        # Clean up for messenger: remove <think> tags, shorten if too long
+        clean = _clean_for_messenger(final)
+        reply_text = f"{agent_emoji} {agent_name}\n\n{clean}"
         await _reply(reply_text)
 
     except Exception as e:

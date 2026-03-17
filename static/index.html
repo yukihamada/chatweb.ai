@@ -5491,32 +5491,34 @@ async function openBillingModal() {
     {
       id: 'free', name: 'フリー', price: 0, period: '',
       badge: '', badgeColor: '',
-      desc: '個人利用・お試しに最適',
-      requests: '月100メッセージ',
+      desc: '個人利用・お試しに',
+      requests: '$2/月のクレジット付き',
       btnLabel: '現在のプラン', btnDisabled: true,
       accentColor: '#64748b',
       features: [
-        '33種類のAIエージェント',
-        '長期記憶 50件',
-        'ファイルアップロード (PDF/Excel/CSV)',
-        'サイト公開 3件まで',
-        'Slack / Discord 連携',
+        '30以上のAIエージェント',
+        '高速モード（Qwen3-32B）',
+        '長期記憶',
+        'ファイルアップロード',
+        'サイト公開 3件',
+        'LINE / Telegram連携',
       ]
     },
     {
-      id: 'pro', name: 'プロ', price: 2980, period: '/月',
+      id: 'pro', name: 'プロ', price: 2900, period: '/月',
       badge: '🔥 最も人気', badgeColor: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
       desc: 'ビジネス利用・本格活用に',
-      requests: '月2,000メッセージ',
+      requests: '$19/月のクレジット付き',
       btnLabel: 'プロにアップグレード', btnDisabled: false,
       accentColor: '#8b5cf6',
       features: [
-        '全33種類のエージェント (制限なし)',
+        'フリーの全機能',
+        'プロモード（Claude Sonnet）',
+        'Geminiモード',
         '長期記憶 無制限',
-        'Proモデル優先処理',
         'サイト公開 無制限',
-        'カスタムWebhook / API接続',
-        'Google Calendar / Gmail 連携',
+        'Google Workspace連携',
+        '追加クレジットチャージ可',
         '優先サポート',
       ]
     },
@@ -5524,16 +5526,34 @@ async function openBillingModal() {
       id: 'team', name: 'チーム', price: 9800, period: '/月',
       badge: '🏢 法人向け', badgeColor: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
       desc: 'チーム・企業での本格導入',
-      requests: '月10,000メッセージ',
+      requests: '$65/月のクレジット付き',
       btnLabel: 'チームプランを開始', btnDisabled: false,
       accentColor: '#0ea5e9',
       features: [
         'プロの全機能',
         'チームワークスペース共有',
-        'カスタムエージェント作成',
         '管理者ダッシュボード',
-        'SLAサポート (営業日1日以内)',
+        '追加クレジットチャージ可',
+        'SLAサポート（1営業日）',
         '請求書払い対応',
+      ]
+    },
+    {
+      id: 'enterprise', name: 'エンタープライズ', price: 98000, period: '/月',
+      badge: '👑 専任サポート', badgeColor: 'linear-gradient(135deg,#f59e0b,#eab308)',
+      desc: '専任コンサル・カスタム開発',
+      requests: '$650/月のクレジット付き',
+      btnLabel: 'お問い合わせ', btnDisabled: false,
+      accentColor: '#f59e0b',
+      features: [
+        'チームの全機能',
+        '専任AIコンサルタント',
+        'カスタムエージェント開発代行',
+        '業務フロー自動化設計',
+        '専用Slackサポート',
+        'SLA 4時間対応',
+        '月次レビューMTG',
+        'API無制限',
       ]
     }
   ];
@@ -5612,7 +5632,7 @@ async function startCheckout(planId) {
   const btn = document.querySelector(`#bcard-${planId} .billing-cta`);
   if (btn) { btn.textContent = '処理中…'; btn.disabled = true; }
   try {
-    const email = _currentUser?.email || '';
+    const email = currentUser?.email || '';
     const r = await fetch('/billing/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
