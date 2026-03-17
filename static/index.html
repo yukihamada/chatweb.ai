@@ -891,7 +891,8 @@ body {
 
   /* ── Footer action buttons ── */
   .msg-ai-footer { gap: 4px; }
-  .msg-ai-footer button, .tts-btn { font-size: 14px; padding: 3px 5px !important; min-width: 28px; min-height: 28px; }
+  .msg-ai-footer button, .tts-btn { font-size: 14px; padding: 6px 8px !important; min-width: 36px; min-height: 36px; }
+  @media (pointer: coarse) { .msg-ai-footer button, .tts-btn { min-width: 44px; min-height: 44px; } }
 
   /* ── Input area ── */
   .quick-chips { padding: 6px 10px 0; gap: 5px; -webkit-overflow-scrolling: touch; }
@@ -1483,6 +1484,10 @@ let stats = { msg:0, a2a:0, mcp:0, hitl:0, quality:[], agent:'—' };
 
 let isStreaming = false;
 let _abortController = null;
+
+// ── Network status indicator ──
+window.addEventListener('offline', () => { setStatus('オフライン — ネットワーク接続を確認してください', 'amber'); document.getElementById('sendBtn').disabled = true; });
+window.addEventListener('online', () => { setStatus(''); document.getElementById('sendBtn').disabled = false; });
 let currentStreamEl   = null;
 let currentStreamText = '';
 let currentAgentId    = null;
@@ -2499,7 +2504,8 @@ async function sendMessage() {
       buf = lines.pop();
       for (const line of lines) {
         if (!line.startsWith('data:')) continue;
-        handleEvent(JSON.parse(line.slice(5).trim()), typingId);
+        try { handleEvent(JSON.parse(line.slice(5).trim()), typingId); }
+        catch(_) { /* skip malformed SSE chunk */ }
       }
     }
   } catch(e) {
@@ -5275,7 +5281,7 @@ async function replayTask(bubbleEl, query, btn) {
       buf = lines.pop();
       for (const line of lines) {
         if (!line.startsWith('data:')) continue;
-        const ev = JSON.parse(line.slice(5).trim());
+        let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch(_) { continue; }
         if (ev.type === 'stream_chunk') fullText += ev.text || '';
         if (ev.type === 'end') fullText = ev.full_response || fullText;
       }

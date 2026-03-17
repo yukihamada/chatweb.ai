@@ -6452,12 +6452,7 @@ async def _require_auth(request: Request) -> dict:
     return user
 
 
-async def _require_user(request: Request) -> dict:
-    token = _extract_session_token(request)
-    user = await _get_user_from_session(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
-    return user
+# _require_user removed — use _require_auth instead
 
 
 # ── Auth endpoints ─────────────────────────────────────────────────────────
@@ -6647,7 +6642,7 @@ class SecretSet(BaseModel):
 
 @app.post("/user/secrets")
 async def set_user_secret(req: SecretSet, request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     sid = uuid.uuid4().hex[:16]
     encrypted = _encrypt_secret(req.key_value)
     async with db_conn() as db:
@@ -6659,7 +6654,7 @@ async def set_user_secret(req: SecretSet, request: Request):
 
 @app.get("/user/secrets")
 async def list_user_secrets(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
@@ -6671,7 +6666,7 @@ async def list_user_secrets(request: Request):
 
 @app.delete("/user/secrets/{key_name}")
 async def delete_user_secret(key_name: str, request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         await db.execute(
             "DELETE FROM user_secrets WHERE user_id=? AND key_name=?",
@@ -6683,7 +6678,7 @@ async def delete_user_secret(key_name: str, request: Request):
 @app.post("/user/secrets/{key_name}/share")
 async def share_user_secret(key_name: str, request: Request):
     """Share a secret with another user by email."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     target_email = body.get("email", "").strip().lower()
     if not target_email:
@@ -6720,7 +6715,7 @@ async def share_user_secret(key_name: str, request: Request):
 @app.get("/user/secrets/{key_name}/shared")
 async def list_shared_secret(key_name: str, request: Request):
     """List who a secret is shared with."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         async with db.execute(
@@ -6733,7 +6728,7 @@ async def list_shared_secret(key_name: str, request: Request):
 
 @app.get("/user/profile")
 async def user_profile(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     # Fetch usage stats
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
@@ -6863,7 +6858,14 @@ async def get_history(session_id: str, limit: int = 8) -> list:
 
 def _estimate_tokens(messages: list) -> int:
     """Rough token estimate: ~3.5 chars/token for mixed ja/en."""
-    return sum(len(m.get("content", "") or "") for m in messages) // 3
+    total = 0
+    for m in messages:
+        c = m.get("content", "") or ""
+        if isinstance(c, list):
+            total += sum(len(p.get("text", "")) for p in c if isinstance(p, dict))
+        else:
+            total += len(str(c))
+    return max(1, total // 3)
 
 
 # Per-session summary cache (session_id → (summary_text, msg_count))
@@ -6900,7 +6902,12 @@ async def compress_history(messages: list, session_id: str = "",
     summary_prompt = "以下の会話を簡潔に要約してください。重要な情報（ユーザーの要望、決定事項、コンテキスト）を漏らさず、200-400文字程度にまとめてください:\n\n"
     for m in old_msgs:
         role_label = "ユーザー" if m["role"] == "user" else "AI"
-        content = (m.get("content") or "")[:500]
+        raw = m.get("content") or ""
+        # Handle list-type content (vision messages with [{type:text,...}])
+        if isinstance(raw, list):
+            content = " ".join(p.get("text", "") for p in raw if isinstance(p, dict) and p.get("type") == "text")[:500]
+        else:
+            content = str(raw)[:500]
         summary_prompt += f"{role_label}: {content}\n"
 
     try:
@@ -9241,7 +9248,7 @@ async def analytics_stats(token: str = "", days: int = 7):
 @app.get("/link/code")
 async def link_generate_code(request: Request):
     """Generate a one-time 6-char code for logged-in user to link LINE/Telegram."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     code = _secrets.token_hex(3).upper()
     expires = (datetime.utcnow() + timedelta(minutes=10)).isoformat()
     _link_codes[code] = {"user_id": user["id"], "email": user.get("email", ""), "expires_at": expires}
@@ -9375,7 +9382,7 @@ async def get_agents(request: Request):
 @app.post("/agents/{agent_id}/fork")
 async def fork_agent(agent_id: str, request: Request):
     """Fork a built-in agent into a personal copy with custom prompt."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     original = AGENTS.get(agent_id)
     if not original:
@@ -10487,7 +10494,7 @@ _REFERRAL_REWARD = 3.0  # $3 for both referrer and referred
 @app.get("/referral/code")
 async def get_referral_code(request: Request):
     """Get or generate the user's unique referral code."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     uid = user["id"]
     async with db_conn() as db:
         cur = await db.execute("SELECT referral_code FROM users WHERE id=?", (uid,))
@@ -10503,7 +10510,7 @@ async def get_referral_code(request: Request):
 @app.get("/referral/stats")
 async def get_referral_stats(request: Request):
     """Get referral statistics for the user."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     uid = user["id"]
     async with db_conn() as db:
         cur = await db.execute(
@@ -10518,7 +10525,7 @@ async def get_referral_stats(request: Request):
 @app.post("/referral/apply")
 async def apply_referral_code(request: Request):
     """Apply a referral code during sign-up. Grants $3 to both users."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     code = body.get("code", "").strip().upper()
     if not code:
@@ -10626,7 +10633,7 @@ async def memory_delete(memory_id: str, request: Request):
 @app.post("/onboarding/profile")
 async def onboarding_profile(request: Request):
     """Research user's company from email domain and save to memory."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     email = user.get("email", "")
     domain = email.split("@")[1] if "@" in email else ""
     if not domain or domain in ("gmail.com", "yahoo.co.jp", "outlook.com", "hotmail.com", "icloud.com",
@@ -12447,7 +12454,7 @@ async def _get_user_by_api_key(api_key: str):
 
 @app.post("/api/keys")
 async def create_api_key(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     name = body.get("name", "Default Key")
     raw_key = "sk-syn-" + uuid.uuid4().hex
@@ -12464,7 +12471,7 @@ async def create_api_key(request: Request):
 
 @app.get("/api/keys")
 async def list_api_keys(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -12476,7 +12483,7 @@ async def list_api_keys(request: Request):
 
 @app.delete("/api/keys/{key_id}")
 async def delete_api_key(key_id: str, request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         await db.execute(
             "DELETE FROM api_keys WHERE id = ? AND user_id = ?", (key_id, user["id"])
@@ -12491,7 +12498,7 @@ async def delete_api_key(key_id: str, request: Request):
 
 @app.post("/teams")
 async def create_team(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     name = body.get("name", "My Team")
     team_id = uuid.uuid4().hex[:16]
@@ -12510,7 +12517,7 @@ async def create_team(request: Request):
 
 @app.get("/teams")
 async def list_teams(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -12527,7 +12534,7 @@ async def list_teams(request: Request):
 
 @app.post("/teams/{team_id}/invite")
 async def invite_team_member(team_id: str, request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     email = body.get("email", "")
     if not email:
@@ -12551,7 +12558,7 @@ async def invite_team_member(team_id: str, request: Request):
 
 @app.get("/teams/{team_id}/members")
 async def get_team_members(team_id: str, request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -12567,7 +12574,7 @@ async def get_team_members(team_id: str, request: Request):
 @app.post("/teams/{team_id}/broadcast")
 async def team_broadcast(team_id: str, request: Request):
     """Send a message to all team members via their best available channel."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     message = body.get("message", "")
     subject = body.get("subject", "チームメッセージ")
@@ -12609,7 +12616,7 @@ async def list_marketplace_agents():
 
 @app.post("/marketplace/publish")
 async def publish_marketplace_agent(request: Request):
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     name = body.get("name", "")
     description = body.get("description", "")
@@ -12888,7 +12895,7 @@ class ImageGenerateRequest(BaseModel):
 @app.post("/image/generate")
 async def image_generate(req: ImageGenerateRequest, request: Request):
     """Generate an image using DALL-E 3."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not OPENAI_API_KEY:
         raise HTTPException(503, "OPENAI_API_KEY not configured")
     result = await tool_dalle_generate(req.prompt, req.size)
@@ -13040,7 +13047,7 @@ class OutboundWebhookCreate(BaseModel):
 @app.post("/webhooks/outbound")
 async def create_outbound_webhook(req: OutboundWebhookCreate, request: Request):
     """Create an outbound webhook subscription."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     hook_id = uuid.uuid4().hex[:16]
     async with db_conn() as db:
         await db.execute(
@@ -13054,7 +13061,7 @@ async def create_outbound_webhook(req: OutboundWebhookCreate, request: Request):
 @app.get("/webhooks/outbound")
 async def list_outbound_webhooks(request: Request):
     """List outbound webhooks for the current user."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -13067,7 +13074,7 @@ async def list_outbound_webhooks(request: Request):
 @app.delete("/webhooks/outbound/{hook_id}")
 async def delete_outbound_webhook(hook_id: str, request: Request):
     """Delete an outbound webhook."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         await db.execute(
             "DELETE FROM outbound_webhooks WHERE id = ? AND user_id = ?", (hook_id, user["id"])
@@ -13089,7 +13096,7 @@ class ABTestRequest(BaseModel):
 @app.post("/ab/test")
 async def ab_test(req: ABTestRequest, request: Request):
     """Run A/B test by executing message through multiple agents in parallel."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if len(req.agent_ids) < 2:
         raise HTTPException(400, "At least 2 agent_ids required for A/B test")
     session_id = req.session_id or f"ab-{uuid.uuid4().hex[:8]}"
@@ -13178,7 +13185,7 @@ async def replay_run(run_id: str, request: Request, streaming: bool = False):
 @app.post("/agents/{agent_id}/versions")
 async def save_agent_version(agent_id: str, request: Request):
     """Save the current system prompt as a new version for an agent."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     version_note = body.get("version_note", "")
     # Look up agent in custom_agents or AGENTS dict
@@ -13223,7 +13230,7 @@ async def list_agent_versions(agent_id: str, request: Request):
 @app.post("/agents/{agent_id}/versions/{version_id}/restore")
 async def restore_agent_version(agent_id: str, version_id: str, request: Request):
     """Restore a saved version's system prompt to the custom_agents table."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         ver_rows = await db.execute_fetchall(
@@ -13384,7 +13391,7 @@ class CustomToolCreate(BaseModel):
 @app.post("/tools/custom")
 async def create_custom_tool(req: CustomToolCreate, request: Request):
     """Create a custom Python tool."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     tool_id = uuid.uuid4().hex[:16]
     async with db_conn() as db:
         await db.execute(
@@ -13398,7 +13405,7 @@ async def create_custom_tool(req: CustomToolCreate, request: Request):
 @app.get("/tools/custom")
 async def list_custom_tools(request: Request):
     """List custom tools for the current user."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
         rows = await db.execute_fetchall(
@@ -13411,7 +13418,7 @@ async def list_custom_tools(request: Request):
 @app.delete("/tools/custom/{tool_id}")
 async def delete_custom_tool(tool_id: str, request: Request):
     """Delete a custom tool."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     async with db_conn() as db:
         await db.execute(
             "DELETE FROM custom_tools WHERE id = ? AND user_id = ?", (tool_id, user["id"])
@@ -13423,7 +13430,7 @@ async def delete_custom_tool(tool_id: str, request: Request):
 @app.post("/tools/custom/{tool_id}/run")
 async def run_custom_tool(tool_id: str, request: Request):
     """Execute a custom tool's Python code in a sandboxed subprocess."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     body = await request.json()
     tool_input = body.get("input", {})
     async with db_conn() as db:
@@ -13950,7 +13957,7 @@ execute_agent = execute_agent_extended
 @app.get("/admin/settings")
 async def admin_get_settings(request: Request):
     """List all system settings (admin only)."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     async with db_conn() as db:
@@ -13975,7 +13982,7 @@ async def admin_get_settings(request: Request):
 @app.put("/admin/settings/{key}")
 async def admin_put_setting(key: str, request: Request):
     """Update a system setting (admin only)."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     body = await request.json()
@@ -13995,7 +14002,7 @@ async def admin_put_setting(key: str, request: Request):
 @app.delete("/admin/settings/{key}")
 async def admin_delete_setting(key: str, request: Request):
     """Reset a system setting to default (admin only)."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     async with db_conn() as db:
@@ -14080,7 +14087,7 @@ async def feedback_log_endpoint(request: Request):
 @app.get("/admin/feedback-logs")
 async def admin_get_feedback_logs(request: Request):
     """List recent feedback logs (admin only)."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     limit = int(request.query_params.get("limit", "50"))
@@ -14098,7 +14105,7 @@ async def admin_get_feedback_logs(request: Request):
 @app.post("/admin/feedback-logs/{log_id}/resolve")
 async def admin_resolve_feedback(log_id: int, request: Request):
     """Mark a feedback log as resolved (admin only)."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     async with db_conn() as db:
@@ -14112,7 +14119,7 @@ async def admin_resolve_feedback(log_id: int, request: Request):
 @app.get("/admin/feedback-report")
 async def admin_feedback_report(request: Request):
     """Get feedback loop analytics — agent performance, ratings, costs."""
-    user = await _require_user(request)
+    user = await _require_auth(request)
     if not _is_admin(user.get("email", "")):
         return JSONResponse({"error": "Forbidden"}, status_code=403)
     hours = int(request.query_params.get("hours", "24"))
