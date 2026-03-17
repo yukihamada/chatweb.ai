@@ -12540,19 +12540,58 @@ async def _log_feedback(category: str, source: str, message: str,
 
 @app.post("/feedback/log")
 async def feedback_log_endpoint(request: Request):
-    """Client-side error/feedback reporting."""
+    """Client-side error/feedback reporting. Awards up to $1 credit for quality feedback."""
     body = await request.json()
     user = await _get_user_from_session(_extract_session_token(request))
     uid = (user or {}).get("id", "")
+    msg = body.get("message", "")
+    category = body.get("category", "error")
+
     await _log_feedback(
-        category=body.get("category", "error"),
+        category=category,
         source="client",
-        message=body.get("message", ""),
+        message=msg,
         context=body.get("context"),
         user_id=uid,
         session_id=body.get("session_id", ""),
     )
-    return {"ok": True}
+
+    reward = 0.0
+    # Award credit for user_feedback (not errors)
+    if uid and category == "user_feedback" and len(msg.strip()) >= 10:
+        # Check monthly feedback reward cap ($10/month)
+        current_month = datetime.utcnow().strftime("%Y-%m")
+        async with db_conn() as db:
+            async with db.execute(
+                "SELECT COALESCE(SUM(CAST(json_extract(context,'$.reward') AS REAL)),0) FROM feedback_logs "
+                "WHERE user_id=? AND category='user_feedback' AND created_at LIKE ?",
+                (uid, f"{current_month}%")
+            ) as c:
+                row = await c.fetchone()
+                monthly_total = float(row[0]) if row and row[0] else 0.0
+
+        if monthly_total < 10.0:
+            # Score feedback quality with AI (fast)
+            try:
+                r = await aclient.messages.create(
+                    model="claude-haiku-4-5-20251001", max_tokens=20,
+                    system="Rate this user feedback from 0.0 to 1.0 based on usefulness (specific bug reports, feature suggestions, UX insights = high; vague or empty = low). Return ONLY a number like 0.7",
+                    messages=[{"role": "user", "content": msg[:500]}],
+                )
+                score = float(r.content[0].text.strip())
+                reward = round(min(max(score, 0.0), 1.0), 2)  # cap at $1
+                reward = min(reward, 10.0 - monthly_total)  # don't exceed monthly cap
+            except Exception:
+                reward = 0.1 if len(msg.strip()) >= 20 else 0.0
+
+            if reward > 0:
+                await _add_purchased_credit(uid, reward)
+                # Store reward amount in context for tracking
+                await _log_feedback("feedback_reward", "system",
+                    f"Rewarded ${reward:.2f} for feedback: {msg[:100]}",
+                    context={"reward": reward}, user_id=uid)
+
+    return {"ok": True, "reward": reward}
 
 
 @app.get("/admin/feedback-logs")

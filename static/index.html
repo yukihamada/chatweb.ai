@@ -2994,7 +2994,9 @@ function addRatingButtons(bubbleEl, runId) {
   ratingDiv.dataset.runId = rId;
   ratingDiv.innerHTML = `
     <button onclick="rateMessage(this, 1)" title="良い回答">👍</button>
-    <button onclick="rateMessage(this, -1)" title="改善が必要">👎</button>`;
+    <button onclick="rateMessage(this, -1)" title="改善が必要">👎</button>
+    <button onclick="retryWithPro(this)" title="プロモデルで再回答" style="font-size:11px">🚀</button>
+    <button onclick="showFeedbackInput(this)" title="フィードバックを送る" style="font-size:11px">💬</button>`;
   footer.appendChild(ratingDiv);
 }
 
@@ -3014,6 +3016,82 @@ async function rateMessage(btn, rating) {
       body: JSON.stringify({ rating }),
     });
   } catch {}
+
+  // If thumbs down, show retry option
+  if (rating === -1) {
+    const retryHint = document.createElement('div');
+    retryHint.style.cssText = 'font-size:11px;color:var(--muted);margin-top:4px';
+    retryHint.innerHTML = '🚀 をタップするとプロモデル（Claude Sonnet）で再回答します';
+    container.parentElement.appendChild(retryHint);
+  }
+}
+
+async function retryWithPro(btn) {
+  const bubble = btn.closest('.msg-ai');
+  if (!bubble) return;
+  // Find the original user message (previous sibling msg-container with msg-user)
+  let prev = bubble.closest('.msg-container')?.previousElementSibling;
+  while (prev && !prev.querySelector('.msg-user')) prev = prev.previousElementSibling;
+  const userMsg = prev?.querySelector('.msg-user-bubble')?.textContent?.trim();
+  if (!userMsg) { showToast('元のメッセージが見つかりません'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  showToast('🚀 プロモデルで再回答中...');
+
+  // Temporarily switch to pro tier
+  const oldTier = _currentTier;
+  await selectInputTier('pro');
+
+  // Send the same message again
+  document.getElementById('chatInput').value = userMsg;
+  sendMessage();
+
+  // Restore tier after a delay
+  setTimeout(() => { if (oldTier !== 'pro') selectInputTier(oldTier); }, 3000);
+}
+
+function showFeedbackInput(btn) {
+  const container = btn.closest('.rating-btns');
+  if (!container) return;
+  // Check if already open
+  if (container.parentElement.querySelector('.feedback-input-box')) return;
+
+  const fbDiv = document.createElement('div');
+  fbDiv.className = 'feedback-input-box';
+  fbDiv.style.cssText = 'margin-top:6px;display:flex;gap:4px;align-items:center';
+  fbDiv.innerHTML = `
+    <input type="text" placeholder="どう改善すべき？" style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
+    <button onclick="submitFeedback(this)" style="padding:6px 10px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;cursor:pointer;white-space:nowrap">送信</button>`;
+  container.parentElement.appendChild(fbDiv);
+  fbDiv.querySelector('input').focus();
+}
+
+async function submitFeedback(btn) {
+  const input = btn.previousElementSibling;
+  const text = input?.value?.trim();
+  if (!text) return;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const r = await fetch('/feedback/log', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({category: 'user_feedback', message: text, session_id: SESSION_ID}),
+    });
+    const d = await r.json();
+    if (d.reward > 0) {
+      showToast(`🎁 フィードバックありがとう！$${d.reward.toFixed(2)}クレジットをプレゼント`);
+      // Refresh credit balance
+      fetch('/auth/me').then(r=>r.json()).then(u=>{
+        const el=document.getElementById('credit-balance');
+        if(el&&u.credit_balance!==undefined) el.textContent='\u{1F4B0} $'+u.credit_balance.toFixed(2);
+      }).catch(()=>{});
+    } else {
+      showToast('フィードバックを送信しました');
+    }
+    btn.closest('.feedback-input-box').remove();
+  } catch { showToast('送信できませんでした'); btn.textContent='送信'; btn.disabled=false; }
 }
 
 // ── Feature 5: PWA ────────────────────────────────────────────────────────
