@@ -383,13 +383,13 @@ body {
 .msg-ai-name { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
 .msg-ai-bubble {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 4px 14px 14px 14px;
   padding: 13px 16px;
   font-size: 14px; line-height: 1.7;
   word-break: break-word;
 }
-.msg-ai-bubble.streaming { border-color: rgba(139,92,246,0.3); }
+.msg-ai-bubble.streaming { border: 1px solid rgba(139,92,246,0.3); }
 .msg-ai-footer { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
 
 /* Chips */
@@ -481,15 +481,19 @@ body {
 .mem-recall {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 2px 8px;
   background: rgba(244,114,182,0.06);
-  border: 1px solid rgba(244,114,182,0.12);
-  border-radius: 20px;
-  font-size: 11px;
-  color: rgba(244,114,182,0.65);
-  margin: 4px 0;
+  border: 1px solid rgba(244,114,182,0.10);
+  border-radius: 12px;
+  font-size: 10px;
+  color: rgba(244,114,182,0.55);
+  margin: 2px 0;
   animation: fadeUp 0.2s ease;
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Screenshots */
@@ -530,8 +534,8 @@ body {
 .quick-chips::-webkit-scrollbar { display: none; }
 .chip {
   flex-shrink: 0; font-size: 12px; padding: 6px 13px;
-  border-radius: 20px; border: 1px solid var(--border);
-  background: var(--card); color: var(--muted);
+  border-radius: 20px; border: 1px solid rgba(139,92,246,0.25);
+  background: var(--card); color: var(--muted2);
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
   min-height: 36px; /* touch target */
   font-family: inherit;
@@ -549,7 +553,7 @@ body {
 
 .input-row {
   display: flex; gap: 8px; align-items: flex-end;
-  padding: 10px 28px 14px;
+  padding: 12px 28px 16px;
   max-width: 780px; margin: 0 auto;
 }
 #chatInput {
@@ -876,9 +880,9 @@ body {
   /* ── Input area ── */
   .quick-chips { padding: 6px 10px 0; gap: 5px; -webkit-overflow-scrolling: touch; }
   .chip { font-size: 11.5px; padding: 5px 11px; }
-  .input-row { padding: 7px 8px 10px; gap: 6px; }
+  .input-row { padding: 10px 10px 12px; gap: 6px; }
   /* font-size 16px prevents iOS auto-zoom on focus */
-  #chatInput { font-size: 16px; padding: 10px 13px; min-height: 44px; max-height: 120px; border-radius: 12px; }
+  #chatInput { font-size: 16px; padding: 12px 16px; min-height: 44px; max-height: 120px; border-radius: 12px; }
   #plus-btn  { width: 42px; height: 42px; font-size: 22px; flex-shrink: 0; }
   #send-btn  { width: 42px; height: 42px; font-size: 17px; border-radius: 12px; flex-shrink: 0; }
   #mic-btn   { width: 42px; height: 42px; flex-shrink: 0; }
@@ -1132,7 +1136,7 @@ body {
   </div>
 
   <div class="topbar-right">
-    <span id="credit-balance" style="font-size:11px;color:var(--muted);cursor:pointer;display:none" onclick="openBillingModal()" title="クレジット残高"></span>
+    <span id="credit-balance" style="font-size:11px;color:var(--muted);cursor:pointer;display:none" onclick="openBillingModal()" title="クレジット残高（クリックで詳細）"></span>
     <span id="cost-display" style="display:none"></span>
     <!-- Language selector (hidden, in menu) -->
     <div style="position:relative;display:none;">
@@ -1945,12 +1949,18 @@ const _CHIPS_BY_ROLE = {
 const _CHIPS_COMMON = [
   "📱 LINEを連携して毎朝ニュースを届けてほしい",
   "📱 Telegramを連携して通知を受け取りたい",
-  "📅 毎朝9時にAIニュースまとめをLINEに届けて",
-  "📅 今日15時にチームMTGをGoogleカレンダーに入れて",
-  "📝 SaaS利用規約を日本法準拠で作って",
-  "💹 新NISAで今おすすめのETF3つを理由付きで教えて",
+  "💹 今日のNVIDIA・Apple・Googleの株価をまとめて",
+  "📊 競合3社の強み・弱みを調べてSWOT分析して",
+  "📧 取引先の山田さんに提案フォローメールを書いて",
+  "📝 MTGメモ「9/15リリース、佐藤FE、鈴木API」→ 議事録にして",
+  "🌐 QRコード生成ツールを作ってchatweb.aiで公開して",
+  "⚖️ SaaS利用規約を日本法準拠で作って",
+  "📣 新機能リリースのX投稿を3パターン書いて",
+  "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
+  "🎬 猫がボールで遊んでいる動画を作って",
   "🚄 来週火曜の東京→名古屋の新幹線を検索して",
-  "📧 この英語メールの返信案を3パターン書いて",
+  "📅 今日15時にチームMTGをGoogleカレンダーに入れて",
+  "📅 毎朝9時にAIニュースまとめをLINEに届けて",
 ];
 
 function initQuickChips() {
@@ -2224,7 +2234,7 @@ async function sendMessage() {
           const synthDiv = document.createElement('div');
           synthDiv.className = 'msg-container';
           synthDiv.innerHTML = `<div class="msg-ai">
-            <div class="msg-ai-bubble" style="border:2px solid var(--accent);border-radius:12px">
+            <div class="msg-ai-bubble" style="border:1px solid var(--border);border-radius:12px">
               <div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:8px">🔮 最終まとめ</div>
               ${renderMarkdown(data.synthesis)}
             </div>
@@ -2271,7 +2281,7 @@ async function sendMessage() {
         // Refresh credit balance
         fetch('/auth/me').then(r=>r.json()).then(d=>{
           const el=document.getElementById('credit-balance');
-          if(el&&d.credit_balance!==undefined){el.textContent='$'+d.credit_balance.toFixed(2);el.style.color=d.credit_balance<1?'var(--red)':'var(--muted)';}
+          if(el&&d.credit_balance!==undefined){el.textContent='\u{1F4B0} $'+d.credit_balance.toFixed(2);el.style.color=d.credit_balance<1?'var(--red)':'var(--muted)';}
         }).catch(()=>{});
         break;
 
@@ -3997,7 +4007,7 @@ function updateAuthUI(user) {
     // Show credit balance
     const creditEl = document.getElementById('credit-balance');
     if (creditEl && user.credit_balance !== undefined) {
-      creditEl.textContent = `$${user.credit_balance.toFixed(2)}`;
+      creditEl.textContent = `\u{1F4B0} $${user.credit_balance.toFixed(2)}`;
       creditEl.style.display = '';
       creditEl.style.color = user.credit_balance < 1 ? 'var(--red)' : 'var(--muted)';
     }

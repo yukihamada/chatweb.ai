@@ -4976,7 +4976,9 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 ## 🌐 公開完了
 **URL**: https://XXXXX.chatweb.ai
 **機能**: [実装した機能の説明]
-**API**: [使用したAPIエンドポイント（あれば）]""",
+**API**: [使用したAPIエンドポイント（あれば）]
+
+必ず完成形のHTMLを生成して即座に公開してください。確認の質問はしないでください。ユーザーの要件から最善の推測でデザイン・構成を決めて実行してください。""",
     },
     "coder": {
         "name": "💻 コーダーエージェント",
@@ -5098,7 +5100,7 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 3. **自動公開**: site_deployツールでXXXX.chatweb.aiに即公開
 4. **対応ジャンル**: 営業提案・投資家向けピッチ・社内報告・勉強会・ポートフォリオ
 
-まず構成を確認してからHTML生成します。「すぐ作って」と言われたら確認なしで生成。""",
+必ず完成形のHTMLスライドを出力してください。確認の質問はしないでください。まず最善の推測で構成を決めて、即座にHTML生成・公開まで実行してください。""",
     },
 
     "crm": {
@@ -7205,7 +7207,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         # Fall back to X-Language logic handled in chat_stream; here default to ja
         _effective_lang = "ja"
     _lang_instruction = f"\n\n[必須] 回答は必ず {_lang_names.get(_effective_lang, _effective_lang)} で返してください。" if _effective_lang != "ja" else ""
-    _clarify_instruction = "\n\n【重要: 不明な点は確認する】リクエストが曖昧・不完全な場合は、推測で進めず「〜について、もう少し教えていただけますか？」と確認の質問を返してください。例: 対象が不明、条件が不足、複数の解釈が可能な場合。"
+    _clarify_instruction = "\n\n曖昧な場合でもまず最善の推測で回答を実行してください。本当に情報が足りない場合のみ、1つだけ質問してください。"
     _system_with_lang = agent["system"] + _clarify_instruction + _lang_instruction
 
     # Build user_content AFTER model selection so vision block is added correctly
