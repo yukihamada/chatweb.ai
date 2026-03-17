@@ -292,6 +292,7 @@ TG_PLANS = {
 # In-memory credits store: {tg_user_id: credits_remaining}
 _tg_credits: dict[str, int] = {}
 _oauth_verifiers: dict[str, str] = {}  # state -> code_verifier for PKCE
+_oauth_scopes: dict[str, list] = {}   # state -> scopes used for this auth request
 _link_codes: dict[str, dict] = {}     # code -> {user_id, expires_at}
 
 # Per-chat language preference: {chat_id: lang_code}
@@ -3383,7 +3384,15 @@ async def tool_sql_query(sql: str, session_id: str) -> str:
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID",     "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GROQ_API_KEY         = os.getenv("GROQ_API_KEY",         "")
-GOOGLE_OAUTH_SCOPES  = [
+# Minimal scopes for login (openid + email + profile only)
+GOOGLE_LOGIN_SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
+
+# Full scopes requested incrementally when user first uses Gmail/Calendar/etc.
+GOOGLE_OAUTH_SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/drive",
@@ -3451,7 +3460,7 @@ async def tool_gmail_send(to: str, subject: str, body: str, user_id: str = "defa
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📧 Gmailを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
+            "📧 Gmailを利用するにはGoogle Workspace連携が必要です。[Google認証はこちら](/auth/google?full=1)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3479,7 +3488,7 @@ async def tool_gmail_read(query: str = "is:unread", max_results: int = 5, user_i
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📧 Gmailを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
+            "📧 Gmailを利用するにはGoogle Workspace連携が必要です。[Google認証はこちら](/auth/google?full=1)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3511,9 +3520,10 @@ async def tool_gmail_read(query: str = "is:unread", max_results: int = 5, user_i
         return f"gmail_read error: {e}"
 
 
-def _google_oauth_url(state: str = "default") -> str:
+def _google_oauth_url(state: str = "default", scopes: list = None) -> str:
     if not GOOGLE_CLIENT_ID:
         return "(GOOGLE_CLIENT_ID未設定)"
+    use_scopes = scopes or GOOGLE_LOGIN_SCOPES
     try:
         from google_auth_oauthlib.flow import Flow
         flow = Flow.from_client_config(
@@ -3524,15 +3534,16 @@ def _google_oauth_url(state: str = "default") -> str:
                 "token_uri": "https://oauth2.googleapis.com/token",
                 "redirect_uris": [f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/auth/google/callback"],
             }},
-            scopes=GOOGLE_OAUTH_SCOPES,
+            scopes=use_scopes,
         )
         flow.redirect_uri = f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/auth/google/callback"
         auth_url, _ = flow.authorization_url(
             access_type="offline", include_granted_scopes="true", state=state, prompt="consent"
         )
-        # Save code_verifier for PKCE callback
+        # Save code_verifier and scopes for callback
         if getattr(flow, "code_verifier", None):
             _oauth_verifiers[state] = flow.code_verifier
+        _oauth_scopes[state] = use_scopes
         return auth_url
     except Exception as e:
         return f"(OAuth URL生成エラー: {e})"
@@ -3547,7 +3558,7 @@ async def tool_gcal_list(days: int = 7, user_id: str = "default") -> str:
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📅 カレンダーを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
+            "📅 カレンダーを利用するにはGoogle Workspace連携が必要です。[Google認証はこちら](/auth/google?full=1)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -3581,7 +3592,7 @@ async def tool_gcal_create(title: str, start: str, end: str, description: str = 
     creds = _get_google_creds(user_id)
     if not creds:
         return (
-            "📅 カレンダーを利用するにはGoogle連携が必要です。[Google認証はこちら](/auth/google)\n"
+            "📅 カレンダーを利用するにはGoogle Workspace連携が必要です。[Google認証はこちら](/auth/google?full=1)\n"
             f"[🔐 こちらをクリックしてGoogle認証]({_google_oauth_url()})"
         )
     try:
@@ -4167,6 +4178,13 @@ check_element: セレクタ""",
         "real_tools": ["gmail", "slack", "line", "zapier"],
         "hitl_required": True,
         "system": """あなたはプロフェッショナルなコミュニケーション担当エージェントです。
+
+【重要: 送信先の決定ルール】
+1. ユーザーが宛先を指定した場合 → その宛先に送る
+2. 「自分に送って」「メールで送って」等、宛先が不明な場合 → ユーザー自身のメールアドレスに送る
+3. ユーザーのメールアドレスは【長期記憶】または会話コンテキストから取得する
+4. どうしても宛先が不明な場合は「どなたに送りますか？」と確認する。架空の名前を使わない。
+
 【必須フォーマット】
 📧 送信チャネル: [Gmail / Slack / LINE]
 👤 送信先: [相手の名前・アドレス／チャンネル名]
@@ -6545,6 +6563,10 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
                 await emit("shell", "done", real=True)
 
     elif agent_id == "notify":
+        # Inject user's email so notify agent knows who "自分" is
+        user_email = _ctx_user_email.get()
+        if user_email:
+            results["user_context"] = f"ログインユーザーのメールアドレス: {user_email}（宛先未指定の場合はこのアドレスに送信してください）"
         # Zapier integration if available
         if ZAPIER_WEBHOOK_URL and re.search(r'zapier|webhook|自動化|オートメーション', message, re.I):
             await emit("zapier", "calling", real=True)
@@ -6838,7 +6860,8 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         # Fall back to X-Language logic handled in chat_stream; here default to ja
         _effective_lang = "ja"
     _lang_instruction = f"\n\n[必須] 回答は必ず {_lang_names.get(_effective_lang, _effective_lang)} で返してください。" if _effective_lang != "ja" else ""
-    _system_with_lang = agent["system"] + _lang_instruction
+    _clarify_instruction = "\n\n【重要: 不明な点は確認する】リクエストが曖昧・不完全な場合は、推測で進めず「〜について、もう少し教えていただけますか？」と確認の質問を返してください。例: 対象が不明、条件が不足、複数の解釈が可能な場合。"
+    _system_with_lang = agent["system"] + _clarify_instruction + _lang_instruction
 
     # Build user_content AFTER model selection so vision block is added correctly
     if active_image_b64 and model_provider == "claude":
@@ -7878,9 +7901,13 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
 
             # ── Memory retrieval + plan detection in parallel ──
             _client_chose_agent = bool(req.agent_id and req.agent_id in AGENTS)
+            # Check if message matches agent_creator/platform_ops keywords — skip multi-agent
+            _msg_lower = req.message.lower()
+            _force_single = any(kw in _msg_lower for kw in _AGENT_CREATOR_KEYWORDS) or \
+                            any(kw in _msg_lower for kw in _PLATFORM_OPS_KEYWORDS)
             await queue.put({"type": "step", "step": "routing", "label": "🧭 セマンティックルーティング中..."})
-            if _client_chose_agent:
-                # User explicitly selected an agent — skip multi-agent planning
+            if _client_chose_agent or _force_single:
+                # User explicitly selected an agent or keyword matches special agent — skip multi-agent planning
                 memories = await search_memories(req.message, limit=6, user_id=_uid)
                 plan = {"multi": False}
             else:
@@ -8829,9 +8856,13 @@ async def get_metrics():
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/auth/google")
-async def auth_google(session_id: str = "default"):
-    """Redirect user to Google OAuth consent page."""
-    url = _google_oauth_url(state=session_id)
+async def auth_google(session_id: str = "default", full: str = ""):
+    """Redirect user to Google OAuth consent page.
+    ?full=1 requests all Workspace scopes (Gmail, Calendar, Drive, etc.)
+    Default: minimal login scopes only (email + profile)
+    """
+    scopes = GOOGLE_OAUTH_SCOPES if full == "1" else GOOGLE_LOGIN_SCOPES
+    url = _google_oauth_url(state=session_id, scopes=scopes)
     if url.startswith("("):
         return {"error": url, "hint": "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET env vars"}
     from fastapi.responses import RedirectResponse
@@ -8850,6 +8881,8 @@ async def auth_google_callback(code: str = "", state: str = "default", error: st
         from fastapi.responses import HTMLResponse, RedirectResponse as _RR
         import httpx as _hx
 
+        # Use the same scopes that were used when generating the auth URL
+        cb_scopes = _oauth_scopes.pop(state, GOOGLE_LOGIN_SCOPES)
         flow = Flow.from_client_config(
             {"web": {
                 "client_id": GOOGLE_CLIENT_ID,
@@ -8858,7 +8891,7 @@ async def auth_google_callback(code: str = "", state: str = "default", error: st
                 "token_uri": "https://oauth2.googleapis.com/token",
                 "redirect_uris": [f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/auth/google/callback"],
             }},
-            scopes=GOOGLE_OAUTH_SCOPES,
+            scopes=cb_scopes,
         )
         flow.redirect_uri = f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/auth/google/callback"
         code_verifier = _oauth_verifiers.pop(state, None)

@@ -974,12 +974,8 @@ body {
   <div id="dtab-metrics"></div>
 </div>
 
-<!-- PWA Install Banner -->
-<div id="install-banner" hidden>
-  <span>📱 ホーム画面に追加してすぐアクセス</span>
-  <button onclick="installApp()">インストール</button>
-  <button onclick="this.parentElement.hidden=true">✕</button>
-</div>
+<!-- PWA Install (hidden, triggered from menu only) -->
+<div id="install-banner" hidden style="display:none !important"></div>
 
 <!-- Agent Creation Modal -->
 <div id="agent-modal" class="modal" hidden onclick="if(event.target===this)closeAgentModal()">
@@ -1040,14 +1036,9 @@ body {
 
   <div class="topbar-right">
     <span id="cost-display" title="このセッションのAPIコスト"></span>
-    <!-- Language selector -->
-    <div style="position:relative;">
-      <button id="lang-btn" onclick="toggleLangMenu()" title="言語を切り替え"
-        style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:20px;
-               border:1px solid var(--border2);background:rgba(255,255,255,0.04);cursor:pointer;
-               font-size:12px;font-weight:600;color:var(--text);transition:all 0.15s;white-space:nowrap">
-        🌐 <span id="lang-label">JA</span>
-      </button>
+    <!-- Language selector (hidden, in menu) -->
+    <div style="position:relative;display:none;">
+      <button id="lang-btn" onclick="toggleLangMenu()">🌐 <span id="lang-label">JA</span></button>
       <div id="lang-dropdown" class="dropdown" style="display:none;min-width:130px">
         <button class="dropdown-item" onclick="setLanguage('ja','JA','日本語')">🇯🇵 日本語</button>
         <button class="dropdown-item" onclick="setLanguage('en','EN','English')">🇺🇸 English</button>
@@ -1067,8 +1058,6 @@ body {
       <span id="tier-icon">💰</span>
       <span id="tier-label">エコノミー</span>
     </button>
-    <button id="theme-btn" onclick="toggleTheme()" title="ダーク/ライト切り替え"
-      style="width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:16px;color:var(--muted);transition:all 0.15s;display:flex;align-items:center;justify-content:center;">🌙</button>
     <div style="position:relative;">
       <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
       <div id="more-dropdown" class="dropdown">
@@ -1118,6 +1107,10 @@ body {
         <button class="dropdown-item" onclick="window.open('/static/features.html')">✨ 機能一覧</button>
         <button class="dropdown-item" onclick="window.open('/static/terms.html')">📜 <span data-i18n="menu_terms">利用規約</span></button>
         <button class="dropdown-item" onclick="window.open('/static/privacy.html')">🔒 <span data-i18n="menu_privacy">プライバシーポリシー</span></button>
+        <div class="dropdown-sep"></div>
+        <div class="dropdown-label">表示</div>
+        <button class="dropdown-item" onclick="toggleTheme();toggleMoreMenu()">🌙 <span data-i18n="menu_theme">ダーク/ライト切り替え</span></button>
+        <button class="dropdown-item" onclick="toggleLangMenu();toggleMoreMenu()">🌐 <span>言語: <span id="lang-label-menu">JA</span></span></button>
       </div>
     </div>
   </div>
@@ -2873,7 +2866,7 @@ let _installPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _installPrompt = e;
-  document.getElementById('install-banner')?.removeAttribute('hidden');
+  // No banner popup — install via menu only
 });
 
 function installApp() {
@@ -4211,7 +4204,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'APIキー管理',
     menu_team: 'チームワークスペース',
     welcome_html: '<strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br><span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 長期記憶</span>',
-    quick_chips: ['🔍 chatweb.aiとは何か教えて','⚙️ Rustで非同期HTTPサーバーを書いて','🌐 https://example.com をテストして','📨 Slackで進捗報告を送って','💹 NVDAの財務分析してメールで送って','⚖️ NDA契約の法的リスクを確認して','🚀 fly.ioにデプロイして','🛠️ gitステータスを確認して'],
   },
   en: {
     select_agent: 'Select agent',
@@ -4268,7 +4260,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'API Key Management',
     menu_team: 'Team Workspace',
     welcome_html: 'Welcome to <strong>chatweb.ai — Multi-Agent AI</strong>.<br><br>Multiple specialized AI agents work together to handle your requests.<br><br><span style="color:#a78bfa">⚡ Token Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwright Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A Delegation</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Long-term Memory</span>',
-    quick_chips: ['🔍 What is chatweb.ai?','⚙️ Write an async HTTP server in Rust','🌐 Test https://example.com','📨 Send a progress report on Slack','💹 Analyze NVDA financials and email me','⚖️ Review legal risks in this NDA','🚀 Deploy to fly.io','🛠️ Check git status'],
   },
   zh: {
     select_agent: '选择代理',
@@ -4325,7 +4316,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'API密钥管理',
     menu_team: '团队工作区',
     welcome_html: '欢迎使用 <strong>chatweb.ai — 多代理 AI</strong>。<br><br>多个专业AI代理协同工作，处理您的请求。<br><br><span style="color:#a78bfa">⚡ 流式输出</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 浏览器控制</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委托</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 长期记忆</span>',
-    quick_chips: ['🔍 什么是chatweb.ai?','⚙️ 用Rust写异步HTTP服务器','🌐 测试 https://example.com','📨 发送进度报告到Slack','💹 分析NVDA财务并发邮件','⚖️ 审查NDA法律风险','🚀 部署到fly.io','🛠️ 检查git状态'],
   },
   ko: {
     select_agent: '에이전트 선택',
@@ -4382,7 +4372,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'API 키 관리',
     menu_team: '팀 워크스페이스',
     welcome_html: '<strong>chatweb.ai — 멀티 에이전트 AI</strong>에 오신 것을 환영합니다.<br><br>여러 전문 AI 에이전트가 협력하여 요청을 처리합니다.<br><br><span style="color:#a78bfa">⚡ 스트리밍</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 브라우저</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 장기 기억</span>',
-    quick_chips: ['🔍 chatweb.ai란?','⚙️ Rust로 비동기 HTTP 서버 작성','🌐 https://example.com 테스트','📨 Slack에 진행 보고서 전송','💹 NVDA 재무분석 및 이메일 전송','⚖️ NDA 법적 위험 검토','🚀 fly.io에 배포','🛠️ git 상태 확인'],
   },
   fr: {
     select_agent: 'Choisir un agent',
@@ -4439,7 +4428,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'Gestion des clés API',
     menu_team: 'Espace de travail d\'équipe',
     welcome_html: 'Bienvenue sur <strong>chatweb.ai — IA Multi-Agent</strong>.<br><br>Plusieurs agents IA spécialisés collaborent pour traiter vos demandes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navigateur</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Délégation A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Mémoire</span>',
-    quick_chips: ['🔍 Qu\'est-ce que chatweb.ai?','⚙️ Écrire un serveur HTTP async en Rust','🌐 Tester https://example.com','📨 Envoyer un rapport sur Slack','💹 Analyser les finances NVDA par email','⚖️ Vérifier les risques juridiques NDA','🚀 Déployer sur fly.io','🛠️ Vérifier le statut git'],
   },
   es: {
     select_agent: 'Seleccionar agente',
@@ -4496,7 +4484,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'Gestión de claves API',
     menu_team: 'Espacio de trabajo del equipo',
     welcome_html: 'Bienvenido a <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Múltiples agentes IA especializados colaboran para procesar tus solicitudes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegación A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memoria</span>',
-    quick_chips: ['🔍 ¿Qué es chatweb.ai?','⚙️ Escribir servidor HTTP async en Rust','🌐 Probar https://example.com','📨 Enviar informe de progreso en Slack','💹 Analizar finanzas NVDA y enviar email','⚖️ Revisar riesgos legales del NDA','🚀 Desplegar en fly.io','🛠️ Verificar estado de git'],
   },
   de: {
     select_agent: 'Agent auswählen',
@@ -4553,7 +4540,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'API-Schlüsselverwaltung',
     menu_team: 'Team-Arbeitsbereich',
     welcome_html: 'Willkommen bei <strong>chatweb.ai — Multi-Agent KI</strong>.<br><br>Mehrere spezialisierte KI-Agenten arbeiten zusammen, um Ihre Anfragen zu bearbeiten.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Gedächtnis</span>',
-    quick_chips: ['🔍 Was ist chatweb.ai?','⚙️ Async HTTP-Server in Rust schreiben','🌐 https://example.com testen','📨 Fortschrittsbericht auf Slack senden','💹 NVDA-Finanzen analysieren','⚖️ Rechtliche Risiken im NDA prüfen','🚀 Auf fly.io deployen','🛠️ Git-Status prüfen'],
   },
   pt: {
     select_agent: 'Selecionar agente',
@@ -4610,7 +4596,6 @@ const LANG_STRINGS = {
     menu_api_keys: 'Gerenciamento de chaves API',
     menu_team: 'Espaço de trabalho da equipe',
     welcome_html: 'Bem-vindo ao <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Vários agentes de IA especializados colaboram para processar seus pedidos.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegação A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memória</span>',
-    quick_chips: ['🔍 O que é o chatweb.ai?','⚙️ Escrever servidor HTTP async em Rust','🌐 Testar https://example.com','📨 Enviar relatório de progresso no Slack','💹 Analisar finanças da NVDA por email','⚖️ Revisar riscos legais do NDA','🚀 Deploy no fly.io','🛠️ Verificar status do git'],
   },
 };
 let _currentLang = localStorage.getItem('chatweb_lang') || 'ja';
@@ -4667,13 +4652,8 @@ function applyLanguage(code) {
   const wb = document.getElementById('welcome-bubble');
   if (wb && s.welcome_html) wb.innerHTML = s.welcome_html;
 
-  // Quick chips
-  const chips = document.getElementById('quickChips');
-  if (chips && s.quick_chips) {
-    chips.innerHTML = s.quick_chips.map(c =>
-      `<button class="chip" onclick="useChip(this)" type="button">${c}</button>`
-    ).join('');
-  }
+  // Quick chips — always use ALL_CHIPS with initQuickChips (ignore translation table)
+  initQuickChips();
 
   // Speech recognition lang
   if (typeof _recognition !== 'undefined' && _recognition) {
