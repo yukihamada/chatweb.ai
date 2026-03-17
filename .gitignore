@@ -10,3 +10,4 @@ static/screenshots/*.png
 .DS_Store
 cf-worker/.wrangler/
 *.bak
+cf-worker/.wrangler/

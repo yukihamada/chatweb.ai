@@ -64,12 +64,12 @@ STRIPE_WEBHOOK_SECRET    = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_ID_PRO      = os.getenv("STRIPE_PRICE_ID_PRO", "") or os.getenv("STRIPE_PRICE_PRO", "")
 STRIPE_PRICE_ID_TEAM     = os.getenv("STRIPE_PRICE_ID_TEAM", "")
 STRIPE_PRICE_ID_ENTERPRISE = os.getenv("STRIPE_PRICE_ID_ENTERPRISE", "") or os.getenv("STRIPE_PRICE_ENTERPRISE", "")
-CF_ACCOUNT_ID         = os.getenv("CF_ACCOUNT_ID", "46bf2542468db352a9741f14b84d2744")
+CF_ACCOUNT_ID         = os.getenv("CF_ACCOUNT_ID", "")
 CF_API_KEY            = os.getenv("CF_API_KEY", "")
-CF_API_EMAIL          = os.getenv("CF_API_EMAIL", "mail@yukihamada.jp")
-CF_KV_NAMESPACE_ID    = os.getenv("CF_KV_NAMESPACE_ID", "d67714d343da41efa022d6a02c81ff30")
+CF_API_EMAIL          = os.getenv("CF_API_EMAIL", "")
+CF_KV_NAMESPACE_ID    = os.getenv("CF_KV_NAMESPACE_ID", "")
 SITE_BASE_DOMAIN      = os.getenv("SITE_BASE_DOMAIN", "chatweb.ai")
-ADMIN_EMAILS: set     = set(os.getenv("ADMIN_EMAILS", "yuki@hamada.tokyo").split(","))
+ADMIN_EMAILS: set     = set(filter(None, os.getenv("ADMIN_EMAILS", "").split(",")))
 _APP_SOURCE_ROOT      = os.getenv("APP_SOURCE_ROOT", "/app")
 
 import contextvars
@@ -479,7 +479,7 @@ _RATE_LIMIT_MAX    = 30   # requests per window
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     if request.url.path.startswith("/chat") or request.url.path.startswith("/a2a") or request.url.path.startswith("/api/"):
-        ip = request.client.host if request.client else "unknown"
+        ip = request.headers.get("fly-client-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
         now = time.time()
         hits = _rate_limit.get(ip, [])
         hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
@@ -6216,7 +6216,12 @@ from cryptography.fernet import Fernet
 _SECRET_ENCRYPTION_KEY = os.getenv("SECRET_ENCRYPTION_KEY", "")
 if not _SECRET_ENCRYPTION_KEY:
     # Derive a stable key from ADMIN_TOKEN or machine-specific fallback
-    _raw = (os.getenv("ADMIN_TOKEN") or os.getenv("FLY_APP_NAME", "chatweb-local") + "-secrets-key").encode()
+    _fallback = os.getenv("ADMIN_TOKEN") or os.getenv("FLY_APP_NAME", "")
+    if not _fallback:
+        log.warning("SECRET_ENCRYPTION_KEY not set — generating random key (secrets will not persist across restarts)")
+        import secrets as _s
+        _fallback = _s.token_hex(32)
+    _raw = (_fallback + "-secrets-key").encode()
     _SECRET_ENCRYPTION_KEY = base64.urlsafe_b64encode(hashlib.sha256(_raw).digest())
 else:
     _SECRET_ENCRYPTION_KEY = _SECRET_ENCRYPTION_KEY.encode() if isinstance(_SECRET_ENCRYPTION_KEY, str) else _SECRET_ENCRYPTION_KEY
@@ -6386,10 +6391,14 @@ async def auth_register(req: RegisterRequest):
             })
         except Exception as e:
             log.warning(f"Magic link email failed: {e}")
-            return {"status": "sent", "debug_url": magic_url}
+            if os.getenv("DEBUG") == "true":
+                return {"status": "sent", "debug_url": magic_url}
+            return {"status": "sent", "email": email}
     else:
         log.warning(f"RESEND_API_KEY not set — magic link for {email} not sent")
-        return {"status": "sent", "debug_url": magic_url}  # dev fallback
+        if os.getenv("DEBUG") == "true":
+            return {"status": "sent", "debug_url": magic_url}
+        return {"status": "error", "message": "メール送信サービスが設定されていません"}
     return {"status": "sent", "email": email}
 
 @app.get("/auth/verify-session")
