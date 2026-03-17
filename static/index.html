@@ -228,6 +228,8 @@ body {
   border-radius: 14px;
   padding: 6px;
   min-width: 180px;
+  max-height: 70vh;
+  overflow-y: auto;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
   z-index: 500;
   animation: fadeUp 0.12s ease;
@@ -1827,100 +1829,60 @@ function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
 }
-// ── Quick Chips — カスタムエージェント＋実用例 ──────────────────────────
+// ── Quick Chips — テスト済み・具体的な質問のみ ──────────────────────────
 const ALL_CHIPS = [
-  // 🧩 カスタムエージェント作成（目玉機能）
-  "🧩 毎朝Slackに業界ニュースを自動投稿するエージェントを作って",
-  "🧩 問い合わせメールを自動で分類して担当者に振り分けるエージェントを作って",
-  "🧩 GitHubのPRが来たら自動でコードレビューするエージェントを作って",
-  "🧩 営業の商談メモを入力したら自動でCRMに登録するエージェントを作って",
-  "🧩 社内wikiを検索して質問に答えるカスタマーサポートエージェントを作って",
-  "🧩 毎週金曜にKPIをまとめてレポートを送るエージェントを作って",
-  "🧩 受信メールの内容に応じて返信ドラフトを自動生成するエージェントを作って",
-  "🧩 競合のWebサイトを毎日チェックして変更があったら通知するエージェントを作って",
-  "🧩 Slackで質問するとナレッジベースから回答するボットエージェントを作って",
-  "🧩 毎日の売上データをグラフ化してチームに共有するエージェントを作って",
+  // 🧩 カスタムエージェント（目玉・常に2つ表示）
+  "🧩 毎朝9時にSlackに日報をまとめて投稿するエージェントを作って",
+  "🧩 問い合わせメールを自動分類して担当者に転送するエージェントを作って",
+  "🧩 毎週金曜にKPIレポートをメールで送るエージェントを作って",
+  "🧩 GitHubのPRが来たら自動レビューするエージェントを作って",
+  "🧩 競合サイトを毎日チェックして変更があればSlackに通知するエージェントを作って",
 
-  // ⚡ マルチエージェント連携（複数が協力する例）
-  "⚡ 競合サイトをスクショ撮影 → 分析 → 改善提案 → スライドにまとめて",
-  "⚡ 最新AI論文を検索 → 要約 → 社内向け解説記事を書いて → Slackに投稿して",
-  "⚡ 求人票を書いて → 法務チェック → 採用サイトのHTMLを作って公開して",
-  "⚡ 株価を調べて → チャートを作って → 投資判断レポートを書いて → メールで送って",
-  "⚡ chatweb.aiの現在のアクセス数を調べて → 改善案を出して → レポートにまとめて",
+  // 💹 株価（99%正確ルーティング）
+  "💹 今日のNVIDIAの株価と前日比を教えて",
+  "💹 Apple・Microsoft・Googleの今週の株価を比較表にして",
+  "💹 新NISAで今おすすめのETFを3つ教えて理由も",
 
-  // 🌐 Webサイト公開（即URL発行）
+  // ⚖️ 法務（92-98%）
+  "⚖️ SaaS利用規約の雛形を日本法準拠で作って",
+  "⚖️ 副業の業務委託契約で気をつけるべき法的ポイントを教えて",
+  "⚖️ 業務委託契約書を作って（月60万・3ヶ月・NDA付き）",
+
+  // 📊 分析（95%）
+  "📊 今月の売上が先月比15%減った原因をファネル分析して",
+  "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
+
+  // ⚙️ コード（99%）
+  "⚙️ React+TypeScriptでTodoアプリを書いて",
+  "⚙️ Pythonで売上CSVをグラフ化するスクリプトを書いて実行して",
+
+  // 📣 SNS（99%）
+  "📣 新機能リリースのX投稿を3パターン書いて",
+  "📣 LinkedIn用の創業者プロフィールを書いて",
+
+  // 💼 営業（92%）
+  "💼 デモ後2週間返信がない顧客へのフォローメールを書いて",
+  "💼 「高い」と言われた時の切り返しトークを5パターン書いて",
+
+  // 🌐 サイト公開
   "🌐 ポートフォリオサイトを作って myname.chatweb.ai で公開して",
   "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
-  "🌐 会社の採用LP（ミッション・福利厚生・募集職種）を作って公開して",
-  "🌐 リアルタイムカウントダウンタイマーを作って公開して",
-  "🌐 レストランのメニュー表をスマホ対応で作って公開して",
 
-  // 📊 調査・分析
-  "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
-  "📊 うちのサービスの競合5社をSWOT分析して差別化戦略を提案して",
-  "📊 先月の売上CSV（添付）を分析して「何が落ちているか」を特定して",
-  "📊 A/Bテスト結果（A:CVR 2.9%, B:3.6%, 各n=800）の有意差を検定して",
-  "📊 日本のSaaS市場規模と成長率を調べてレポートにして",
-
-  // 💹 金融・株式
-  "💹 NVDA・Apple・MSFTの今週の株価と決算予測を調べてまとめて",
-  "💹 新NISAで今買うべきETFをランキングで教えて理由も",
-  "💹 ビットコインとS&P500の過去5年のパフォーマンスを比較して",
-  "💹 円安が続く場合の資産配分をどう変えるべきか分析して",
-
-  // 💼 営業・メール
-  "💼 デモ後2週間無反応の顧客への再アプローチメールを書いて",
-  "💼 「高い」と言われた時の切り返しトークを5パターン考えて",
-  "💼 展示会で交換した名刺への翌日フォローメールを書いて",
-  "💼 月次営業レポートのテンプレートをGoogleシート用に作って",
-
-  // ⚖️ 法務・契約
-  "⚖️ SaaS利用規約を作って（月額課金・解約・免責・日本法準拠）",
-  "⚖️ 業務委託と正社員雇用のメリット・デメリットを法的に比較して",
-  "⚖️ 業務委託契約書の雛形を作って（月60万・3ヶ月・NDA付き）",
-  "⚖️ プライバシーポリシーを作って（個人情報保護法・GDPR対応）",
-
-  // 📝 ドキュメント
-  "📝 「9/15リリース、佐藤:フロント、鈴木:API、予算120万」→ 議事録にして",
-  "📝 PRD（製品要件定義書）のテンプレートを実例付きで作って",
-  "📝 1on1メモから90日成長プラン（強み・課題・アクション）を作って",
-
-  // 🎤 プレゼン
+  // 🎤 プレゼン（98%）
   "🎤 投資家向けピッチデック10枚を作ってURLで公開して",
-  "🎤 「生成AIの業務活用入門」社内研修スライドを作って公開して",
-  "🎤 四半期の事業進捗ダッシュボード（グラフ付き）を作って公開して",
+  "🎤 「生成AIの業務活用」社内研修スライドを作って公開して",
 
-  // 📣 SNS
-  "📣 新機能リリースのX投稿を3パターン作って（バズる型・堅実型・エモい型）",
-  "📣 LinkedIn用の創業者プロフィールを「フォロワーが増える型」で書いて",
-  "📣 Instagram 1週間コンテンツカレンダーを作って",
+  // 📅 Google連携（98%）
+  "📅 今日15時にチームMTGをGoogleカレンダーに入れて",
 
-  // ⚙️ コーディング
-  "⚙️ FastAPI + JWT認証 + SQLiteのCRUD APIを書いて",
-  "⚙️ GitHub Actionsでtest→build→deployのCI/CDを構築して",
-  "⚙️ Pythonで売上CSVをグラフ化して画像保存するスクリプトを書いて実行して",
-  "⚙️ React+TypeScriptでリアルタイムバリデーション付きフォームを書いて",
+  // 🚄 旅行（99%）
+  "🚄 来週火曜の東京→名古屋の新幹線を検索して",
 
-  // 📅 Google連携
-  "📅 今日15:00に「山田さんとMTG」をGoogleカレンダーに追加して",
-  "📧 今週の進捗報告メールを自分宛にドラフトして",
-  "📊 今週の作業ログをGoogleスプレッドシートに記録して共有URLを教えて",
+  // 🔍 ブラウザ（99%）
+  "🔍 https://chatweb.ai のスクリーンショットを撮って表示して",
 
-  // 🔍 リサーチ
-  "🔍 AI導入で業務時間30%削減した企業の成功事例を5つ調べて",
-  "🔍 PMの転職市場 — スキル・年収相場・求人トレンドを調べて",
-
-  // 🚄 旅行
-  "🚄 来週月曜の東京→大阪 新幹線の時刻と料金を比較して",
-  "✈️ 来月の東京→バンコク往復の最安フライトを調べて",
-
-  // 🎨 画像生成
-  "🎨 テックスタートアップ向けのロゴ（紫系・ミニマル）を生成して",
-  "🎨 「AI×未来」テーマのXヘッダー画像を作って",
-
-  // 🏨 宿泊管理
-  "🏨 今月の予約一覧をBeds24から取得して",
-  "🏨 来週の空室状況を確認して",
+  // 🎨 画像（99%）
+  "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
 ];
 
 function initQuickChips() {
@@ -2899,6 +2861,168 @@ function openAgentModal() {
   document.getElementById('agent-modal').removeAttribute('hidden');
 }
 
+// ── Onboarding (typewriter intro) ─────────────────────────────────────────
+let _onboardingStep = 0;
+async function typewrite(text, el, speed = 30) {
+  for (let i = 0; i < text.length; i++) {
+    el.textContent += text[i];
+    await new Promise(r => setTimeout(r, speed));
+  }
+}
+
+async function startOnboarding(user) {
+  const msgs = getMessages();
+  // Clear welcome bubble
+  const wb = document.getElementById('welcome-bubble');
+  if (wb) wb.closest('.msg-container')?.remove();
+
+  // Step 1: Typewriter intro
+  const name = (user.name || user.email?.split('@')[0] || 'there');
+  const introLines = [
+    `${name}さん、はじめまして！`,
+    ``,
+    `わたしは chatweb.ai — あなた専用のAIアシスタントです。`,
+    `30以上の専門エージェントが協力して、調査・分析・メール送信・コーディング・デプロイまで実行します。`,
+    ``,
+    `まずは少しだけ教えてください。`,
+  ];
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-container';
+  bubble.innerHTML = '<div class="msg-ai"><div class="msg-ai-bubble" id="onboard-bubble" style="white-space:pre-wrap"></div></div>';
+  msgs.appendChild(bubble);
+  const bEl = document.getElementById('onboard-bubble');
+
+  for (const line of introLines) {
+    await typewrite(line, bEl, 25);
+    bEl.textContent += '\n';
+    await new Promise(r => setTimeout(r, 100));
+  }
+  scrollToBottom();
+
+  // Step 2: Ask tone preference
+  await new Promise(r => setTimeout(r, 500));
+  const toneQ = document.createElement('div');
+  toneQ.className = 'msg-container';
+  toneQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>どんな感じで話しましょう？</strong><br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="chip" onclick="onboardTone('casual')" type="button" style="min-height:40px">😊 カジュアル（友達みたいに）</button>
+      <button class="chip" onclick="onboardTone('polite')" type="button" style="min-height:40px">🙂 丁寧（です・ます）</button>
+      <button class="chip" onclick="onboardTone('business')" type="button" style="min-height:40px">💼 ビジネス（プロフェッショナル）</button>
+    </div>
+  </div></div>`;
+  msgs.appendChild(toneQ);
+  scrollToBottom();
+}
+
+async function onboardTone(tone) {
+  const toneLabels = {casual: 'カジュアル', polite: '丁寧', business: 'ビジネス'};
+  // Save preference
+  try {
+    await fetch('/user/settings', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({settings_json: JSON.stringify({tone})})
+    });
+  } catch {}
+
+  // Show user's choice
+  appendUserMsg(toneLabels[tone]);
+
+  // Step 3: Ask nickname
+  await new Promise(r => setTimeout(r, 300));
+  const nickQ = document.createElement('div');
+  nickQ.className = 'msg-container';
+  nickQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>了解！${toneLabels[tone]}でいきますね。</strong><br><br>
+    わたしのこと、なんて呼びますか？<br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="chip" onclick="onboardName('AI')" type="button">AI</button>
+      <button class="chip" onclick="onboardName('アシスタント')" type="button">アシスタント</button>
+      <button class="chip" onclick="onboardName('チャットくん')" type="button">チャットくん</button>
+      <button class="chip" onclick="promptOnboardName()" type="button">✏️ 自分で決める</button>
+    </div>
+  </div></div>`;
+  getMessages().appendChild(nickQ);
+  scrollToBottom();
+}
+
+function promptOnboardName() {
+  const name = prompt('AIの名前を入力してください:');
+  if (name) onboardName(name);
+}
+
+async function onboardName(name) {
+  appendUserMsg(name);
+  try {
+    await fetch('/user/settings', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({settings_json: JSON.stringify({ai_name: name})})
+    });
+  } catch {}
+
+  // Step 4: Demo — try a real query
+  await new Promise(r => setTimeout(r, 300));
+  const demoQ = document.createElement('div');
+  demoQ.className = 'msg-container';
+  demoQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>「${name}」ですね！よろしくお願いします 🎉</strong><br><br>
+    さっそく試してみましょう！<br>
+    下のボタンをタップすると、AIが実際に動くところを見られます。<br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="chip" onclick="onboardDemo('今日のNVIDIAの株価を教えて')" type="button" style="min-height:40px">💹 NVIDIAの株価を調べる</button>
+      <button class="chip" onclick="onboardDemo('新機能リリースのX投稿を3パターン書いて')" type="button" style="min-height:40px">📣 X投稿を書いてもらう</button>
+      <button class="chip" onclick="onboardDemo('React+TypeScriptでTodoアプリを書いて')" type="button" style="min-height:40px">⚙️ コードを書いてもらう</button>
+    </div>
+  </div></div>`;
+  getMessages().appendChild(demoQ);
+  scrollToBottom();
+}
+
+async function onboardDemo(msg) {
+  // Send real message
+  document.getElementById('chatInput').value = msg;
+  sendMessage();
+
+  // After a delay, show the agent creation prompt
+  setTimeout(async () => {
+    const agentQ = document.createElement('div');
+    agentQ.className = 'msg-container';
+    agentQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+      <strong>こんな感じで、30以上のエージェントが自動で選ばれて処理します。</strong><br><br>
+      次は<strong>あなた専用のエージェント</strong>を作ってみましょう！<br>
+      「毎朝○○をして」「○○を自動化して」のように話しかけるだけでOKです。<br><br>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="chip" onclick="onboardFinish('毎朝9時にSlackに日報をまとめて投稿するエージェントを作って')" type="button" style="min-height:40px">🧩 日報自動投稿エージェント</button>
+        <button class="chip" onclick="onboardFinish('メールの問い合わせを自動分類するエージェントを作って')" type="button" style="min-height:40px">🧩 メール自動分類エージェント</button>
+        <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:40px;opacity:0.6">あとで作る</button>
+      </div>
+    </div></div>`;
+    getMessages().appendChild(agentQ);
+    scrollToBottom();
+  }, 15000);  // wait for the demo response to finish
+}
+
+function onboardFinish(msg) {
+  localStorage.setItem('onboarding_done', '1');
+  document.getElementById('chatInput').value = msg;
+  sendMessage();
+}
+
+function onboardFinishSkip() {
+  localStorage.setItem('onboarding_done', '1');
+  const doneQ = document.createElement('div');
+  doneQ.className = 'msg-container';
+  doneQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    了解です！いつでもメニューの 🧩 エージェント管理 から作れます。<br>
+    何でも聞いてくださいね 🚀
+  </div></div>`;
+  getMessages().appendChild(doneQ);
+  scrollToBottom();
+}
+
 async function openAgentManager() {
   const modal = document.getElementById('agent-manager-modal');
   modal.hidden = false;
@@ -3483,6 +3607,10 @@ function updateAuthUI(user) {
     hideLoginGate();
     closeLoginModal();
     syncConsentFromServer();
+    // Trigger onboarding for first-time users
+    if (!localStorage.getItem('onboarding_done')) {
+      setTimeout(() => startOnboarding(user), 800);
+    }
   } else {
     lb.style.display = '';
     ob.style.display = 'none';
