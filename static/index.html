@@ -1903,76 +1903,86 @@ function autoResize(ta) {
   ta.style.height = 'auto';
   ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
 }
-// ── Quick Chips — テスト済み・具体的な質問のみ ──────────────────────────
-const ALL_CHIPS = [
-  // 🧩 カスタムエージェント（目玉・常に2つ表示）
-  "🧩 毎朝9時にLINEに今日のタスクと天気をまとめて送るエージェントを作って",
-  "🧩 問い合わせメールを自動分類して担当者に転送するエージェントを作って",
-  "🧩 毎週金曜にKPIレポートをメールで送るエージェントを作って",
-  "🧩 GitHubのPRが来たら自動レビューするエージェントを作って",
-  "🧩 競合サイトを毎日チェックして変更があればLINEに通知するエージェントを作って",
-
-  // 💹 株価（99%正確ルーティング）
-  "💹 今日のNVIDIAの株価と前日比を教えて",
-  "💹 Apple・Microsoft・Googleの今週の株価を比較表にして",
-  "💹 新NISAで今おすすめのETFを3つ教えて理由も",
-
-  // ⚖️ 法務（92-98%）
-  "⚖️ SaaS利用規約の雛形を日本法準拠で作って",
-  "⚖️ 副業の業務委託契約で気をつけるべき法的ポイントを教えて",
-  "⚖️ 業務委託契約書を作って（月60万・3ヶ月・NDA付き）",
-
-  // 📊 分析（95%）
-  "📊 今月の売上が先月比15%減った原因をファネル分析して",
-  "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
-
-  // ⚙️ コード（99%）
-  "⚙️ React+TypeScriptでTodoアプリを書いて",
-  "⚙️ Pythonで売上CSVをグラフ化するスクリプトを書いて実行して",
-
-  // 📣 SNS（99%）
-  "📣 新機能リリースのX投稿を3パターン書いて",
-  "📣 LinkedIn用の創業者プロフィールを書いて",
-
-  // 💼 営業（92%）
-  "💼 デモ後2週間返信がない顧客へのフォローメールを書いて",
-  "💼 「高い」と言われた時の切り返しトークを5パターン書いて",
-
-  // 🌐 サイト公開
-  "🌐 ポートフォリオサイトを作って myname.chatweb.ai で公開して",
-  "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
-
-  // 🎤 プレゼン（98%）
-  "🎤 投資家向けピッチデック10枚を作ってURLで公開して",
-  "🎤 「生成AIの業務活用」社内研修スライドを作って公開して",
-
-  // 📅 Google連携（98%）
+// ── Quick Chips — ペルソナ対応・編集可能 ──────────────────────────────
+const _CHIPS_BY_ROLE = {
+  'エンジニア': [
+    "⚙️ FastAPI+JWT+SQLiteのCRUD APIを書いて",
+    "⚙️ このエラーログを分析して原因と修正方法を教えて",
+    "⚙️ GitHub Actionsでtest→build→deployのCI/CDを書いて",
+    "🌐 QRコード生成ツールを作ってchatweb.aiで公開して",
+    "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
+  ],
+  '経営者・マネージャー': [
+    "📊 競合（○○・△△・□□）をSWOT分析して表にして",
+    "📝 MTGメモ「決定事項, 担当, 期限」→ 議事録にして",
+    "💹 今日のNVIDIA・Apple・Googleの株価をまとめて",
+    "🎤 投資家向けピッチデック10枚を作って公開して",
+    "📧 ○○会社の△△さんに初回営業メールを書いて送って",
+  ],
+  'マーケター': [
+    "📣 新機能リリースのX投稿を3パターン書いて",
+    "📣 LinkedIn用の創業者プロフィールを書いて",
+    "📊 A/Bテスト結果（A:CVR2.9% B:3.6% n=800）の有意差を検定して",
+    "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
+    "📧 先週デモした顧客にフォローメールを書いて送って",
+  ],
+  '営業': [
+    "📧 ○○会社の△△さんに初回営業メールを書いて送って",
+    "💼 「高い」と言われた時の切り返しトーク5パターン",
+    "💼 展示会で交換した名刺へのフォローメールを書いて",
+    "📝 この会議メモからTODOを担当者別に整理して",
+    "📊 競合（○○・△△・□□）をSWOT分析して表にして",
+  ],
+  'デザイナー': [
+    "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
+    "🌐 ポートフォリオサイトを作ってchatweb.aiで公開して",
+    "🌐 BMI計算機をダークテーマで作って公開して",
+    "📣 Instagram 1週間コンテンツカレンダーを作って",
+    "🔍 https://chatweb.ai のスクショを撮って改善点を教えて",
+  ],
+};
+const _CHIPS_COMMON = [
+  "📱 LINEを連携して毎朝ニュースを届けてほしい",
+  "📱 Telegramを連携して通知を受け取りたい",
+  "📅 毎朝9時にAIニュースまとめをLINEに届けて",
   "📅 今日15時にチームMTGをGoogleカレンダーに入れて",
-
-  // 🚄 旅行（99%）
+  "📝 SaaS利用規約を日本法準拠で作って",
+  "💹 新NISAで今おすすめのETF3つを理由付きで教えて",
   "🚄 来週火曜の東京→名古屋の新幹線を検索して",
-
-  // 🔍 ブラウザ（99%）
-  "🔍 https://chatweb.ai のスクリーンショットを撮って表示して",
-
-  // 🎨 画像（99%）
-  "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
+  "📧 この英語メールの返信案を3パターン書いて",
 ];
 
 function initQuickChips() {
   const chips = document.getElementById('quickChips');
   if (!chips) return;
-  // Time-seeded shuffle: changes every 30 minutes so returning users see fresh chips
+  // Get user's role from settings or localStorage
+  const role = localStorage.getItem('user_role') || '';
+  const roleChips = _CHIPS_BY_ROLE[role] || [];
+  // Combine: LINE/TG first, then role-specific, then common
+  const lineChips = _CHIPS_COMMON.filter(c => c.startsWith('📱'));
+  const otherCommon = _CHIPS_COMMON.filter(c => !c.startsWith('📱'));
   const seed = Math.floor(Date.now() / 1800000);
   const rng = (i) => { let x = (seed * 9301 + 49297 + i * 233) % 233280; return x / 233280; };
-  const shuffled = [...ALL_CHIPS].map((v,i) => ({v, r: rng(i)})).sort((a,b) => a.r - b.r).map(x => x.v);
-  // Always show 1-2 agent creation chips first, then mix
-  const agentChips = shuffled.filter(c => c.startsWith('🧩'));
-  const otherChips = shuffled.filter(c => !c.startsWith('🧩'));
-  const picked = [...agentChips.slice(0,2), ...otherChips.slice(0,13)];
+  const shuffledCommon = [...otherCommon].map((v,i) => ({v,r:rng(i)})).sort((a,b)=>a.r-b.r).map(x=>x.v);
+  const picked = [...lineChips.slice(0,1), ...roleChips.slice(0,4), ...shuffledCommon.slice(0,8)];
   chips.innerHTML = picked.map(c =>
-    `<button class="chip" onclick="useChip(this)" type="button">${c}</button>`
+    `<button class="chip" onclick="editChip(this)" type="button">${c}</button>`
   ).join('');
+}
+
+function editChip(el) {
+  const raw = el.textContent.trim();
+  // LINE/Telegram chips → show link code modal directly
+  if (raw.includes('LINEを連携') || raw.includes('Telegramを連携')) {
+    showLinkCode();
+    return;
+  }
+  // Other chips → put in input for editing
+  const text = raw.replace(/^[\p{Emoji}\s]+/u, '').trim();
+  const input = document.getElementById('chatInput');
+  input.value = text;
+  input.focus();
+  autoResize(input);
 }
 
 let _lastUserMsg = '';
@@ -3142,6 +3152,8 @@ function promptOnboardRole() {
 
 async function onboardRole(role) {
   appendUserMsg(role);
+  // Save role for personalized chips
+  localStorage.setItem('user_role', role);
   // Save to long-term memory
   try {
     const email = currentUser?.email || '';
@@ -3151,6 +3163,8 @@ async function onboardRole(role) {
       body: JSON.stringify({content: `ユーザーの職種: ${role}（${email}）`})
     });
   } catch {}
+  // Refresh chips with role-specific ones
+  initQuickChips();
 
   // Step 5: Demo
   await new Promise(r => setTimeout(r, 300));

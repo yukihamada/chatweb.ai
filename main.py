@@ -2169,28 +2169,41 @@ async def tool_browser_run_test(url: str, test_spec: str, session_id: str = "") 
 
 
 # ── Finance ───────────────────────────────────────────────────────────────────
+_TICKER_ALIASES = {
+    "トヨタ": "7203.T", "ソニー": "6758.T", "ソフトバンク": "9984.T",
+    "任天堂": "7974.T", "テスラ": "TSLA", "apple": "AAPL",
+    "アップル": "AAPL", "nvidia": "NVDA", "マイクロソフト": "MSFT",
+    "microsoft": "MSFT", "google": "GOOGL", "グーグル": "GOOGL",
+    "アマゾン": "AMZN", "amazon": "AMZN", "meta": "META", "メタ": "META",
+    "bitcoin": "BTC-USD", "ビットコイン": "BTC-USD", "eth": "ETH-USD",
+    "日経": "^N225", "日経平均": "^N225", "s&p": "^GSPC", "ダウ": "^DJI",
+}
+
 def _extract_ticker(text: str) -> str | None:
-    m = re.search(r'\b([A-Z]{1,5}(?:\.[A-Z]{1,2})?)\b', text)
-    mj = re.search(r'\b(\d{4}\.T)\b', text)
-    if mj:
-        return mj.group(1)
-    aliases = {
-        "トヨタ": "7203.T", "ソニー": "6758.T", "ソフトバンク": "9984.T",
-        "任天堂": "7974.T", "テスラ": "TSLA", "apple": "AAPL",
-        "アップル": "AAPL", "nvidia": "NVDA", "マイクロソフト": "MSFT",
-        "google": "GOOGL", "アマゾン": "AMZN", "bitcoin": "BTC-USD",
-        "ビットコイン": "BTC-USD", "eth": "ETH-USD",
-    }
-    for name, ticker in aliases.items():
-        if name.lower() in text.lower():
-            return ticker
-    return m.group(1) if m else None
+    tickers = _extract_tickers(text)
+    return tickers[0] if tickers else None
+
+def _extract_tickers(text: str) -> list[str]:
+    """Extract ALL tickers from text (supports multiple)."""
+    found = []
+    text_lower = text.lower()
+    # Check aliases first
+    for name, ticker in _TICKER_ALIASES.items():
+        if name.lower() in text_lower and ticker not in found:
+            found.append(ticker)
+    # Check explicit tickers (AAPL, 7203.T, etc.)
+    for m in re.finditer(r'\b([A-Z]{1,5}(?:\.[A-Z]{1,2})?)\b', text):
+        t = m.group(1)
+        if t not in found and t not in ("GET", "POST", "PUT", "API", "URL", "CSV", "PDF", "HTML", "JSON", "MTG"):
+            found.append(t)
+    for m in re.finditer(r'\b(\d{4}\.T)\b', text):
+        if m.group(1) not in found:
+            found.append(m.group(1))
+    return found
 
 
-async def tool_bloomberg(query: str) -> str:
-    ticker_str = _extract_ticker(query)
-    if not ticker_str:
-        ticker_str = "^N225"
+async def _fetch_single_ticker(ticker_str: str) -> str:
+    """Fetch data for a single ticker and return formatted string."""
     def _fetch():
         t = yf.Ticker(ticker_str)
         info = t.info
@@ -2210,19 +2223,38 @@ async def tool_bloomberg(query: str) -> str:
             "sector": info.get("sector"),
             "recent_prices": prices[-5:],
         }
+    data = await asyncio.get_event_loop().run_in_executor(None, _fetch)
+    mc = data["market_cap"]
+    mc_str = f"¥{mc/1e12:.1f}兆" if mc and mc > 1e12 else (f"${mc/1e9:.1f}B" if mc else "N/A")
+    price_trend = " → ".join(str(p) for p in data["recent_prices"])
+    return (
+        f"【{data['name']} ({data['ticker']})】\n"
+        f"現在値: {data['price']}  前日終値: {data['prev_close']}\n"
+        f"PER: {data['pe']}  PBR: {data['pb']}\n"
+        f"時価総額: {mc_str}  セクター: {data['sector']}\n"
+        f"52週 高値: {data['52w_high']}  安値: {data['52w_low']}\n"
+        f"直近5日終値: {price_trend}"
+    )
+
+
+async def tool_bloomberg(query: str) -> str:
+    tickers = _extract_tickers(query)
+    if not tickers:
+        tickers = ["^N225"]
+    # Fetch all tickers
+    if len(tickers) > 1:
+        results = []
+        for ticker_str in tickers[:5]:  # max 5
+            try:
+                result = await _fetch_single_ticker(ticker_str)
+                results.append(result)
+            except Exception as e:
+                results.append(f"## {ticker_str}\nデータ取得エラー: {e}")
+        return "\n\n---\n\n".join(results)
+    # Single ticker
+    ticker_str = tickers[0]
     try:
-        data = await asyncio.get_event_loop().run_in_executor(None, _fetch)
-        mc = data["market_cap"]
-        mc_str = f"¥{mc/1e12:.1f}兆" if mc and mc > 1e12 else (f"${mc/1e9:.1f}B" if mc else "N/A")
-        price_trend = " → ".join(str(p) for p in data["recent_prices"])
-        return (
-            f"【{data['name']} ({data['ticker']})】\n"
-            f"現在値: {data['price']}  前日終値: {data['prev_close']}\n"
-            f"PER: {data['pe']}  PBR: {data['pb']}\n"
-            f"時価総額: {mc_str}  セクター: {data['sector']}\n"
-            f"52週 高値: {data['52w_high']}  安値: {data['52w_low']}\n"
-            f"直近5日終値: {price_trend}"
-        )
+        return await _fetch_single_ticker(ticker_str)
     except Exception as e:
         return f"bloomberg error: {e}"
 
