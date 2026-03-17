@@ -983,7 +983,8 @@ async def tg_edit(chat_id: int | str, message_id: int, text: str, parse_mode: st
 
 
 async def process_telegram_message(chat_id: int | str, user_text: str, username: str = "",
-                                    image_b64: str | None = None, image_mime: str = "image/jpeg") -> None:
+                                    image_b64: str | None = None, image_mime: str = "image/jpeg",
+                                    _is_group: bool = False) -> None:
     """Route a Telegram message through agents and stream reply via message edits."""
     session_id = f"tg_{chat_id}"
     # Resolve unified user_id for cross-channel memory
@@ -1124,13 +1125,13 @@ async def line_push(user_id: str, text: str) -> dict:
         return {"ok": False, "error": "LINE_TOKEN not set"}
     if len(text) > 5000:
         text = text[:4997] + "..."
-    async with httpx.AsyncClient(timeout=10) as hc:
-        r = await hc.post(
-            f"{_LINE_API}/push",
-            headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
-            json={"to": user_id, "messages": [{"type": "text", "text": text}]},
-        )
-        return {"ok": r.status_code == 200, "status": r.status_code}
+    hc = get_http()
+    r = await hc.post(
+        f"{_LINE_API}/push",
+        headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
+        json={"to": user_id, "messages": [{"type": "text", "text": text}]},
+    )
+    return {"ok": r.status_code == 200, "status": r.status_code}
 
 
 async def line_reply(reply_token: str, text: str) -> dict:
@@ -1139,13 +1140,13 @@ async def line_reply(reply_token: str, text: str) -> dict:
         return {"ok": False}
     if len(text) > 5000:
         text = text[:4997] + "..."
-    async with httpx.AsyncClient(timeout=10) as hc:
-        r = await hc.post(
-            f"{_LINE_API}/reply",
-            headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
-            json={"replyToken": reply_token, "messages": [{"type": "text", "text": text}]},
-        )
-        return {"ok": r.status_code == 200, "status": r.status_code}
+    hc = get_http()
+    r = await hc.post(
+        f"{_LINE_API}/reply",
+        headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
+        json={"replyToken": reply_token, "messages": [{"type": "text", "text": text}]},
+    )
+    return {"ok": r.status_code == 200, "status": r.status_code}
 
 
 async def line_push_flex(user_id: str, alt_text: str, flex_contents: dict) -> dict:
@@ -1153,13 +1154,13 @@ async def line_push_flex(user_id: str, alt_text: str, flex_contents: dict) -> di
     if not LINE_TOKEN:
         return {"ok": False}
     msg = {"type": "flex", "altText": alt_text[:400], "contents": flex_contents}
-    async with httpx.AsyncClient(timeout=10) as hc:
-        r = await hc.post(
-            f"{_LINE_API}/push",
-            headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
-            json={"to": user_id, "messages": [msg]},
-        )
-        return {"ok": r.status_code == 200}
+    hc = get_http()
+    r = await hc.post(
+        f"{_LINE_API}/push",
+        headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
+        json={"to": user_id, "messages": [msg]},
+    )
+    return {"ok": r.status_code == 200}
 
 
 async def line_reply_with_quickreply(reply_token: str, text: str, quick_items: list[dict] | None = None) -> dict:
@@ -1169,13 +1170,13 @@ async def line_reply_with_quickreply(reply_token: str, text: str, quick_items: l
     msg: dict = {"type": "text", "text": text[:5000]}
     if quick_items:
         msg["quickReply"] = {"items": quick_items}
-    async with httpx.AsyncClient(timeout=10) as hc:
-        r = await hc.post(
-            f"{_LINE_API}/reply",
-            headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
-            json={"replyToken": reply_token, "messages": [msg]},
-        )
-        return {"ok": r.status_code == 200}
+    hc = get_http()
+    r = await hc.post(
+        f"{_LINE_API}/reply",
+        headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
+        json={"replyToken": reply_token, "messages": [msg]},
+    )
+    return {"ok": r.status_code == 200}
 
 
 _LINE_QUICK_ITEMS = [
@@ -6004,6 +6005,7 @@ async def init_db():
             "    last_accessed TEXT DEFAULT (datetime('now','localtime'))"
             ")")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_mem_importance ON memories(importance DESC, last_accessed DESC)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_mem_user_id ON memories(user_id)")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS runs (
                 id TEXT PRIMARY KEY,
@@ -6038,6 +6040,7 @@ async def init_db():
         except Exception:
             pass
         await db.execute("CREATE INDEX IF NOT EXISTS idx_runs_user ON runs(user_id, created_at)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_runs_session ON runs(session_id)")
         # ── custom_agents visibility columns ─────────────────────────────
         for col_def in [
             "ALTER TABLE custom_agents ADD COLUMN visibility TEXT DEFAULT 'private'",
@@ -6297,6 +6300,7 @@ async def init_db():
                 ua TEXT,
                 created_at TEXT DEFAULT (datetime('now','localtime'))
             )""")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_analytics_event_created ON analytics(event, created_at)")
         await db.commit()
 
 
@@ -9850,14 +9854,14 @@ async def list_user_sessions(request: Request):
                       COUNT(*) as msg_count,
                       (SELECT content FROM messages m2 WHERE m2.session_id=m1.session_id AND m2.role='user' ORDER BY m2.created_at LIMIT 1) as first_msg
                FROM messages m1
-               WHERE session_id LIKE ? OR session_id IN (
+               WHERE session_id IN (
                    SELECT DISTINCT session_id FROM runs WHERE user_id=?
                )
                GROUP BY session_id
                HAVING msg_count > 0
                ORDER BY last_msg DESC
                LIMIT 30""",
-            (f"sess_%", uid)
+            (uid,)
         ) as c:
             rows = [dict(r) for r in await c.fetchall()]
     return {"sessions": [{
@@ -9870,7 +9874,16 @@ async def list_user_sessions(request: Request):
 
 
 @app.get("/history/{session_id}")
-async def get_session_history(session_id: str):
+async def get_session_history(session_id: str, request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
+    # Verify session belongs to user
+    uid = user.get("id", "")
+    async with db_conn() as db:
+        cur = await db.execute("SELECT 1 FROM runs WHERE session_id=? AND user_id=? LIMIT 1", (session_id, uid))
+        if not await cur.fetchone():
+            raise HTTPException(403, "このセッションへのアクセス権がありません")
     h = await get_history(session_id, limit=50)
     return {"messages": h}
 
@@ -11169,7 +11182,8 @@ async def telegram_webhook(request: Request):
 
     # ── Process as AI message ────────────────────────────────────────────────
     asyncio.create_task(process_telegram_message(chat_id, text, username,
-                                                  image_b64=image_b64, image_mime=image_mime))
+                                                  image_b64=image_b64, image_mime=image_mime,
+                                                  _is_group=_is_group))
     return {"ok": True}
 
 
