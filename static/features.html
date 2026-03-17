@@ -4,139 +4,177 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>chatweb.ai — できること全ガイド</title>
-<meta name="description" content="chatweb.aiで何ができるか？33種類のAIエージェント、サイト公開、Google連携、コード実行まで全機能を網羅したガイド。">
+<meta name="description" content="chatweb.aiで何ができるか？39種類のAIエージェント、6つのAIモデル、サイト公開、Google連携、コード実行まで全機能を網羅したガイド。">
 <meta property="og:title" content="chatweb.ai — できること全ガイド">
 <meta property="og:image" content="https://chatweb.ai/static/og.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0a0a0f;--bg2:#111118;--card:#16161e;
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#0d0d14;--card:#16161e;
   --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.14);
   --text:#f0f0f5;--muted:#6b7280;--accent:#7c6aff;--accent2:#a78bfa;
   --green:#34d399;--amber:#fbbf24;--red:#f87171;--pink:#f472b6;--cyan:#22d3ee;
+  --blue:#60a5fa;
 }
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Hiragino Sans',sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:inherit}
 
 /* NAV */
-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px}
-.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px}
 .nav-logo{font-weight:800;font-size:18px;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
 .nav-links{display:flex;gap:24px;list-style:none}
 .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;transition:color .15s}
 .nav-links a:hover{color:var(--text)}
-.nav-cta{padding:8px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;transition:opacity .15s}
-.nav-cta:hover{opacity:.85}
+.nav-cta{padding:8px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;transition:all .2s}
+.nav-cta:hover{opacity:.85;transform:translateY(-1px)}
 
 /* HERO */
-.hero{text-align:center;padding:100px 24px 80px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,106,255,0.15),transparent)}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;border:1px solid rgba(124,106,255,0.3);background:rgba(124,106,255,0.07);font-size:12px;color:var(--accent2);font-weight:600;margin-bottom:24px}
-h1{font-size:clamp(36px,6vw,64px);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:20px}
+.hero{text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,106,255,0.18),transparent 70%)}
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 70% 20%,rgba(244,114,182,0.08),transparent 60%)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:24px;border:1px solid rgba(124,106,255,0.3);background:rgba(124,106,255,0.08);font-size:13px;color:var(--accent2);font-weight:600;margin-bottom:28px;position:relative}
+h1{font-size:clamp(36px,6vw,68px);font-weight:900;line-height:1.08;letter-spacing:-1.5px;margin-bottom:24px;position:relative}
 h1 span{background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero-sub{font-size:clamp(16px,2.5vw,20px);color:var(--muted);max-width:680px;margin:0 auto 40px}
-.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.btn-primary{padding:14px 32px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-size:16px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,106,255,0.4)}
-.btn-secondary{padding:14px 32px;border:1px solid var(--border2);color:var(--text);border-radius:10px;text-decoration:none;font-size:16px;font-weight:600;transition:all .2s;background:rgba(255,255,255,0.03)}
-.btn-secondary:hover{border-color:var(--accent2);color:var(--accent2)}
+.hero-sub{font-size:clamp(16px,2.5vw,20px);color:var(--muted);max-width:720px;margin:0 auto 44px;line-height:1.7}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
+.btn-primary{padding:14px 36px;background:linear-gradient(135deg,var(--accent),#6c5ce7);color:#fff;border-radius:12px;text-decoration:none;font-size:16px;font-weight:700;transition:all .25s;display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(124,106,255,0.45)}
+.btn-secondary{padding:14px 36px;border:1px solid var(--border2);color:var(--text);border-radius:12px;text-decoration:none;font-size:16px;font-weight:600;transition:all .25s;background:rgba(255,255,255,0.03)}
+.btn-secondary:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(124,106,255,0.05)}
 
 /* STAT BAND */
-.stat-band{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:32px 24px}
-.stat-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.stat-band{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:36px 24px}
+.stat-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:24px}
 .stat-item{text-align:center}
-.stat-num{font-size:40px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-num{font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .stat-label{font-size:13px;color:var(--muted);margin-top:4px}
 
 /* SECTION */
 section{padding:80px 24px}
-.section-inner{max-width:1100px;margin:0 auto}
-.section-tag{display:inline-block;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
-.tag-purple{background:rgba(124,106,255,.15);color:var(--accent2);border:1px solid rgba(124,106,255,.25)}
-.tag-green{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)}
-.tag-amber{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
-.tag-pink{background:rgba(244,114,182,.12);color:var(--pink);border:1px solid rgba(244,114,182,.25)}
-.tag-cyan{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.25)}
-.tag-red{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.25)}
-h2{font-size:clamp(28px,4vw,40px);font-weight:800;line-height:1.2;margin-bottom:12px}
-.section-desc{font-size:16px;color:var(--muted);max-width:640px;margin-bottom:48px}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-tag{display:inline-block;padding:4px 14px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px}
+.tag-purple{background:rgba(124,106,255,.12);color:var(--accent2);border:1px solid rgba(124,106,255,.2)}
+.tag-green{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.tag-amber{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.tag-pink{background:rgba(244,114,182,.1);color:var(--pink);border:1px solid rgba(244,114,182,.2)}
+.tag-cyan{background:rgba(34,211,238,.1);color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+.tag-red{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.tag-blue{background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)}
+h2{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.2;margin-bottom:12px}
+.section-desc{font-size:16px;color:var(--muted);max-width:680px;margin-bottom:48px;line-height:1.7}
 
 /* AGENT GRID */
-.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.agent-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .2s;position:relative;overflow:hidden}
-.agent-card::before{content:'';position:absolute;inset:0;background:var(--ac-color);opacity:0;transition:opacity .2s}
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all .25s;position:relative;overflow:hidden}
+.agent-card::before{content:'';position:absolute;inset:0;background:var(--ac-color,var(--accent));opacity:0;transition:opacity .25s}
 .agent-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .agent-card:hover::before{opacity:.04}
 .agent-icon{font-size:28px;margin-bottom:10px;display:block}
 .agent-name{font-size:15px;font-weight:700;margin-bottom:6px}
-.agent-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.agent-desc{font-size:12px;color:var(--muted);line-height:1.6}
 .agent-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
 .agent-tag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;background:rgba(255,255,255,0.06);color:var(--muted)}
 
 /* FEATURE LIST */
-.feature-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}
+.feature-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:28px}
 .feature-item{display:flex;gap:16px;align-items:flex-start}
-.feature-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.feature-text h3{font-size:15px;font-weight:700;margin-bottom:4px}
-.feature-text p{font-size:13px;color:var(--muted);line-height:1.5}
+.feature-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.feature-text h3{font-size:15px;font-weight:700;margin-bottom:5px}
+.feature-text p{font-size:13px;color:var(--muted);line-height:1.6}
 
 /* BIG FEATURE */
 .big-features{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.big-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;transition:all .2s}
-.big-card:hover{border-color:var(--border2)}
+.big-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;transition:all .25s}
+.big-card:hover{border-color:var(--border2);transform:translateY(-1px)}
 .big-card h3{font-size:20px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:10px}
 .big-card p{font-size:14px;color:var(--muted);margin-bottom:16px}
 .big-card ul{list-style:none;display:flex;flex-direction:column;gap:7px}
 .big-card li{font-size:13px;display:flex;align-items:center;gap:8px;color:#d1d5db}
-.big-card li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.big-card li::before{content:'';color:var(--green);font-weight:700;flex-shrink:0}
 
 /* FLOW */
 .flow{display:flex;gap:0;align-items:stretch;flex-wrap:wrap}
-.flow-step{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);padding:24px 20px;text-align:center;position:relative}
-.flow-step:not(:last-child)::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted);z-index:1}
-.flow-step:first-child{border-radius:12px 0 0 12px}
-.flow-step:last-child{border-radius:0 12px 12px 0}
-.flow-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;margin:0 auto 10px}
-.flow-step h4{font-size:13px;font-weight:700;margin-bottom:4px}
-.flow-step p{font-size:11px;color:var(--muted)}
+.flow-step{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);padding:28px 20px;text-align:center;position:relative}
+.flow-step:not(:last-child)::after{content:'';position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--muted);z-index:1}
+.flow-step:first-child{border-radius:14px 0 0 14px}
+.flow-step:last-child{border-radius:0 14px 14px 0}
+.flow-num{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#6c5ce7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;margin:0 auto 12px}
+.flow-step h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.flow-step p{font-size:12px;color:var(--muted)}
 
 /* PLAN TABLE */
-.plan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.plan-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center}
-.plan-card.featured{border-color:rgba(124,106,255,0.5);background:rgba(124,106,255,0.06)}
-.plan-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;margin-bottom:12px}
+.plan-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;text-align:center;transition:all .25s}
+.plan-card:hover{transform:translateY(-2px)}
+.plan-card.featured{border-color:rgba(124,106,255,0.5);background:linear-gradient(180deg,rgba(124,106,255,0.08),rgba(124,106,255,0.02))}
+.plan-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;background:linear-gradient(135deg,var(--accent),#6c5ce7);color:#fff;margin-bottom:12px}
 .plan-name{font-size:20px;font-weight:800;margin-bottom:4px}
-.plan-price{font-size:36px;font-weight:900;color:var(--accent2);margin-bottom:4px}
+.plan-price{font-size:36px;font-weight:900;color:var(--accent2);margin-bottom:2px}
 .plan-price sup{font-size:16px;vertical-align:top;margin-top:8px}
+.plan-sub{font-size:13px;color:var(--muted);margin-bottom:4px}
 .plan-unit{font-size:12px;color:var(--muted);margin-bottom:20px}
-.plan-features{list-style:none;text-align:left;display:flex;flex-direction:column;gap:9px;margin-bottom:24px}
+.plan-features{list-style:none;text-align:left;display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
 .plan-features li{font-size:13px;display:flex;align-items:center;gap:8px}
-.plan-features li::before{content:'✓';color:var(--green);font-weight:700}
-.plan-btn{display:block;padding:12px;border-radius:8px;text-align:center;text-decoration:none;font-weight:700;font-size:14px;transition:all .2s}
+.plan-features li::before{content:'';color:var(--green);font-weight:700}
+.plan-btn{display:block;padding:12px;border-radius:10px;text-align:center;text-decoration:none;font-weight:700;font-size:14px;transition:all .25s}
 .plan-btn-outline{border:1px solid var(--border2);color:var(--text)}
-.plan-btn-solid{background:var(--accent);color:#fff}
-.plan-btn-solid:hover{opacity:.85}
+.plan-btn-solid{background:linear-gradient(135deg,var(--accent),#6c5ce7);color:#fff;border:none}
+.plan-btn-solid:hover{opacity:.85;transform:translateY(-1px)}
 .plan-btn-outline:hover{border-color:var(--accent2);color:var(--accent2)}
 
+/* USE CASE */
+.usecase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.usecase-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;transition:all .25s}
+.usecase-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.usecase-role{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:12px}
+.usecase-prompt{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;font-family:'SF Mono',monospace;color:var(--accent2);margin-bottom:12px;position:relative}
+.usecase-prompt::before{content:'>';margin-right:8px;color:var(--muted)}
+.usecase-result{font-size:13px;color:var(--muted);line-height:1.6}
+.usecase-result strong{color:var(--green)}
+
+/* INTEGRATION GRID */
+.int-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.int-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.int-card:hover{border-color:var(--border2)}
+.int-icon{font-size:24px;flex-shrink:0}
+.int-name{font-weight:700;font-size:14px}
+.int-desc{font-size:12px;color:var(--muted)}
+
+/* MODEL BADGE */
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:24px}
+.model-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;transition:all .2s}
+.model-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.model-emoji{font-size:28px;margin-bottom:8px}
+.model-name{font-weight:700;font-size:14px;margin-bottom:2px}
+.model-desc{font-size:11px;color:var(--muted)}
+
 /* DEMO STRIP */
-.demo-strip{background:linear-gradient(135deg,rgba(124,106,255,0.12),rgba(244,114,182,0.08));border:1px solid rgba(124,106,255,0.2);border-radius:20px;padding:48px;text-align:center}
+.demo-strip{background:linear-gradient(135deg,rgba(124,106,255,0.14),rgba(244,114,182,0.08));border:1px solid rgba(124,106,255,0.2);border-radius:20px;padding:56px 48px;text-align:center}
 .demo-strip h2{font-size:32px;margin-bottom:12px}
-.demo-strip p{color:var(--muted);margin-bottom:28px;font-size:16px}
+.demo-strip p{color:var(--muted);margin-bottom:32px;font-size:16px}
 
 /* FOOTER */
-footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
-.footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+footer{border-top:1px solid var(--border);padding:36px 24px;text-align:center}
+.footer-inner{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
 .footer-links{display:flex;gap:20px}
 .footer-links a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .15s}
 .footer-links a:hover{color:var(--text)}
 
+@media(max-width:900px){
+  .stat-inner{grid-template-columns:repeat(3,1fr)}
+  .plan-grid{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:768px){
   .stat-inner{grid-template-columns:repeat(2,1fr)}
   .big-features{grid-template-columns:1fr}
   .plan-grid{grid-template-columns:1fr}
   .flow-step:not(:last-child)::after{display:none}
-  .flow-step{border-radius:12px!important;border:1px solid var(--border)!important}
+  .flow-step{border-radius:14px!important;border:1px solid var(--border)!important}
   .flow{flex-direction:column;gap:8px}
   nav .nav-links{display:none}
+  .feature-cols{grid-template-columns:1fr}
+  .usecase-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -146,117 +184,124 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
   <div class="nav-inner">
     <a class="nav-logo" href="/">chatweb.ai</a>
     <ul class="nav-links">
-      <li><a href="#agents">エージェント</a></li>
-      <li><a href="#features">機能</a></li>
-      <li><a href="#hosting">サイト公開</a></li>
-      <li><a href="#integrations">連携</a></li>
-      <li><a href="#plans">プラン</a></li>
+      <li><a href="#agents">Agents</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#models">Models</a></li>
+      <li><a href="#usecases">Use Cases</a></li>
+      <li><a href="#integrations">Integrations</a></li>
+      <li><a href="#plans">Pricing</a></li>
     </ul>
-    <a class="nav-cta" href="/">今すぐ使う →</a>
+    <a class="nav-cta" href="/">Start Free</a>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- ===== HERO ===== -->
 <section class="hero">
-  <div class="hero-badge">✦ 33種類のAIエージェントが連携して動く</div>
+  <div class="hero-badge">39 AI Agents + 6 Models + A2A Orchestration</div>
   <h1>AIに<span>何でも</span>頼める<br>マルチエージェント基盤</h1>
-  <p class="hero-sub">調査・コード・法務・営業・SNS投稿・サイト公開・Google連携まで、専門AIが自動で選ばれて答えを出す。</p>
+  <p class="hero-sub">調査 / コード実行 / 法務 / 営業 / SNS投稿 / サイト公開 / 動画生成 / Google Workspace連携まで。<br>39の専門AIが自動で選ばれ、連携して答えを出す。</p>
   <div class="hero-btns">
-    <a class="btn-primary" href="/">⚡ 無料で始める</a>
-    <a class="btn-secondary" href="#agents">機能を見る ↓</a>
+    <a class="btn-primary" href="/">無料で始める ($2/月のクレジット付き)</a>
+    <a class="btn-secondary" href="#agents">全機能を見る</a>
   </div>
 </section>
 
-<!-- STATS -->
+<!-- ===== STATS ===== -->
 <div class="stat-band">
   <div class="stat-inner">
     <div class="stat-item">
-      <div class="stat-num">33</div>
+      <div class="stat-num">39</div>
       <div class="stat-label">専門AIエージェント</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">8</div>
-      <div class="stat-label">対応言語（日英中韓仏西独葡）</div>
+      <div class="stat-num">6</div>
+      <div class="stat-label">AIモデル選択可能</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">XXXXX.chatweb.ai サイト公開</div>
+      <div class="stat-num">16</div>
+      <div class="stat-label">対応言語</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">0円</div>
-      <div class="stat-label">無料プランで始められる</div>
+      <div class="stat-num">25+</div>
+      <div class="stat-label">API/サービス連携</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">$0</div>
+      <div class="stat-label">無料プランで開始</div>
     </div>
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
+<!-- ===== HOW IT WORKS ===== -->
 <section style="padding:60px 24px">
   <div class="section-inner">
-    <div style="text-align:center;margin-bottom:40px">
+    <div style="text-align:center;margin-bottom:44px">
       <div class="section-tag tag-purple">HOW IT WORKS</div>
       <h2>送るだけ。AIが判断して動く</h2>
+      <p style="color:var(--muted);margin-top:8px">複数エージェントがステップ数無制限で順次実行 (A2A Orchestration)</p>
     </div>
     <div class="flow" style="flex-wrap:nowrap;overflow-x:auto">
       <div class="flow-step">
         <div class="flow-num">1</div>
         <h4>送る</h4>
-        <p>普通に話しかける</p>
+        <p>自然言語で依頼<br>モデル選択も可能</p>
       </div>
       <div class="flow-step">
         <div class="flow-num">2</div>
         <h4>判断</h4>
-        <p>最適なAIを自動選択</p>
+        <p>最適なエージェントと<br>モデルを自動選択</p>
       </div>
       <div class="flow-step">
         <div class="flow-num">3</div>
         <h4>実行</h4>
-        <p>検索・コード・API</p>
+        <p>検索 / コード実行 /<br>API呼び出し</p>
       </div>
       <div class="flow-step">
         <div class="flow-num">4</div>
-        <h4>回答</h4>
-        <p>リアルタイム表示</p>
+        <h4>連携</h4>
+        <p>複数AIが順次協調<br>ステップ数無制限</p>
       </div>
       <div class="flow-step">
         <div class="flow-num">5</div>
-        <h4>連携</h4>
-        <p>複数AIが協調</p>
+        <h4>回答</h4>
+        <p>リアルタイムストリーム<br>時間・コスト表示</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- AGENTS -->
+<!-- ===== AGENTS ===== -->
 <section id="agents" style="padding:80px 24px;background:var(--bg2)">
   <div class="section-inner">
-    <div class="section-tag tag-purple">33 AI AGENTS</div>
-    <h2>33種類の専門AIエージェント</h2>
-    <p class="section-desc">メッセージの内容を自動判断し、最適なエージェントがリアルタイムで回答。複数エージェントの協調（A2A）にも対応。</p>
+    <div class="section-tag tag-purple">39 AI AGENTS</div>
+    <h2>39種類の専門AIエージェント</h2>
+    <p class="section-desc">メッセージの内容を自動判断し、最適なエージェントがリアルタイムで回答。複数エージェントの協調（A2A）にも対応。カスタムエージェントの作成 / 既存エージェントのフォークも可能。</p>
 
+    <!-- Business -->
     <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">💼 ビジネス・生産性</h3>
     <div class="agent-grid" style="margin-bottom:40px">
-      <div class="agent-card" style="--ac-color:var(--accent)">
+      <div class="agent-card">
         <span class="agent-icon">📣</span>
         <div class="agent-name">SNS/マーケティングAI</div>
-        <div class="agent-desc">X・Instagram・LinkedIn投稿文をプロ品質で生成。ハッシュタグ最適化、コピーライティング、コンテンツカレンダー作成まで。</div>
+        <div class="agent-desc">X / Instagram / LinkedIn投稿文をプロ品質で生成。ハッシュタグ最適化、コピーライティング、コンテンツカレンダー作成まで。</div>
         <div class="agent-tags"><span class="agent-tag">投稿文生成</span><span class="agent-tag">ハッシュタグ</span><span class="agent-tag">広告コピー</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">📝</span>
         <div class="agent-name">会議メモAI</div>
-        <div class="agent-desc">会議メモや書き起こしから議事録・アクションアイテムを自動生成。担当者・期限付きで整理し、メールやGoogle Docsに保存。</div>
+        <div class="agent-desc">会議メモや書き起こしから議事録・アクションアイテムを自動生成。担当者・期限付きで整理し、Google Docsに保存。</div>
         <div class="agent-tags"><span class="agent-tag">議事録</span><span class="agent-tag">アクションアイテム</span><span class="agent-tag">フォローアップ</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">💼</span>
         <div class="agent-name">CRM/営業AI</div>
-        <div class="agent-desc">商談管理・フォローアップメール生成・パイプライン分析。クロージングトーク、失注分析、月次営業報告書の自動作成。</div>
+        <div class="agent-desc">商談管理・フォローアップメール生成・パイプライン分析。失注分析、月次営業報告書の自動作成。Gmailで直接送信可能。</div>
         <div class="agent-tags"><span class="agent-tag">フォローメール</span><span class="agent-tag">商談管理</span><span class="agent-tag">営業レポート</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">🎤</span>
         <div class="agent-name">プレゼンAI</div>
-        <div class="agent-desc">営業提案・投資家ピッチ・社内報告のスライドをHTML形式で生成。そのままchatweb.aiで公開可能。</div>
+        <div class="agent-desc">営業提案・投資家ピッチ・社内報告のスライドをHTML形式で生成。xxx.chatweb.aiにそのまま公開して共有可能。</div>
         <div class="agent-tags"><span class="agent-tag">スライド生成</span><span class="agent-tag">即時公開</span><span class="agent-tag">ピッチデック</span></div>
       </div>
       <div class="agent-card">
@@ -268,17 +313,18 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <div class="agent-card">
         <span class="agent-icon">📅</span>
         <div class="agent-name">スケジュールAI</div>
-        <div class="agent-desc">タスクの優先順位付け・週次スケジュール作成・プロジェクトマイルストーン管理。定期実行の自動化にも対応。</div>
-        <div class="agent-tags"><span class="agent-tag">優先順位</span><span class="agent-tag">スケジュール</span><span class="agent-tag">自動化</span></div>
+        <div class="agent-desc">タスク優先順位付け・週次スケジュール作成・Google Calendar連携。cronベースの定期実行・LINE/Telegram通知にも対応。</div>
+        <div class="agent-tags"><span class="agent-tag">Cron実行</span><span class="agent-tag">スケジュール</span><span class="agent-tag">定期通知</span></div>
       </div>
     </div>
 
+    <!-- Expert -->
     <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">⚖️ 専門知識</h3>
     <div class="agent-grid" style="margin-bottom:40px">
       <div class="agent-card">
         <span class="agent-icon">⚖️</span>
         <div class="agent-name">法務AI</div>
-        <div class="agent-desc">NDA・契約書の法的リスクを確認。e-Gov法令データベース検索対応。フリーランス契約書・利用規約・プライバシーポリシーの雛形作成。</div>
+        <div class="agent-desc">NDA・契約書の法的リスクを確認。e-Gov法令データベース検索対応。利用規約・プライバシーポリシーの雛形作成。</div>
         <div class="agent-tags"><span class="agent-tag">契約書レビュー</span><span class="agent-tag">リスク確認</span><span class="agent-tag">雛形作成</span></div>
       </div>
       <div class="agent-card">
@@ -290,13 +336,13 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <div class="agent-card">
         <span class="agent-icon">🔍</span>
         <div class="agent-name">リサーチAI</div>
-        <div class="agent-desc">Web検索・Wikipedia・専門サイトから情報収集。競合調査・市場分析・技術動向リサーチを構造化されたレポートで提供。</div>
+        <div class="agent-desc">Web検索・Wikipedia・専門サイトから情報収集。競合調査・市場分析・技術動向リサーチを構造化レポートで提供。</div>
         <div class="agent-tags"><span class="agent-tag">Web検索</span><span class="agent-tag">市場調査</span><span class="agent-tag">レポート生成</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">📄</span>
         <div class="agent-name">ファイル解析AI</div>
-        <div class="agent-desc">PDF・Excel・CSV・テキストをアップロードして即時解析。契約書PDF要約・Excelデータ集計・CSVパターン分析。</div>
+        <div class="agent-desc">PDF / Excel / CSV / テキストをアップロードして即時解析。契約書PDF要約・Excelデータ集計・CSVパターン分析。</div>
         <div class="agent-tags"><span class="agent-tag">PDF解析</span><span class="agent-tag">Excel読み込み</span><span class="agent-tag">データ抽出</span></div>
       </div>
       <div class="agent-card">
@@ -313,13 +359,14 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       </div>
     </div>
 
+    <!-- Tech -->
     <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">⚙️ 技術・開発</h3>
     <div class="agent-grid" style="margin-bottom:40px">
       <div class="agent-card">
         <span class="agent-icon">⚙️</span>
-        <div class="agent-name">コードAI</div>
-        <div class="agent-desc">Python・Rust・TypeScript・Go等あらゆる言語に対応。コード生成だけでなくE2Bサンドボックスで実際に実行して結果を検証。</div>
-        <div class="agent-tags"><span class="agent-tag">コード生成</span><span class="agent-tag">実行検証</span><span class="agent-tag">デバッグ</span></div>
+        <div class="agent-name">コードAI (E2B Sandbox)</div>
+        <div class="agent-desc">Python / Rust / TypeScript等あらゆる言語に対応。E2Bサンドボックスでセキュアに実際のコードを実行して結果を検証。</div>
+        <div class="agent-tags"><span class="agent-tag">コード生成</span><span class="agent-tag">E2B実行</span><span class="agent-tag">サンドボックス</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">🌐</span>
@@ -330,13 +377,13 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <div class="agent-card">
         <span class="agent-icon">🚀</span>
         <div class="agent-name">デプロイAI</div>
-        <div class="agent-desc">Fly.ioへのデプロイ・ステータス確認・ログ取得を自動化。「chatweb-aiをデプロイして」と言うだけでリリースまで完了。</div>
+        <div class="agent-desc">Fly.ioへのデプロイ・ステータス確認・ログ取得を自動化。「chatweb-aiをデプロイして」と言うだけでリリース完了。</div>
         <div class="agent-tags"><span class="agent-tag">Fly.io</span><span class="agent-tag">自動デプロイ</span><span class="agent-tag">ログ確認</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">🛠️</span>
         <div class="agent-name">DevOpsAI</div>
-        <div class="agent-desc">GitHub push・PR作成・マージをCLIで直接実行。CI/CDパイプライン確認・コミット・ブランチ管理を自然言語で操作。</div>
+        <div class="agent-desc">GitHub push / PR作成 / マージをCLIで直接実行。CI/CDパイプライン確認・コミット・ブランチ管理を自然言語で操作。</div>
         <div class="agent-tags"><span class="agent-tag">GitHub</span><span class="agent-tag">PR作成</span><span class="agent-tag">CI/CD</span></div>
       </div>
       <div class="agent-card">
@@ -353,13 +400,14 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       </div>
     </div>
 
+    <!-- Google Workspace -->
     <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">🔵 Google Workspace</h3>
     <div class="agent-grid" style="margin-bottom:40px">
       <div class="agent-card">
         <span class="agent-icon">📧</span>
         <div class="agent-name">Gmailエージェント</div>
-        <div class="agent-desc">Gmailの送受信を操作。「田中さんに提案書のメールを送って」と言うだけで、文面を自動生成して実際に送信。</div>
-        <div class="agent-tags"><span class="agent-tag">メール送信</span><span class="agent-tag">Gmail</span><span class="agent-tag">文面生成</span></div>
+        <div class="agent-desc">Gmailの送受信を操作。「田中さんに提案書のメールを送って」と言うだけで、文面を自動生成してHITL承認後に実際に送信。</div>
+        <div class="agent-tags"><span class="agent-tag">メール送信</span><span class="agent-tag">Gmail</span><span class="agent-tag">HITL承認</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">📅</span>
@@ -376,7 +424,7 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <div class="agent-card">
         <span class="agent-icon">📊</span>
         <div class="agent-name">Sheetsエージェント</div>
-        <div class="agent-desc">Google Sheetsのセル読み書き・行追加・数式挿入。売上データの記録や、シートからデータを取得して分析。</div>
+        <div class="agent-desc">Google Sheetsのセル読み書き・行追加・数式挿入。売上データの記録やシートからデータを取得して分析。</div>
         <div class="agent-tags"><span class="agent-tag">スプレッドシート</span><span class="agent-tag">データ記録</span></div>
       </div>
       <div class="agent-card">
@@ -393,19 +441,26 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       </div>
     </div>
 
-    <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">🎨 クリエイティブ</h3>
-    <div class="agent-grid">
+    <!-- Creative -->
+    <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">🎨 クリエイティブ・メディア</h3>
+    <div class="agent-grid" style="margin-bottom:40px">
       <div class="agent-card">
         <span class="agent-icon">🎨</span>
         <div class="agent-name">画像生成AI</div>
-        <div class="agent-desc">Pollinations.aiでAI画像を無料生成。ロゴ・バナー・SNSアイキャッチ・プレゼン素材を自然言語のプロンプトで作成。APIキー不要。</div>
-        <div class="agent-tags"><span class="agent-tag">画像生成</span><span class="agent-tag">無料</span><span class="agent-tag">ロゴ・バナー</span></div>
+        <div class="agent-desc">Pollinations.ai（無料）+ DALL-E（高品質）でAI画像を生成。ロゴ・バナー・SNSアイキャッチ・プレゼン素材を自然言語で作成。</div>
+        <div class="agent-tags"><span class="agent-tag">Pollinations</span><span class="agent-tag">DALL-E</span><span class="agent-tag">ロゴ・バナー</span></div>
+      </div>
+      <div class="agent-card">
+        <span class="agent-icon">🎬</span>
+        <div class="agent-name">動画生成AI</div>
+        <div class="agent-desc">テキストから短尺動画を生成。Pollinations（無料）またはGoogle Veo（高品質プロ向け）。プロモ動画・SNSリール・ロゴアニメーション対応。</div>
+        <div class="agent-tags"><span class="agent-tag">動画生成</span><span class="agent-tag">Google Veo</span><span class="agent-tag">リール</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">🌐</span>
         <div class="agent-name">サイト公開AI</div>
-        <div class="agent-desc">HTMLを生成してXXXXX.chatweb.aiに即時公開。Cloudflare Workers + KV + D1で構築された本番環境に半永久無料ホスティング。</div>
-        <div class="agent-tags"><span class="agent-tag">サイト公開</span><span class="agent-tag">無料ホスティング</span><span class="agent-tag">独自ドメイン</span></div>
+        <div class="agent-desc">HTMLを生成してxxx.chatweb.aiに即時公開。Cloudflare Workers + KV + D1で構築された本番環境に半永久無料ホスティング。</div>
+        <div class="agent-tags"><span class="agent-tag">サイト公開</span><span class="agent-tag">無料ホスティング</span><span class="agent-tag">Cloudflare</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">📚</span>
@@ -416,73 +471,88 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <div class="agent-card">
         <span class="agent-icon">🏭</span>
         <div class="agent-name">エージェント作成AI</div>
-        <div class="agent-desc">「〇〇AIエージェントを作って」と言うだけで新しいエージェントを動的に追加。プロンプト・ツール・色を自動設定。</div>
-        <div class="agent-tags"><span class="agent-tag">カスタムエージェント</span><span class="agent-tag">動的作成</span></div>
-      </div>
-      <div class="agent-card">
-        <span class="agent-icon">🎬</span>
-        <div class="agent-name">動画生成AI</div>
-        <div class="agent-desc">テキストから短尺動画を生成。Pollinations（無料）またはGoogle Veo（高品質）。プロモーション動画・SNSリール・ロゴアニメーション対応。</div>
-        <div class="agent-tags"><span class="agent-tag">動画生成</span><span class="agent-tag">Veo</span><span class="agent-tag">リール</span></div>
+        <div class="agent-desc">「〇〇AIエージェントを作って」で新エージェントを動的に追加。既存エージェントをフォークしてカスタマイズも可能。</div>
+        <div class="agent-tags"><span class="agent-tag">カスタム作成</span><span class="agent-tag">フォーク</span><span class="agent-tag">動的追加</span></div>
       </div>
       <div class="agent-card">
         <span class="agent-icon">🏨</span>
         <div class="agent-name">Beds24 宿泊管理</div>
-        <div class="agent-desc">Beds24 API連携で予約一覧・空室確認・物件管理。民泊・ホテル運営者向けの専用エージェント。</div>
+        <div class="agent-desc">Beds24 API連携で予約一覧・空室確認・物件管理。民泊・ホテル運営者向けの専用プロパティマネジメントエージェント。</div>
         <div class="agent-tags"><span class="agent-tag">Beds24</span><span class="agent-tag">予約管理</span><span class="agent-tag">民泊</span></div>
       </div>
     </div>
-  </div>
 
-  <!-- New features section -->
-  <div class="container" style="margin-top:40px">
-    <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">🆕 最新機能</h3>
+    <!-- Messaging -->
+    <h3 style="font-size:14px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">📱 メッセージング連携</h3>
     <div class="agent-grid">
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">💎</span>
-        <div class="agent-name">マルチモデル選択</div>
-        <div class="agent-desc">入力欄から直接モデルを切替。⚡高速（Qwen3-32B）/ 💎Gemini / 🚀プロ（Claude Sonnet）/ 🧠GPT-4o / 🔬DeepSeek / 🦙Llama。</div>
-        <div class="agent-tags"><span class="agent-tag">6モデル</span><span class="agent-tag">ワンクリック切替</span></div>
+      <div class="agent-card">
+        <span class="agent-icon">💚</span>
+        <div class="agent-name">LINE連携エージェント</div>
+        <div class="agent-desc">QRコード読み取りで即連携。LINEから全AIエージェントに話しかけ、承認タスクの確認・HITL承認もLINEから実行可能。</div>
+        <div class="agent-tags"><span class="agent-tag">LINE</span><span class="agent-tag">QR連携</span><span class="agent-tag">HITL承認</span></div>
       </div>
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">💰</span>
-        <div class="agent-name">クレジットベース課金</div>
-        <div class="agent-desc">無料プラン$2/月、プロ$19/月、チーム$65/月。使った分だけ消費。フィードバック投稿で最大$1/回リワード。</div>
-        <div class="agent-tags"><span class="agent-tag">従量課金</span><span class="agent-tag">フィードバック報酬</span></div>
+      <div class="agent-card">
+        <span class="agent-icon">✈️</span>
+        <div class="agent-name">Telegram連携エージェント</div>
+        <div class="agent-desc">Telegramボットから全機能にアクセス。定期実行の通知受信・承認タスクの実行もTelegramから完了。</div>
+        <div class="agent-tags"><span class="agent-tag">Telegram</span><span class="agent-tag">ボット</span><span class="agent-tag">通知</span></div>
       </div>
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">⚙️</span>
-        <div class="agent-name">E2Bコード実行</div>
-        <div class="agent-desc">Pythonコードをセキュアなサンドボックスで実際に実行。CSV分析、統計計算、API取得、パスワード生成などをその場で実行・検証。</div>
-        <div class="agent-tags"><span class="agent-tag">サンドボックス</span><span class="agent-tag">安全実行</span><span class="agent-tag">E2B</span></div>
-      </div>
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">🔗</span>
-        <div class="agent-name">A2Aプロトコル対応</div>
-        <div class="agent-desc">Google A2Aプロトコル互換。/.well-known/agent-card.json で外部エージェントとの相互運用が可能。</div>
-        <div class="agent-tags"><span class="agent-tag">A2A</span><span class="agent-tag">相互運用</span><span class="agent-tag">Google互換</span></div>
-      </div>
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">🔐</span>
-        <div class="agent-name">暗号化シークレット管理</div>
-        <div class="agent-desc">APIキーをFernet暗号化（AES-128-CBC+HMAC）で安全に保存。25種以上のAPIキー対応。ユーザー間共有も可能。</div>
-        <div class="agent-tags"><span class="agent-tag">暗号化</span><span class="agent-tag">25+ API</span><span class="agent-tag">共有</span></div>
-      </div>
-      <div class="agent-card" style="border-color:rgba(139,92,246,0.3)">
-        <span class="agent-icon">📱</span>
-        <div class="agent-name">LINE / Telegram連携</div>
-        <div class="agent-desc">QRコード読み取りで即連携。LINEやTelegramからAIエージェントに話しかけ、承認タスクの確認・実行も可能。</div>
-        <div class="agent-tags"><span class="agent-tag">LINE</span><span class="agent-tag">Telegram</span><span class="agent-tag">QR連携</span></div>
+      <div class="agent-card">
+        <span class="agent-icon">🔔</span>
+        <div class="agent-name">定期実行エージェント</div>
+        <div class="agent-desc">cronベースのスケジュール実行。「毎朝9時に天気をLINEで通知」「毎週月曜に売上レポートをメール送信」など自動化。</div>
+        <div class="agent-tags"><span class="agent-tag">Cron</span><span class="agent-tag">定期実行</span><span class="agent-tag">自動通知</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- HOSTING -->
-<section id="hosting" style="padding:80px 24px">
+<!-- ===== AI MODELS ===== -->
+<section id="models" style="padding:80px 24px">
   <div class="section-inner">
-    <div class="section-tag tag-cyan">SITE HOSTING</div>
-    <h2>XXXXX.chatweb.ai — AIが作ってすぐ公開</h2>
+    <div class="section-tag tag-cyan">6 AI MODELS</div>
+    <h2>6つのAIモデルをワンクリックで切替</h2>
+    <p class="section-desc">入力欄からモデルを直接選択。用途に応じて高速・高品質・コスト重視を使い分け。全エージェントで利用可能。</p>
+    <div class="model-grid">
+      <div class="model-card">
+        <div class="model-emoji">⚡</div>
+        <div class="model-name">Qwen3</div>
+        <div class="model-desc">高速・低コスト<br>日常タスクに最適</div>
+      </div>
+      <div class="model-card" style="border-color:rgba(124,106,255,0.3)">
+        <div class="model-emoji">🚀</div>
+        <div class="model-name">Claude</div>
+        <div class="model-desc">高品質・プロ向け<br>コード・分析に強い</div>
+      </div>
+      <div class="model-card">
+        <div class="model-emoji">💎</div>
+        <div class="model-name">Gemini</div>
+        <div class="model-desc">Google AI<br>大量コンテキスト対応</div>
+      </div>
+      <div class="model-card">
+        <div class="model-emoji">🧠</div>
+        <div class="model-name">GPT-4o</div>
+        <div class="model-desc">OpenAI最高峰<br>マルチモーダル</div>
+      </div>
+      <div class="model-card">
+        <div class="model-emoji">🔬</div>
+        <div class="model-name">DeepSeek</div>
+        <div class="model-desc">推論特化<br>数学・科学に強い</div>
+      </div>
+      <div class="model-card">
+        <div class="model-emoji">🦙</div>
+        <div class="model-name">Llama</div>
+        <div class="model-desc">Meta OSS<br>オープンソース</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SITE HOSTING ===== -->
+<section id="hosting" style="padding:80px 24px;background:var(--bg2)">
+  <div class="section-inner">
+    <div class="section-tag tag-cyan">SITE PUBLISHING</div>
+    <h2>xxx.chatweb.ai -- AIが作ってすぐ公開</h2>
     <p class="section-desc">「ポートフォリオサイトを作って公開して」と言うだけ。AIがHTMLを生成してCloudflare上に即時デプロイ。サブドメインは永続無料。</p>
     <div class="big-features">
       <div class="big-card">
@@ -491,7 +561,7 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
         <ul>
           <li>ポートフォリオ・プロフィールサイト</li>
           <li>ランディングページ・LP</li>
-          <li>プレゼン・スライドショー</li>
+          <li>プレゼン・スライドショー (公開リンク共有)</li>
           <li>タスク管理・カレンダーアプリ</li>
           <li>カウントダウンタイマー・ツール類</li>
           <li>会社紹介ページ・採用ページ</li>
@@ -499,226 +569,389 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
         </ul>
       </div>
       <div class="big-card">
-        <h3>⚡ システム機能（D1 API）</h3>
-        <p>各サブドメインに自動で動的APIが付与される</p>
+        <h3>⚡ システム機能 (D1 API)</h3>
+        <p>各サブドメインに自動で動的APIが付与</p>
         <ul>
           <li>GET/POST/PUT/DELETE /api/{collection} でCRUD</li>
           <li>GET/POST /api/kv/:key でKey-Value保存</li>
-          <li>D1 SQLiteでデータ永続化（自動テーブル作成）</li>
+          <li>D1 SQLiteでデータ永続化 (自動テーブル作成)</li>
           <li>ページビューカウンター自動記録</li>
-          <li>複数アセット（CSS/JS/画像）対応</li>
+          <li>複数アセット (CSS / JS / 画像) 対応</li>
           <li>マイサイトから直接HTMLを編集・再公開</li>
+          <li>Cloudflare Workers + KV + D1 バックエンド</li>
         </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CORE FEATURES -->
-<section id="features" style="padding:80px 24px;background:var(--bg2)">
+<!-- ===== CORE FEATURES ===== -->
+<section id="features" style="padding:80px 24px">
   <div class="section-inner">
-    <div class="section-tag tag-green">CORE FEATURES</div>
+    <div class="section-tag tag-green">PLATFORM FEATURES</div>
     <h2>プラットフォームの主要機能</h2>
-    <p class="section-desc">エージェント群を支えるインフラとユーザー体験</p>
+    <p class="section-desc">39のエージェントを支えるインフラと、あらゆるビジネスニーズに対応する機能群。</p>
 
     <div class="feature-cols">
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(124,106,255,.15)">🔀</div>
+        <div class="feature-icon" style="background:rgba(124,106,255,.12)">🔀</div>
         <div class="feature-text">
           <h3>A2A マルチエージェント連携</h3>
-          <p>「調べて→分析して→メールで送って」など複数ステップの依頼を自動プランニング。エージェント数に制限なく、必要な分だけ順次実行。</p>
+          <p>「調べて→分析して→メールで送って」など複数ステップの依頼を自動プランニング。エージェント数に制限なく順次実行。Google A2Aプロトコル互換 (/.well-known/agent-card.json)。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(52,211,153,.15)">🧠</div>
+        <div class="feature-icon" style="background:rgba(52,211,153,.12)">🧠</div>
         <div class="feature-text">
-          <h3>長期記憶（会話を超えて記憶）</h3>
-          <p>会話内容からAIが自動で重要情報を抽出・保存。「私はエンジニアです」と伝えると次の会話でも覚えている。最大50件（Free）〜無制限（Pro）。</p>
+          <h3>長期記憶 (会話を超えて記憶)</h3>
+          <p>会話内容からAIが自動で重要情報を抽出・保存。「私はエンジニアです」と伝えると次の会話でも覚えている。会話ごとの学習を蓄積。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(251,191,36,.15)">⏰</div>
+        <div class="feature-icon" style="background:rgba(251,191,36,.12)">⚙️</div>
         <div class="feature-text">
-          <h3>スケジュール自動化（Cron）</h3>
-          <p>「毎朝9時に天気予報をTelegramに送って」などを設定するだけで定期実行。Webhook・LINE・Telegram・Slackへの通知に対応。</p>
+          <h3>E2B サンドボックスコード実行</h3>
+          <p>Pythonコードをセキュアなサンドボックス (E2B) で実際に実行。CSV分析、統計計算、API取得、パスワード生成などをその場で実行・検証。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(244,114,182,.15)">⚠️</div>
+        <div class="feature-icon" style="background:rgba(244,114,182,.12)">🔐</div>
         <div class="feature-text">
-          <h3>HITL（Human-in-the-Loop）</h3>
-          <p>メール送信・Slack通知など実世界への影響がある操作は、AIが下書きを作成した後にユーザーが承認ボタンを押してから実行。誤送信ゼロ。</p>
+          <h3>暗号化シークレット管理</h3>
+          <p>APIキーをFernet暗号化 (AES-128-CBC+HMAC) で安全に保存。25種以上のAPIキーに対応。ユーザー間の安全な共有機能付き。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(34,211,238,.15)">⚡</div>
+        <div class="feature-icon" style="background:rgba(34,211,238,.12)">⚡</div>
         <div class="feature-text">
-          <h3>トークンストリーミング</h3>
-          <p>回答が文字単位でリアルタイムに表示。待ち時間ゼロの体験。SSE（Server-Sent Events）ベースで安定した接続を維持。</p>
+          <h3>リアルタイムストリーミング</h3>
+          <p>回答が文字単位でリアルタイムに表示。処理時間とコストもリアルタイム表示。SSE (Server-Sent Events) ベースで安定接続。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(248,113,113,.15)">📁</div>
+        <div class="feature-icon" style="background:rgba(248,113,113,.12)">🛑</div>
+        <div class="feature-text">
+          <h3>生成中の停止ボタン</h3>
+          <p>AIの回答生成中にいつでも停止可能。意図と違う方向に進んだ場合は即座にキャンセルしてクレジットを節約。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(124,106,255,.12)">☰</div>
+        <div class="feature-text">
+          <h3>チャット履歴 (クロスデバイス)</h3>
+          <p>全会話履歴をサーバーサイドで保存。PC / スマホ / タブレットどこからでも過去の会話にアクセス可能。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(52,211,153,.12)">💰</div>
+        <div class="feature-text">
+          <h3>クレジットベース課金</h3>
+          <p>月額プランでクレジットが毎月付与。追加購入も可能。フィードバック投稿で最大$1/回 (月$10上限) のリワードを獲得。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(251,191,36,.12)">⏰</div>
+        <div class="feature-text">
+          <h3>スケジュール自動化 (Cron)</h3>
+          <p>「毎朝9時に天気予報をTelegramに送って」などを設定するだけで定期実行。LINE / Telegram / Webhookへの通知に対応。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(244,114,182,.12)">⚠️</div>
+        <div class="feature-text">
+          <h3>HITL (Human-in-the-Loop)</h3>
+          <p>メール送信・外部API呼び出しなど実世界への影響がある操作は、AIが下書き作成後にユーザーが承認。LINE/Telegramからの承認にも対応。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(34,211,238,.12)">📸</div>
+        <div class="feature-text">
+          <h3>ブラウザ自動化 (Playwright)</h3>
+          <p>WebサイトのスクリーンショットUI自動テスト・フォーム入力・スクレイピングをPlaywrightで実行。結果を画像で確認可能。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(248,113,113,.12)">🔧</div>
+        <div class="feature-text">
+          <h3>自己修復システム</h3>
+          <p>フィードバックループによる自動診断。エラー発生時にAIが自律的に原因を特定し、修正を試行。継続的な品質改善。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(124,106,255,.12)">📊</div>
+        <div class="feature-text">
+          <h3>ダッシュボード・コスト分析</h3>
+          <p>クレジット残高・使用状況・モデル別コスト・エージェント別利用頻度を可視化。使いすぎ防止アラート機能付き。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(52,211,153,.12)">🌍</div>
+        <div class="feature-text">
+          <h3>16言語対応UI</h3>
+          <p>日本語 / 英語 / 中国語 / 韓国語 / フランス語 / スペイン語 / ドイツ語 / ポルトガル語 / イタリア語 / ロシア語 / アラビア語 / ヒンディー語 / タイ語 / ベトナム語 / インドネシア語 / トルコ語。</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(251,191,36,.12)">📁</div>
         <div class="feature-text">
           <h3>ファイルアップロード・解析</h3>
-          <p>PDF・Excel・CSV・画像・テキストをチャット画面にドラッグ＆ドロップするだけで内容をAIが即時解析。pdfplumber + openpyxl対応。</p>
+          <p>PDF / Excel / CSV / 画像 / テキストをチャット画面にドラッグ&ドロップするだけで内容をAIが即時解析。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(124,106,255,.15)">🌍</div>
+        <div class="feature-icon" style="background:rgba(244,114,182,.12)">🔊</div>
         <div class="feature-text">
-          <h3>8言語対応UI</h3>
-          <p>日本語・英語・中国語・韓国語・フランス語・スペイン語・ドイツ語・ポルトガル語に完全対応。言語切り替えはワンタップ。</p>
+          <h3>音声入出力 (TTS/STT)</h3>
+          <p>マイクボタンで音声入力、スピーカーボタンで回答を読み上げ。ハンズフリーでAIエージェントを操作。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(52,211,153,.15)">🔊</div>
+        <div class="feature-icon" style="background:rgba(34,211,238,.12)">🔒</div>
         <div class="feature-text">
-          <h3>音声入出力（TTS/STT）</h3>
-          <p>マイクボタンで音声入力、スピーカーボタンで回答を読み上げ。ハンズフリーでAIエージェントを操作できる。</p>
+          <h3>セキュリティ・管理者制御</h3>
+          <p>admin-onlyツール制限・暗号化ストレージ・HITL承認による安全な運用。機密情報を守りながらAIを活用。</p>
         </div>
       </div>
       <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(251,191,36,.15)">📚</div>
+        <div class="feature-icon" style="background:rgba(248,113,113,.12)">🧩</div>
         <div class="feature-text">
-          <h3>ナレッジベース（RAG）</h3>
-          <p>PDFや文書をアップロードしてベクトル検索対応のナレッジベースを構築。社内規定・マニュアル・議事録からAIが回答。</p>
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(244,114,182,.15)">🔧</div>
-        <div class="feature-text">
-          <h3>カスタムツール作成</h3>
-          <p>自社APIをchatweb.aiのツールとして登録可能。「在庫APIを呼んで」「社内DBを検索して」など独自ツールをエージェントから呼び出し。</p>
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(34,211,238,.15)">🔗</div>
-        <div class="feature-text">
-          <h3>Webhook連携</h3>
-          <p>外部サービスからHTTPでトリガー可能。Slack・GitHub・Stripeなどのイベントを受け取ってAIエージェントを自動起動。</p>
-        </div>
-      </div>
-      <div class="feature-item">
-        <div class="feature-icon" style="background:rgba(124,106,255,.15)">📲</div>
-        <div class="feature-text">
-          <h3>LINE・Telegram連携</h3>
-          <p>LINEやTelegramからchatweb.aiのエージェントに話しかけられる。スマホのメッセージアプリから全機能にアクセス。</p>
+          <h3>カスタムエージェント作成</h3>
+          <p>プロンプト・ツール・アイコン・色を自由に設定してオリジナルエージェントを作成。既存エージェントをフォークしてカスタマイズも可能。</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- INTEGRATIONS -->
+<!-- ===== USE CASES ===== -->
+<section id="usecases" style="padding:80px 24px;background:var(--bg2)">
+  <div class="section-inner">
+    <div class="section-tag tag-amber">USE CASES</div>
+    <h2>こう使う。具体的なユースケース</h2>
+    <p class="section-desc">送るだけで結果が返る。各職種の実践例をご紹介。</p>
+
+    <div class="usecase-grid">
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(124,106,255,.12);color:var(--accent2);border:1px solid rgba(124,106,255,.2)">For Engineers</div>
+        <div class="usecase-prompt">1+1を計算して実行して</div>
+        <div class="usecase-result">E2Bサンドボックスで<strong>実際にPythonコードを実行</strong>し、結果「2」を即座に返します。データ分析・統計計算・API取得も同様に実行可能。</div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.2)">For Executives</div>
+        <div class="usecase-prompt">NVIDIA・Apple・Googleの株価</div>
+        <div class="usecase-result">金融AIがyFinanceから<strong>リアルタイムの株価データを取得</strong>。前日比・時価総額・PERまで含むレポートを生成。</div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(244,114,182,.12);color:var(--pink);border:1px solid rgba(244,114,182,.2)">For Marketers</div>
+        <div class="usecase-prompt">X投稿を3パターン書いて</div>
+        <div class="usecase-result">SNS/マーケティングAIが<strong>トーン違いの3パターンを即生成</strong>。ハッシュタグ・絵文字・文字数最適化済み。</div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.2)">For Sales</div>
+        <div class="usecase-prompt">フォローメールを書いて送って</div>
+        <div class="usecase-result">営業AIがメール文面を自動生成 → HITL承認画面を表示 → 承認後に<strong>Gmailで実際に送信</strong>。</div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.2)">For Designers</div>
+        <div class="usecase-prompt">ロゴを生成して</div>
+        <div class="usecase-result">画像生成AIがPollinations/DALL-Eで<strong>即座にロゴ画像を生成</strong>。バリエーション複数・スタイル指定も可能。</div>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-role" style="background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.2)">For Everyone</div>
+        <div class="usecase-prompt">ポートフォリオサイトを作って公開して</div>
+        <div class="usecase-result">サイト公開AIがHTMLを生成 → <strong>xxx.chatweb.aiに即時デプロイ</strong>。URLをそのまま共有可能。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INTEGRATIONS ===== -->
 <section id="integrations" style="padding:80px 24px">
   <div class="section-inner">
-    <div class="section-tag tag-amber">INTEGRATIONS</div>
+    <div class="section-tag tag-amber">25+ INTEGRATIONS</div>
     <h2>接続できるサービス一覧</h2>
-    <p class="section-desc">主要ビジネスツールとネイティブ連携。設定はOAuthワンクリック。</p>
+    <p class="section-desc">主要ビジネスツールとネイティブ連携。OAuthワンクリックまたはAPIキー設定で即接続。暗号化シークレット管理で安全。</p>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">📧</span><div><div style="font-weight:700;font-size:14px">Gmail</div><div style="font-size:12px;color:var(--muted)">送受信・自動返信</div></div>
+    <div class="int-grid">
+      <div class="int-card">
+        <span class="int-icon">📧</span><div><div class="int-name">Gmail</div><div class="int-desc">送受信・自動返信</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">📅</span><div><div style="font-weight:700;font-size:14px">Google Calendar</div><div style="font-size:12px;color:var(--muted)">予定管理・作成</div></div>
+      <div class="int-card">
+        <span class="int-icon">📅</span><div><div class="int-name">Google Calendar</div><div class="int-desc">予定管理・作成</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">📊</span><div><div style="font-weight:700;font-size:14px">Google Sheets</div><div style="font-size:12px;color:var(--muted)">データ読み書き</div></div>
+      <div class="int-card">
+        <span class="int-icon">📊</span><div><div class="int-name">Google Sheets</div><div class="int-desc">データ読み書き</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">📂</span><div><div style="font-weight:700;font-size:14px">Google Drive</div><div style="font-size:12px;color:var(--muted)">ファイル管理</div></div>
+      <div class="int-card">
+        <span class="int-icon">📂</span><div><div class="int-name">Google Drive</div><div class="int-desc">ファイル管理</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">📝</span><div><div style="font-weight:700;font-size:14px">Google Docs</div><div style="font-size:12px;color:var(--muted)">文書作成・保存</div></div>
+      <div class="int-card">
+        <span class="int-icon">📝</span><div><div class="int-name">Google Docs</div><div class="int-desc">文書作成・保存</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">💬</span><div><div style="font-weight:700;font-size:14px">Slack</div><div style="font-size:12px;color:var(--muted)">通知・メッセージ送信</div></div>
+      <div class="int-card">
+        <span class="int-icon">✅</span><div><div class="int-name">Google Tasks</div><div class="int-desc">タスク管理</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">✈️</span><div><div style="font-weight:700;font-size:14px">Telegram</div><div style="font-size:12px;color:var(--muted)">ボット・通知</div></div>
+      <div class="int-card">
+        <span class="int-icon">👤</span><div><div class="int-name">Google Contacts</div><div class="int-desc">連絡先検索</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">💚</span><div><div style="font-weight:700;font-size:14px">LINE</div><div style="font-size:12px;color:var(--muted)">メッセージ・Push通知</div></div>
+      <div class="int-card">
+        <span class="int-icon">💚</span><div><div class="int-name">LINE</div><div class="int-desc">QR連携・Push通知</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">🐙</span><div><div style="font-weight:700;font-size:14px">GitHub</div><div style="font-size:12px;color:var(--muted)">PR・コミット・CI</div></div>
+      <div class="int-card">
+        <span class="int-icon">✈️</span><div><div class="int-name">Telegram</div><div class="int-desc">ボット・通知</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">🚀</span><div><div style="font-weight:700;font-size:14px">Fly.io</div><div style="font-size:12px;color:var(--muted)">デプロイ・ログ管理</div></div>
+      <div class="int-card">
+        <span class="int-icon">💬</span><div><div class="int-name">Slack</div><div class="int-desc">通知・メッセージ</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">💳</span><div><div style="font-weight:700;font-size:14px">Stripe</div><div style="font-size:12px;color:var(--muted)">決済・サブスク管理</div></div>
+      <div class="int-card">
+        <span class="int-icon">🐙</span><div><div class="int-name">GitHub</div><div class="int-desc">PR・コミット・CI</div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
-        <span style="font-size:24px">☁️</span><div><div style="font-weight:700;font-size:14px">Cloudflare</div><div style="font-size:12px;color:var(--muted)">Workers・KV・D1</div></div>
+      <div class="int-card">
+        <span class="int-icon">🚀</span><div><div class="int-name">Fly.io</div><div class="int-desc">デプロイ・ログ管理</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">💳</span><div><div class="int-name">Stripe</div><div class="int-desc">決済・サブスク管理</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">☁️</span><div><div class="int-name">Cloudflare</div><div class="int-desc">Workers / KV / D1</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🏨</span><div><div class="int-name">Beds24</div><div class="int-desc">予約・物件管理</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🎨</span><div><div class="int-name">Pollinations</div><div class="int-desc">画像・動画生成 (無料)</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🖼️</span><div><div class="int-name">DALL-E</div><div class="int-desc">高品質画像生成</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🎬</span><div><div class="int-name">Google Veo</div><div class="int-desc">プロ動画生成</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">📈</span><div><div class="int-name">yFinance</div><div class="int-desc">株価・財務データ</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🔍</span><div><div class="int-name">Web Search</div><div class="int-desc">リアルタイム検索</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">📖</span><div><div class="int-name">Wikipedia</div><div class="int-desc">百科事典検索</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🏛️</span><div><div class="int-name">e-Gov</div><div class="int-desc">法令データベース</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🎭</span><div><div class="int-name">Playwright</div><div class="int-desc">ブラウザ自動化</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">🐍</span><div><div class="int-name">E2B</div><div class="int-desc">コードサンドボックス</div></div>
+      </div>
+      <div class="int-card">
+        <span class="int-icon">📱</span><div><div class="int-name">fastlane</div><div class="int-desc">iOS/Androidビルド</div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- PLANS -->
+<!-- ===== PRICING ===== -->
 <section id="plans" style="padding:80px 24px;background:var(--bg2)">
   <div class="section-inner">
     <div style="text-align:center;margin-bottom:48px">
-      <div class="section-tag tag-pink">PRICING</div>
-      <h2>シンプルな料金プラン</h2>
+      <div class="section-tag tag-pink">CREDIT-BASED PRICING</div>
+      <h2>クレジットベースの料金プラン</h2>
+      <p style="color:var(--muted);margin-top:8px;font-size:15px">毎月クレジットが付与。使った分だけ消費。追加購入も可能。</p>
     </div>
     <div class="plan-grid">
+      <!-- Free -->
       <div class="plan-card">
-        <div class="plan-name">フリー</div>
-        <div class="plan-price"><sup>¥</sup>0</div>
+        <div class="plan-name">Free</div>
+        <div class="plan-price"><sup>$</sup>0</div>
+        <div class="plan-sub">$2/月 クレジット付与</div>
         <div class="plan-unit">永久無料</div>
         <ul class="plan-features">
-          <li>月100リクエスト</li>
-          <li>全33エージェント利用可</li>
-          <li>長期記憶 50件</li>
+          <li>$2/月のクレジット付与</li>
+          <li>全39エージェント利用可</li>
+          <li>6 AIモデル選択</li>
+          <li>E2Bコード実行</li>
+          <li>xxx.chatweb.ai 公開</li>
           <li>ファイルアップロード</li>
-          <li>XXXXX.chatweb.ai 公開</li>
+          <li>16言語対応UI</li>
         </ul>
         <a href="/" class="plan-btn plan-btn-outline">無料で始める</a>
       </div>
+      <!-- Pro -->
       <div class="plan-card featured">
         <div class="plan-badge">POPULAR</div>
-        <div class="plan-name">プロ</div>
-        <div class="plan-price"><sup>¥</sup>2,980</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price"><sup>¥</sup>2,900</div>
+        <div class="plan-sub">$19/月</div>
         <div class="plan-unit">/ 月</div>
         <ul class="plan-features">
-          <li>月2,000リクエスト</li>
+          <li>大容量クレジット付与</li>
+          <li>Freeの全機能</li>
           <li>長期記憶 無制限</li>
           <li>Proモデル優先利用</li>
-          <li>スケジュール自動化</li>
+          <li>スケジュール自動化 (Cron)</li>
+          <li>暗号化シークレット管理</li>
+          <li>LINE / Telegram連携</li>
           <li>Webhook連携</li>
-          <li>API接続</li>
-          <li>チーム共有（準備中）</li>
+          <li>フィードバックリワード</li>
         </ul>
-        <a href="/" class="plan-btn plan-btn-solid">プロにアップグレード</a>
+        <a href="/" class="plan-btn plan-btn-solid">Proにアップグレード</a>
       </div>
+      <!-- Team -->
       <div class="plan-card">
-        <div class="plan-name">チーム</div>
+        <div class="plan-name">Team</div>
         <div class="plan-price"><sup>¥</sup>9,800</div>
+        <div class="plan-sub">$65/月</div>
         <div class="plan-unit">/ 月</div>
         <ul class="plan-features">
-          <li>月10,000リクエスト</li>
-          <li>プロの全機能</li>
+          <li>チーム大容量クレジット</li>
+          <li>Proの全機能</li>
           <li>チームワークスペース</li>
-          <li>カスタムエージェント</li>
-          <li>SLAサポート</li>
+          <li>カスタムエージェント作成</li>
+          <li>エージェントフォーク</li>
+          <li>チーム間シークレット共有</li>
+          <li>優先サポート</li>
+        </ul>
+        <a href="/" class="plan-btn plan-btn-outline">Teamを始める</a>
+      </div>
+      <!-- Enterprise -->
+      <div class="plan-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-price"><sup>¥</sup>98,000</div>
+        <div class="plan-sub">$650/月</div>
+        <div class="plan-unit">/ 月</div>
+        <ul class="plan-features">
+          <li>無制限クレジット</li>
+          <li>Teamの全機能</li>
+          <li>専用環境 (オンプレ対応)</li>
+          <li>SLA保証</li>
+          <li>管理者制御・監査ログ</li>
+          <li>カスタムインテグレーション</li>
+          <li>専任サポート担当</li>
         </ul>
         <a href="/" class="plan-btn plan-btn-outline">お問い合わせ</a>
       </div>
     </div>
+
+    <!-- Feedback Rewards -->
+    <div style="margin-top:32px;background:var(--card);border:1px solid rgba(52,211,153,0.2);border-radius:14px;padding:24px 28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="font-size:36px">💬</div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-weight:700;font-size:16px;margin-bottom:4px">フィードバックリワード</div>
+        <div style="font-size:14px;color:var(--muted)">AIの回答にフィードバックを投稿すると、品質に応じて <strong style="color:var(--green)">$0 ~ $1/回</strong> のクレジットを獲得。月間上限 $10。AIの品質改善に貢献しながらクレジットを獲得できます。</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- CTA -->
+<!-- ===== CTA ===== -->
 <section style="padding:80px 24px">
   <div class="section-inner">
     <div class="demo-strip">
       <h2>今すぐ試してみよう</h2>
-      <p>クレジットカード不要。Googleアカウントで1クリックで始められます。</p>
-      <a class="btn-primary" href="/">
+      <p>クレジットカード不要。Googleアカウントで1クリックで始められます。<br>無料プランで$2/月のクレジットが即座に付与されます。</p>
+      <a class="btn-primary" href="/" style="font-size:17px;padding:16px 40px">
         <svg width="20" height="20" viewBox="0 0 18 18"><path fill="#fff" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="rgba(255,255,255,0.7)" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/></svg>
         Googleでログインして無料で始める
       </a>
@@ -733,9 +966,10 @@ footer{border-top:1px solid var(--border);padding:32px 24px;text-align:center}
       <a href="/static/terms.html">利用規約</a>
       <a href="/static/privacy.html">プライバシーポリシー</a>
       <a href="/static/tokushoho.html">特定商取引法</a>
+      <a href="/.well-known/agent-card.json">A2A Agent Card</a>
       <a href="/">アプリを開く</a>
     </div>
-    <div style="font-size:12px;color:var(--muted)">© 2026 chatweb.ai</div>
+    <div style="font-size:12px;color:var(--muted)">&copy; 2026 chatweb.ai</div>
   </div>
 </footer>
 
