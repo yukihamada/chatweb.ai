@@ -681,11 +681,11 @@ body {
 .status-pill .sp-dot { width:6px; height:6px; border-radius:50%; background: var(--accent); animation: pulseDot 1s ease infinite; }
 
 /* ── Rating buttons ───────────────────────────────────────────────────── */
-.rating-btns { display: inline-flex; gap: 4px; margin-top: 4px; }
-.rating-btns button { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; font-size: 12px; cursor: pointer; color: var(--muted2); transition: all 0.15s; line-height: 1.4; opacity: 0.6; }
-.rating-btns button:hover { border-color: var(--border2); color: var(--text); opacity: 1; background: rgba(255,255,255,0.04); }
-.rating-btns button.rated-up   { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.1); color: var(--green); opacity: 1; }
-.rating-btns button.rated-down { border-color: rgba(239,68,68,0.5);  background: rgba(239,68,68,0.1);  color: var(--red); opacity: 1; }
+.rating-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.rating-btns button { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text); transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
+.rating-btns button:hover { border-color: var(--border2); background: rgba(255,255,255,0.06); }
+.rating-btns button.rated-up   { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.12); color: var(--green); }
+.rating-btns button.rated-down { border-color: rgba(239,68,68,0.5);  background: rgba(239,68,68,0.12);  color: var(--red); }
 .rating-btns button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── TTS button ───────────────────────────────────────────────────────── */
@@ -1122,9 +1122,11 @@ body {
 
 <!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
 <div id="topbar">
-  <div class="logo">
+  <div class="logo" style="display:flex;align-items:center;gap:8px">
+    <button onclick="showChatHistory()" title="会話履歴" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:4px">☰</button>
     <div class="logo-icon">◈</div>
     <span>chatweb.ai</span>
+    <button onclick="newChat()" title="新しい会話" style="background:none;border:1px solid var(--border);border-radius:6px;font-size:14px;cursor:pointer;color:var(--muted);padding:2px 8px;margin-left:4px">＋</button>
   </div>
 
   <div class="topbar-center">
@@ -1333,7 +1335,100 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 
 // ── State ─────────────────────────────────────────────────────────────────────
-const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2,9);
+// Session management — persist across reloads, support multiple chats
+let SESSION_ID = localStorage.getItem('current_session') || ('sess_' + Math.random().toString(36).slice(2,9));
+localStorage.setItem('current_session', SESSION_ID);
+
+function newChat() {
+  // Save current session to history
+  const history = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  const existing = history.find(h => h.id === SESSION_ID);
+  if (!existing && document.querySelectorAll('.msg-user').length > 0) {
+    const firstMsg = document.querySelector('.msg-user-bubble')?.textContent?.slice(0, 40) || '新しい会話';
+    history.unshift({id: SESSION_ID, title: firstMsg, ts: Date.now()});
+    localStorage.setItem('chat_sessions', JSON.stringify(history.slice(0, 50)));
+  }
+  // Create new session
+  SESSION_ID = 'sess_' + Math.random().toString(36).slice(2,9);
+  localStorage.setItem('current_session', SESSION_ID);
+  // Clear chat UI
+  const msgs = document.getElementById('chatMessages');
+  if (msgs) msgs.innerHTML = '';
+  // Re-show welcome
+  appendWelcome();
+  initQuickChips();
+  showToast('新しい会話を開始しました');
+}
+
+function appendWelcome() {
+  const msgs = getMessages();
+  const div = document.createElement('div');
+  div.className = 'msg-container';
+  div.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble" id="welcome-bubble" style="text-align:center;padding:20px">
+    <strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>
+    複数の専門AIエージェントが協調して、あなたのリクエストを処理します。
+  </div></div>`;
+  msgs.appendChild(div);
+}
+
+function loadChatHistory() {
+  return JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+}
+
+function switchChat(sessionId) {
+  // Save current first
+  const history = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+  const existing = history.find(h => h.id === SESSION_ID);
+  if (!existing && document.querySelectorAll('.msg-user').length > 0) {
+    const firstMsg = document.querySelector('.msg-user-bubble')?.textContent?.slice(0, 40) || '会話';
+    history.unshift({id: SESSION_ID, title: firstMsg, ts: Date.now()});
+    localStorage.setItem('chat_sessions', JSON.stringify(history.slice(0, 50)));
+  }
+  // Switch
+  SESSION_ID = sessionId;
+  localStorage.setItem('current_session', sessionId);
+  // Reload messages from server
+  const msgs = document.getElementById('chatMessages');
+  if (msgs) msgs.innerHTML = '';
+  loadServerHistory(sessionId);
+  document.getElementById('chat-history-panel')?.remove();
+}
+
+async function loadServerHistory(sid) {
+  try {
+    const r = await fetch(`/history/${sid}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    for (const m of (d.messages || [])) {
+      if (m.role === 'user') appendUserMsg(m.content);
+      else if (m.role === 'assistant') appendAiMsg(m.content);
+    }
+    scrollToBottom();
+  } catch {}
+}
+
+function showChatHistory() {
+  let panel = document.getElementById('chat-history-panel');
+  if (panel) { panel.remove(); return; }
+  const history = loadChatHistory();
+  panel = document.createElement('div');
+  panel.id = 'chat-history-panel';
+  panel.style.cssText = 'position:fixed;top:50px;left:0;width:280px;height:calc(100vh - 50px);background:#111113;border-right:1px solid var(--border);z-index:400;overflow-y:auto;padding:12px;animation:fadeUp 0.15s ease';
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <strong style="font-size:14px">💬 会話履歴</strong>
+      <button onclick="document.getElementById('chat-history-panel').remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <button onclick="newChat();document.getElementById('chat-history-panel')?.remove()" style="width:100%;padding:10px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600;margin-bottom:12px">＋ 新しい会話</button>
+    ${history.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">履歴はまだありません</div>' :
+      history.map(h => `
+        <div onclick="switchChat('${h.id}')" style="padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'};border:1px solid ${h.id===SESSION_ID?'rgba(139,92,246,0.3)':'var(--border)'};transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'}'">
+          <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(h.title)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${new Date(h.ts).toLocaleDateString('ja-JP')} ${new Date(h.ts).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>`).join('')}
+  `;
+  document.body.appendChild(panel);
+}
 let agents = {};
 let drawerOpen = false;
 let activeTab  = 'agents';
@@ -3042,10 +3137,10 @@ function addRatingButtons(bubbleEl, runId) {
   ratingDiv.className = 'rating-btns';
   ratingDiv.dataset.runId = rId;
   ratingDiv.innerHTML = `
-    <button onclick="rateMessage(this, 1)" title="良い回答">👍</button>
-    <button onclick="rateMessage(this, -1)" title="改善が必要">👎</button>
-    <button onclick="retryWithPro(this)" title="プロモデルで再回答" style="font-size:11px">🚀</button>
-    <button onclick="showFeedbackInput(this)" title="フィードバックを送る" style="font-size:11px">💬</button>`;
+    <button onclick="rateMessage(this, 1)" title="良い回答">👍 良い</button>
+    <button onclick="rateMessage(this, -1)" title="改善が必要">👎 微妙</button>
+    <button onclick="retryWithPro(this)" title="プロモデルで再回答" style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.3);color:#a78bfa">🚀 プロで再回答</button>
+    <button onclick="showFeedbackInput(this)" title="フィードバックで最大$1もらえる">💬 改善提案（$報酬）</button>`;
   footer.appendChild(ratingDiv);
 }
 
