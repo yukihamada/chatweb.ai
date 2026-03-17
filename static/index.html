@@ -1684,12 +1684,18 @@ let _streamSeq = 0;
 let _streamBubbleEl  = null;  // direct reference to bubble wrapper
 let _streamFooterEl  = null;  // direct reference to footer
 
+let _streamTimer = null;
+let _streamStartTime = 0;
+let _streamTokenCount = 0;
+
 function startStreamBubble(agentId, agentName) {
   // Finalize any previous stream that wasn't closed cleanly
   if (_streamBubbleEl) _cleanupStreamIds();
 
   _streamSeq++;
   const seq = _streamSeq;
+  _streamStartTime = Date.now();
+  _streamTokenCount = 0;
 
   // Remove typing indicator
   document.getElementById('typing_active')?.closest('.msg-container')?.remove();
@@ -1700,7 +1706,10 @@ function startStreamBubble(agentId, agentName) {
   div.innerHTML = `
     <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
     <div class="msg-ai-body">
-      <div class="msg-ai-name">${agentName}</div>
+      <div class="msg-ai-name" style="display:flex;align-items:center;gap:8px">
+        ${agentName}
+        <span data-stream-stats="${seq}" style="font-size:10px;color:var(--muted);font-weight:400"></span>
+      </div>
       <div class="msg-ai-bubble streaming" data-stream-content="${seq}"><span class="cursor"></span></div>
       <div class="msg-ai-footer" data-stream-footer="${seq}"></div>
     </div>`;
@@ -1709,6 +1718,18 @@ function startStreamBubble(agentId, agentName) {
   currentStreamEl  = div.querySelector(`[data-stream-content="${seq}"]`);
   _streamFooterEl  = div.querySelector(`[data-stream-footer="${seq}"]`);
   currentStreamText = '';
+
+  // Start timer for real-time stats
+  if (_streamTimer) clearInterval(_streamTimer);
+  _streamTimer = setInterval(() => {
+    const statsEl = div.querySelector(`[data-stream-stats="${seq}"]`);
+    if (statsEl) {
+      const elapsed = ((Date.now() - _streamStartTime) / 1000).toFixed(1);
+      const cost = (_sessionCost).toFixed(4);
+      statsEl.textContent = `${elapsed}s · $${cost}`;
+    }
+  }, 200);
+
   scrollToBottom();
 }
 
@@ -1723,7 +1744,9 @@ function _cleanupStreamIds() {
 }
 
 function finalizeStreamBubble(response, realTools, qualityScore) {
-  // Use direct references (not getElementById) to target the correct bubble
+  // Stop stream timer
+  if (_streamTimer) { clearInterval(_streamTimer); _streamTimer = null; }
+
   const content = currentStreamEl;
   const footer  = _streamFooterEl;
 

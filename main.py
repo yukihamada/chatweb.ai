@@ -5137,6 +5137,7 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
         "color": "#ec4899",
         "description": "スライド構成作成・HTML発表資料生成・chatweb.aiで即公開",
         "mcp_tools": ["web_search", "site_deploy"],
+        "real_tools": ["web_search", "site_deploy"],
         "system": """あなたはプレゼンテーション作成の専門AIです。
 
 できること:
