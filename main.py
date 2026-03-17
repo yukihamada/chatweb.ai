@@ -628,6 +628,19 @@ async def setup_telegram_webhook(base_url: str) -> None:
         log.info(f"Telegram webhook registered: {webhook_url}")
     else:
         log.warning(f"Telegram webhook setup failed: {r}")
+    # Register bot commands menu
+    await tg_api("setMyCommands", commands=[
+        {"command": "start", "description": "はじめる・ヘルプ"},
+        {"command": "agents", "description": "エージェント一覧"},
+        {"command": "memory", "description": "記憶を確認"},
+        {"command": "status", "description": "ステータス確認"},
+        {"command": "link", "description": "Webアカウント連携"},
+        {"command": "clear", "description": "会話リセット"},
+        {"command": "web", "description": "Web版を開く"},
+    ])
+    # Set bot description
+    await tg_api("setMyDescription", description="chatweb.ai — 30以上のAIエージェントが連携するマルチエージェントAI。株価調査、コード生成、メール送信、サイト公開まで実行します。")
+    await tg_api("setMyShortDescription", short_description="マルチエージェントAI — 聞くだけじゃなく、実行する。")
 
 async def tg_edit(chat_id: int | str, message_id: int, text: str, parse_mode: str = "Markdown") -> None:
     """Edit an existing Telegram message (for streaming updates)."""
@@ -672,7 +685,9 @@ async def process_telegram_message(chat_id: int | str, user_text: str, username:
         # Memory context from unified user_id if linked
         mem_context = ""
         if unified_uid:
-            mem_context = await search_memories(user_text, limit=5, user_id=unified_uid)
+            mems = await search_memories(user_text, limit=5, user_id=unified_uid)
+            if mems:
+                mem_context = "【長期記憶】\n" + "\n".join(f"- {m['content']}" for m in mems)
 
         # Use a local queue to capture SSE tokens for streaming to Telegram
         # Register under session_id so execute_agent picks it up
@@ -788,6 +803,20 @@ async def line_reply(reply_token: str, text: str) -> dict:
         return {"ok": r.status_code == 200, "status": r.status_code}
 
 
+async def line_push_flex(user_id: str, alt_text: str, flex_contents: dict) -> dict:
+    """Send a LINE Flex Message."""
+    if not LINE_TOKEN:
+        return {"ok": False}
+    msg = {"type": "flex", "altText": alt_text[:400], "contents": flex_contents}
+    async with httpx.AsyncClient(timeout=10) as hc:
+        r = await hc.post(
+            f"{_LINE_API}/push",
+            headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
+            json={"to": user_id, "messages": [msg]},
+        )
+        return {"ok": r.status_code == 200}
+
+
 async def line_reply_with_quickreply(reply_token: str, text: str, quick_items: list[dict] | None = None) -> dict:
     """Reply with optional quick reply buttons."""
     if not LINE_TOKEN or not reply_token:
@@ -810,6 +839,7 @@ _LINE_QUICK_ITEMS = [
     {"type": "action", "action": {"type": "message", "label": "🧠 記憶", "text": "/memory"}},
     {"type": "action", "action": {"type": "message", "label": "🗑️ リセット", "text": "/clear"}},
     {"type": "action", "action": {"type": "message", "label": "🔗 連携", "text": "/link"}},
+    {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai"}},
     {"type": "action", "action": {"type": "uri", "label": "🌐 Web版", "uri": "https://chatweb.ai/"}},
 ]
 
@@ -827,19 +857,44 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
             await line_push(user_id, msg)
 
     # ── Built-in LINE commands ──────────────────────────────────────────────
-    if text in ("/menu", "メニュー", "menu"):
-        linked = f"✅ 連携済み ({unified_uid[:8]}...)" if unified_uid else "❌ 未連携 — /link でWebと連携"
-        await _reply(
-            f"📋 *chatweb.ai メニュー*\n\n"
-            f"🔗 Web連携: {linked}\n\n"
-            f"コマンド一覧:\n"
-            f"/status — ステータス確認\n"
-            f"/agents — エージェント一覧\n"
-            f"/memory — 記憶一覧\n"
-            f"/clear — 会話リセット\n"
-            f"/link <コード> — Webアカウント連携\n"
-            f"/help — ヘルプ"
-        )
+    if text in ("/start", "/menu", "メニュー", "menu"):
+        linked = "✅ 連携済み" if unified_uid else "❌ 未連携"
+        # Send Flex Message with buttons
+        flex = {
+            "type": "bubble",
+            "size": "mega",
+            "header": {
+                "type": "box", "layout": "vertical",
+                "contents": [
+                    {"type": "text", "text": "◈ chatweb.ai", "weight": "bold", "size": "xl", "color": "#8b5cf6"},
+                    {"type": "text", "text": "マルチエージェントAI", "size": "sm", "color": "#aaaaaa", "margin": "sm"},
+                ],
+                "backgroundColor": "#1a1a2e", "paddingAll": "20px",
+            },
+            "body": {
+                "type": "box", "layout": "vertical", "spacing": "md",
+                "contents": [
+                    {"type": "text", "text": f"🔗 Web連携: {linked}", "size": "sm", "color": "#cccccc"},
+                    {"type": "separator", "margin": "md"},
+                    {"type": "box", "layout": "vertical", "spacing": "sm", "margin": "md", "contents": [
+                        {"type": "button", "action": {"type": "message", "label": "🤖 エージェント一覧", "text": "/agents"}, "style": "secondary", "height": "sm"},
+                        {"type": "button", "action": {"type": "message", "label": "🧠 記憶を確認", "text": "/memory"}, "style": "secondary", "height": "sm"},
+                        {"type": "button", "action": {"type": "message", "label": "📊 ステータス", "text": "/status"}, "style": "secondary", "height": "sm"},
+                        {"type": "button", "action": {"type": "message", "label": "🔗 Webアカウント連携", "text": "/link"}, "style": "primary", "height": "sm", "color": "#8b5cf6"},
+                    ]},
+                ],
+                "backgroundColor": "#16161a", "paddingAll": "16px",
+            },
+            "footer": {
+                "type": "box", "layout": "horizontal", "spacing": "sm",
+                "contents": [
+                    {"type": "button", "action": {"type": "uri", "label": "🌐 Web版を開く", "uri": "https://chatweb.ai"}, "style": "link", "height": "sm"},
+                    {"type": "button", "action": {"type": "message", "label": "🗑️ リセット", "text": "/clear"}, "style": "link", "height": "sm"},
+                ],
+                "backgroundColor": "#111113",
+            },
+        }
+        await line_push_flex(user_id, "chatweb.ai メニュー", flex)
         return
 
     if text in ("/help", "ヘルプ", "help"):
@@ -948,7 +1003,9 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
         # Memory from unified user_id
         mem_context = ""
         if unified_uid:
-            mem_context = await search_memories(text, limit=5, user_id=unified_uid)
+            mems = await search_memories(text, limit=5, user_id=unified_uid)
+            if mems:
+                mem_context = "【長期記憶】\n" + "\n".join(f"- {m['content']}" for m in mems)
 
         result = await execute_agent(agent_id, f"{_channel_ctx}\n{text}", session_id,
                                      history=history, memory_context=mem_context)
@@ -9277,6 +9334,25 @@ async def telegram_webhook(request: Request):
 
     # ── Built-in commands ────────────────────────────────────────────────────
     ui = _tg_ui(chat_id)
+    # Handle /start with link code (from QR code: /start linkCODE)
+    if text.startswith("/start link"):
+        code = text.replace("/start link", "").replace("/start ", "").strip().upper()
+        if code:
+            try:
+                async with httpx.AsyncClient(timeout=10) as hc:
+                    r = await hc.post(
+                        f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/link/verify",
+                        json={"code": code, "channel": "telegram", "channel_id": str(chat_id)},
+                    )
+                if r.status_code == 200:
+                    data = r.json()
+                    await tg_send(chat_id, f"✅ Webアカウント（{data.get('email','')}）と連携しました！\n\n記憶・履歴が全チャネルで共有されます。\n\n何でも聞いてくださいね 🚀")
+                else:
+                    await tg_send(chat_id, "このコードは無効か期限切れです。Webのメニューから新しいコードを発行してください。")
+            except Exception as e:
+                await tg_send(chat_id, f"処理できませんでした: {e}")
+            return {"ok": True}
+
     if text in ("/start", "/menu"):
         linked_uid = await resolve_channel_user("telegram", str(chat_id))
         link_status = f"✅ `{linked_uid[:8]}...`" if linked_uid else ui.get("not_linked", "—")
@@ -9289,11 +9365,18 @@ async def telegram_webhook(request: Request):
              {"text": ui["btn_reset"], "callback_data": "clear"}],
             [{"text": ui["btn_link"], "callback_data": "link"},
              {"text": ui["btn_lang"] if "btn_lang" in ui else "🌐 Lang", "callback_data": "lang"}],
+            [{"text": "🌐 Web版を開く", "url": "https://chatweb.ai"}],
         ]}
         welcome = ui["welcome"]
         if linked_uid:
             welcome += f"\n\n🔗 Web連携: ✅"
         await tg_send(chat_id, welcome, reply_markup=kb)
+        return {"ok": True}
+
+    if text == "/web":
+        await tg_send(chat_id, "🌐 [chatweb.ai を開く](https://chatweb.ai)", reply_markup={
+            "inline_keyboard": [[{"text": "🌐 Web版を開く", "url": "https://chatweb.ai"}]]
+        })
         return {"ok": True}
 
     if text == "/help":

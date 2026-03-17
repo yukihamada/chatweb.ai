@@ -2866,6 +2866,7 @@ function openAgentModal() {
 
 // ── Onboarding (typewriter intro) ─────────────────────────────────────────
 let _onboardingStep = 0;
+let _onboardingStarted = false;
 async function typewrite(text, el, speed = 30) {
   for (let i = 0; i < text.length; i++) {
     el.textContent += text[i];
@@ -2873,23 +2874,38 @@ async function typewrite(text, el, speed = 30) {
   }
 }
 
+const _TAGLINES = [
+  "あなたのチャット、ひとつのchatweb.ai。",
+  "聞くだけのAIは卒業。実行するAIへ。",
+  "30のエージェント、1つの入口。",
+  "コーヒーを淹れてる間に、3つのタスクが終わります。",
+  "AIに仕事を頼む。AIが仕事をする。それだけ。",
+  "「やっておいて」が通じるAI。",
+  "メールも、コードも、株価も。全部ここで。",
+  "あなたの分身AI、育てませんか。",
+];
+
 async function startOnboarding(user) {
+  if (_onboardingStarted) return;
+  _onboardingStarted = true;
   const msgs = getMessages();
-  // Clear welcome bubble
   const wb = document.getElementById('welcome-bubble');
   if (wb) wb.closest('.msg-container')?.remove();
 
-  // No background search — we'll ask the user directly in the onboarding flow
+  const email = user.email || '';
+  const name = (user.name || email.split('@')[0] || 'there');
+  const tagline = _TAGLINES[Math.floor(Math.random() * _TAGLINES.length)];
 
   // Step 1: Typewriter intro
-  const name = (user.name || email.split('@')[0] || 'there');
   const introLines = [
-    `${name}さん、はじめまして！`,
+    `${name}さん、はじめまして！ 🎉`,
     ``,
-    `わたしは chatweb.ai — あなた専用のAIアシスタントです。`,
-    `30以上の専門エージェントが協力して、調査・分析・メール送信・コーディング・デプロイまで実行します。`,
+    `— ${tagline}`,
     ``,
-    `まずは少しだけ教えてください。`,
+    `chatweb.ai は「聞くだけ」のAIじゃありません。`,
+    `株価調査、コード生成、メール送信、サイト公開 — 実際に動きます。`,
+    ``,
+    `...まずは、ちょっとだけ仲良くなりましょう 👋`,
   ];
 
   const bubble = document.createElement('div');
@@ -2899,22 +2915,23 @@ async function startOnboarding(user) {
   const bEl = document.getElementById('onboard-bubble');
 
   for (const line of introLines) {
-    await typewrite(line, bEl, 25);
+    await typewrite(line, bEl, 20);
     bEl.textContent += '\n';
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 80));
   }
   scrollToBottom();
 
-  // Step 2: Ask tone preference
-  await new Promise(r => setTimeout(r, 500));
+  // Step 2: Tone
+  await new Promise(r => setTimeout(r, 400));
   const toneQ = document.createElement('div');
   toneQ.className = 'msg-container';
   toneQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>どんな感じで話しましょう？</strong><br><br>
+    <strong>どんなノリで話しましょうか？</strong><br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardTone('casual')" type="button" style="min-height:40px">😊 カジュアル（友達みたいに）</button>
-      <button class="chip" onclick="onboardTone('polite')" type="button" style="min-height:40px">🙂 丁寧（です・ます）</button>
-      <button class="chip" onclick="onboardTone('business')" type="button" style="min-height:40px">💼 ビジネス（プロフェッショナル）</button>
+      <button class="chip" onclick="onboardTone('casual')" type="button">😎 フランク</button>
+      <button class="chip" onclick="onboardTone('polite')" type="button">🙂 ふつう</button>
+      <button class="chip" onclick="onboardTone('business')" type="button">💼 プロ仕様</button>
+      <button class="chip" onclick="onboardTone('funny')" type="button">🤪 おもしろく</button>
     </div>
   </div></div>`;
   msgs.appendChild(toneQ);
@@ -2922,7 +2939,7 @@ async function startOnboarding(user) {
 }
 
 async function onboardTone(tone) {
-  const toneLabels = {casual: 'カジュアル', polite: '丁寧', business: 'ビジネス'};
+  const toneLabels = {casual: 'フランク', polite: 'ふつう', business: 'プロ仕様', funny: 'おもしろく'};
   // Save preference
   try {
     await fetch('/user/settings', {
@@ -2940,12 +2957,15 @@ async function onboardTone(tone) {
   const nickQ = document.createElement('div');
   nickQ.className = 'msg-container';
   nickQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>了解！${toneLabels[tone]}でいきますね。</strong><br><br>
-    わたしのこと、なんて呼びますか？<br>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-      <button class="chip" onclick="onboardName('AI')" type="button">AI</button>
-      <button class="chip" onclick="onboardName('アシスタント')" type="button">アシスタント</button>
-      <button class="chip" onclick="onboardName('チャットくん')" type="button">チャットくん</button>
+    <strong>${tone === 'funny' ? 'りょ！笑いは大事🤣' : '了解！' + toneLabels[tone] + 'でいきますね。'}</strong><br><br>
+    ところで、わたしのこと何て呼びます？<br>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="chip" onclick="onboardName('AI')" type="button">🤖 AI</button>
+      <button class="chip" onclick="onboardName('ウェブ')" type="button">🌐 ウェブ</button>
+      <button class="chip" onclick="onboardName('クロ')" type="button">🐱 クロ</button>
+      <button class="chip" onclick="onboardName('ナビ')" type="button">🧭 ナビ</button>
+      <button class="chip" onclick="onboardName('バディ')" type="button">🤝 バディ</button>
+      <button class="chip" onclick="onboardName('秘書')" type="button">📋 秘書</button>
       <button class="chip" onclick="promptOnboardName()" type="button">✏️ 自分で決める</button>
     </div>
   </div></div>`;
@@ -3636,17 +3656,18 @@ async function showLinkCode() {
     const tgQr   = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(tgUrl)}`;
     modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:420px;max-width:94vw;text-align:center">
       <h3 style="margin-bottom:6px">🔗 LINE / Telegram 連携</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">QRを読み取るか、ボットにコマンドを送ってください（10分間有効）</p>
-      <div style="font-size:38px;font-weight:800;letter-spacing:10px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:10px 0;border-radius:10px">${code}</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">QRを読み取って友達追加 → メッセージを送るだけで連携完了（10分間有効）</p>
+      <div style="font-size:32px;font-weight:800;letter-spacing:8px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:8px 0;border-radius:10px">${code}</div>
       <div style="display:flex;gap:16px;justify-content:center;margin:16px 0">
         <div>
           <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="LINE QR"></a>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">📱 LINE</div>
-          <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
+          <div style="font-size:12px;color:#06c755;margin-top:6px;font-weight:600">📱 LINE で友達追加</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">追加後にこのメッセージを送信↓</div>
+          <code style="font-size:12px;background:rgba(0,0,0,.3);padding:3px 10px;border-radius:4px;display:inline-block;margin-top:2px">/link ${code}</code>
         </div>
         <div>
           <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="Telegram QR"></a>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">✈️ Telegram</div>
+          <div style="font-size:12px;color:#229ed9;margin-top:6px;font-weight:600">✈️ Telegram で開く</div>
           <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
         </div>
       </div>
@@ -3704,10 +3725,7 @@ async function checkAuth() {
     const d = await r.json();
     updateAuthUI(d);
     if (!d.logged_in) showLoginGate();
-    // Trigger onboarding if logged in but not done yet
-    if (d.logged_in && !localStorage.getItem('onboarding_done')) {
-      setTimeout(() => startOnboarding(d), 1000);
-    }
+    // Onboarding is triggered only from updateAuthUI — not here (prevents double-fire)
   } catch {}
 }
 
@@ -3731,6 +3749,14 @@ function showLoginGate() {
       </a>
       <button onclick="openLoginModal()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text);font-size:13px;cursor:pointer;">メールで登録</button>
     `;
+    // On mobile, also show LINE/Telegram quick links
+    if (window.innerWidth < 768) {
+      gateEl.innerHTML += `
+        <div style="width:100%;display:flex;gap:8px;justify-content:center;margin-top:4px">
+          <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" style="padding:6px 14px;border-radius:8px;background:#06c755;color:#fff;font-size:12px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px">📱 LINEで使う</a>
+          <a href="https://t.me/chatweb_aichat_bot" target="_blank" style="padding:6px 14px;border-radius:8px;background:#229ed9;color:#fff;font-size:12px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px">✈️ Telegramで使う</a>
+        </div>`;
+    }
     const inputOuter = document.getElementById('inputAreaOuter');
     if (inputOuter) inputOuter.prepend(gateEl);
   }
