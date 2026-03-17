@@ -7223,15 +7223,17 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                 stream_options={"include_usage": True},
             )
             async for chunk in stream:
+                # Usage-only chunk (stream_options include_usage)
+                if not chunk.choices:
+                    if hasattr(chunk, 'usage') and chunk.usage:
+                        input_tokens = getattr(chunk.usage, 'prompt_tokens', 0) or 0
+                        output_tokens = getattr(chunk.usage, 'completion_tokens', 0) or 0
+                    continue
                 delta = chunk.choices[0].delta.content or ""
                 if delta:
                     draft_parts.append(delta)
                     if queue:
                         await queue.put({"type": "token", "text": delta})
-                # Capture usage from final chunk
-                if hasattr(chunk, 'usage') and chunk.usage:
-                    input_tokens = getattr(chunk.usage, 'prompt_tokens', 0) or 0
-                    output_tokens = getattr(chunk.usage, 'completion_tokens', 0) or 0
             draft = "".join(draft_parts)
             _groq_used = _groq_model
             # Estimate tokens if not provided by stream
