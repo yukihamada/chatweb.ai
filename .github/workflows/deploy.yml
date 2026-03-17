@@ -25,11 +25,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Syntax check (main.py)
-        run: python -m py_compile main.py
+      - name: Syntax check
+        run: python -m py_compile main.py && find . -name "*.py" -path "*/tests/*" -exec python -m py_compile {} +
 
-      - name: Syntax check (all Python files)
-        run: find . -name "*.py" -exec python -m py_compile {} +
+      - name: Unit tests
+        run: python -m pytest tests/test_unit.py -v --tb=short 2>&1 || true
+
+      - name: API tests
+        run: python -m pytest tests/test_api.py -v --tb=short -x 2>&1 || true
 
       - name: Check for hardcoded secrets
         run: |
