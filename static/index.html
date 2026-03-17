@@ -1096,29 +1096,23 @@ body {
         <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="user-email-display"></span><span style="font-size:13px">ログアウト</span></button>
         <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 プラン</button>
         <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 APIキー</button>
-        <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">🔗 LINE/Telegram連携</button>
+        <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">📱 LINE / Telegram</button>
         <div class="dropdown-label">エージェント</div>
-        <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 管理・カスタマイズ</button>
-        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ 新規作成</button>
-        <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 ワークフロー</button>
+        <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 管理</button>
+        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ 作成</button>
         <button class="dropdown-item" onclick="openSchedulePanel();toggleMoreMenu()">⏰ スケジュール</button>
         <div class="dropdown-label">データ</div>
-        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 記憶 (<span id="memCount">0</span>)</button>
+        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 記憶 <span id="memCount" style="opacity:0.5">0</span></button>
+        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 検索</button>
         <button class="dropdown-item" onclick="openFilesModal();toggleMoreMenu()">📁 ファイル</button>
-        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 会話検索</button>
-        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 エクスポート</button>
-        <div class="dropdown-label">分析</div>
+        <div class="dropdown-label">その他</div>
         <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 ダッシュボード</button>
-        <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 使用状況</button>
-        <div class="dropdown-label">設定</div>
-        <button class="dropdown-item" onclick="toggleTheme();toggleMoreMenu()">🌙 テーマ切替</button>
+        <button class="dropdown-item" onclick="toggleTheme();toggleMoreMenu()">🌙 テーマ</button>
         <button class="dropdown-item" onclick="toggleLangMenu();toggleMoreMenu()">🌐 言語 <span id="lang-label-menu">JA</span></button>
-        <button class="dropdown-item" onclick="openNotificationSettings();toggleMoreMenu()">🔔 通知</button>
-        <button class="dropdown-item" onclick="openWebhookModal();toggleMoreMenu()">🔗 Webhook</button>
-        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機削除 (<span id="hitlPendingCount">0</span>)</button>
+        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機削除 <span id="hitlPendingCount">0</span></button>
         <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 チーム</button>
         <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API</button>
-        <button class="dropdown-item" onclick="window.open('/static/about.html')" style="opacity:0.6;font-size:12px">💡 About · <a href="/static/terms.html" style="color:inherit">利用規約</a> · <a href="/static/privacy.html" style="color:inherit">プライバシー</a></button>
+        <button class="dropdown-item" onclick="window.open('/static/about.html')" style="opacity:0.5;font-size:11px">About · 利用規約 · プライバシー</button>
       </div>
     </div>
   </div>
@@ -2876,8 +2870,23 @@ async function startOnboarding(user) {
   const wb = document.getElementById('welcome-bubble');
   if (wb) wb.closest('.msg-container')?.remove();
 
+  // Infer company/role from email domain and save to memory
+  const email = user.email || '';
+  const domain = email.split('@')[1] || '';
+  if (domain && !['gmail.com','yahoo.co.jp','outlook.com','hotmail.com','icloud.com'].includes(domain)) {
+    // Corporate email — infer company name and save
+    const company = domain.replace(/\.(co\.jp|com|io|ai|dev|org|net)$/, '').replace(/\./g, ' ');
+    try {
+      await fetch('/memory/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({content: `ユーザーの所属: ${company} (${domain}) — メールアドレス: ${email}`})
+      });
+    } catch {}
+  }
+
   // Step 1: Typewriter intro
-  const name = (user.name || user.email?.split('@')[0] || 'there');
+  const name = (user.name || email.split('@')[0] || 'there');
   const introLines = [
     `${name}さん、はじめまして！`,
     ``,
@@ -2973,8 +2982,8 @@ async function onboardName(name) {
     下のボタンをタップすると、AIが実際に動くところを見られます。<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="chip" onclick="onboardDemo('今日のNVIDIAの株価を教えて')" type="button" style="min-height:40px">💹 NVIDIAの株価を調べる</button>
-      <button class="chip" onclick="onboardDemo('新機能リリースのX投稿を3パターン書いて')" type="button" style="min-height:40px">📣 X投稿を書いてもらう</button>
-      <button class="chip" onclick="onboardDemo('React+TypeScriptでTodoアプリを書いて')" type="button" style="min-height:40px">⚙️ コードを書いてもらう</button>
+      <button class="chip" onclick="onboardDemo('副業の業務委託契約で気をつけるポイントを3つ教えて')" type="button" style="min-height:40px">⚖️ 副業の法的リスクを聞く</button>
+      <button class="chip" onclick="onboardDemo('ポートフォリオサイトを作って公開して')" type="button" style="min-height:40px">🌐 Webサイトを作って公開する</button>
     </div>
   </div></div>`;
   getMessages().appendChild(demoQ);
@@ -2985,30 +2994,66 @@ async function onboardDemo(msg) {
   // Send real message
   document.getElementById('chatInput').value = msg;
   sendMessage();
+  _onboardingStep = 4;
 
-  // After a delay, show the agent creation prompt
-  setTimeout(async () => {
-    const agentQ = document.createElement('div');
-    agentQ.className = 'msg-container';
-    agentQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-      <strong>こんな感じで、30以上のエージェントが自動で選ばれて処理します。</strong><br><br>
-      次は<strong>あなた専用のエージェント</strong>を作ってみましょう！<br>
-      「毎朝○○をして」「○○を自動化して」のように話しかけるだけでOKです。<br><br>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="chip" onclick="onboardFinish('毎朝9時にSlackに日報をまとめて投稿するエージェントを作って')" type="button" style="min-height:40px">🧩 日報自動投稿エージェント</button>
-        <button class="chip" onclick="onboardFinish('メールの問い合わせを自動分類するエージェントを作って')" type="button" style="min-height:40px">🧩 メール自動分類エージェント</button>
-        <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:40px;opacity:0.6">あとで作る</button>
-      </div>
-    </div></div>`;
-    getMessages().appendChild(agentQ);
-    scrollToBottom();
-  }, 15000);  // wait for the demo response to finish
+  // After response finishes, show next step (LINE/Telegram connect)
+  setTimeout(() => onboardConnect(), 12000);
+}
+
+function onboardConnect() {
+  const q = document.createElement('div');
+  q.className = 'msg-container';
+  q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>どうですか？エージェントが自動で選ばれて処理しました 🎉</strong><br><br>
+    次は<strong>スマホからもアクセス</strong>できるようにしましょう！<br>
+    LINEまたはTelegramを連携すると、いつでもAIに話しかけられます。<br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="chip" onclick="onboardLinkCode()" type="button" style="min-height:40px">📱 LINE / Telegram を連携する</button>
+      <button class="chip" onclick="onboardAgent()" type="button" style="min-height:40px;opacity:0.7">⏩ スキップ</button>
+    </div>
+  </div></div>`;
+  getMessages().appendChild(q);
+  scrollToBottom();
+}
+
+async function onboardLinkCode() {
+  appendUserMsg('LINE / Telegram を連携する');
+  await showLinkCode();  // Show QR code modal
+  // After they close the modal, continue to agent creation
+  setTimeout(() => onboardAgent(), 3000);
+}
+
+function onboardAgent() {
+  const q = document.createElement('div');
+  q.className = 'msg-container';
+  q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+    <strong>最後に、あなた専用のエージェントを作ってみましょう！</strong><br><br>
+    例えば「毎朝○○をして」「○○を自動化して」と話しかけるだけでエージェントが作れます。<br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="chip" onclick="onboardFinish('毎朝9時にSlackに日報をまとめて投稿するエージェントを作って')" type="button" style="min-height:40px">🧩 日報自動投稿</button>
+      <button class="chip" onclick="onboardFinish('問い合わせメールを自動分類して担当者に転送するエージェントを作って')" type="button" style="min-height:40px">🧩 メール自動分類</button>
+      <button class="chip" onclick="onboardFinish('毎週金曜にKPIレポートをメールで送るエージェントを作って')" type="button" style="min-height:40px">🧩 週次レポート</button>
+      <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:40px;opacity:0.5">あとで作る</button>
+    </div>
+  </div></div>`;
+  getMessages().appendChild(q);
+  scrollToBottom();
 }
 
 function onboardFinish(msg) {
   localStorage.setItem('onboarding_done', '1');
   document.getElementById('chatInput').value = msg;
   sendMessage();
+  setTimeout(() => {
+    const done = document.createElement('div');
+    done.className = 'msg-container';
+    done.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+      セットアップ完了です！🚀<br>
+      何でも聞いてくださいね。メニューの 🧩 からエージェントの管理もできます。
+    </div></div>`;
+    getMessages().appendChild(done);
+    scrollToBottom();
+  }, 10000);
 }
 
 function onboardFinishSkip() {
