@@ -2038,14 +2038,14 @@ async def tool_code_executor(code: str) -> dict:
 
 async def tool_github_search(query: str) -> str:
     try:
-        async with httpx.AsyncClient() as h:
-            r = await h.get(
-                "https://api.github.com/search/repositories",
-                params={"q": query, "sort": "stars", "per_page": 5},
-                headers={"Authorization": f"token {GITHUB_TOKEN}",
-                         "Accept": "application/vnd.github.v3+json"},
-                timeout=10,
-            )
+        h = get_http()
+        r = await h.get(
+            "https://api.github.com/search/repositories",
+            params={"q": query, "sort": "stars", "per_page": 5},
+            headers={"Authorization": f"token {GITHUB_TOKEN}",
+                     "Accept": "application/vnd.github.v3+json"},
+            timeout=10,
+        )
         if r.status_code == 200:
             items = r.json().get("items", [])
             lines = [
@@ -2830,8 +2830,8 @@ async def tool_pdf_reader(url_or_text: str) -> str:
     if not url_or_text.startswith("http"):
         return "URLを指定してください"
     try:
-        async with httpx.AsyncClient() as h:
-            r = await h.get(url_or_text, timeout=15, follow_redirects=True)
+        h = get_http()
+        r = await h.get(url_or_text, timeout=15)
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
             f.write(r.content)
             fname = f.name
@@ -3803,12 +3803,12 @@ async def tool_send_email(subject: str, body: str, to: str = DEMO_EMAIL) -> dict
 async def tool_send_telegram(text: str) -> dict:
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        async with httpx.AsyncClient() as h:
-            r = await h.post(url, json={
-                "chat_id": TELEGRAM_CHAT_ID,
-                "text": f"📨 *A2Aデモ HITL送信*\n{'─'*28}\n{text[:3000]}",
-                "parse_mode": "Markdown",
-            }, timeout=10)
+        h = get_http()
+        r = await h.post(url, json={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": f"📨 *A2Aデモ HITL送信*\n{'─'*28}\n{text[:3000]}",
+            "parse_mode": "Markdown",
+        }, timeout=10)
         return {"channel": "Slack→Telegram(デモ)", "ok": r.status_code == 200}
     except Exception as e:
         return {"channel": "Slack→Telegram(デモ)", "ok": False, "error": str(e)}
@@ -8039,7 +8039,9 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
 
     # 2. Build message array with history (compress if too long)
     messages = list(history or [])
-    messages, _summary = await compress_history(messages, session_id)
+    _summary = None
+    if len(messages) > 6:  # Only compress if enough history to warrant it
+        messages, _summary = await compress_history(messages, session_id)
     if _summary and queue:
         await queue.put({"type": "summary", "text": _summary,
                          "label": "前の会話をまとめました"})
@@ -12912,21 +12914,26 @@ async def image_generate(req: ImageGenerateRequest, request: Request):
 async def search_messages(request: Request, q: str = "", session_id: str = "", limit: int = 20):
     """Full-text search across messages table."""
     user = await _require_auth(request)
+    uid = user.get("id", "")
     if not q:
         raise HTTPException(400, "Query parameter 'q' is required")
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
+        # Scope to user's sessions only
+        user_sessions_clause = "AND session_id IN (SELECT DISTINCT session_id FROM runs WHERE user_id=?)"
         if session_id:
             rows = await db.execute_fetchall(
-                """SELECT * FROM messages WHERE content LIKE ? AND session_id = ?
+                f"""SELECT * FROM messages WHERE content LIKE ? AND session_id = ?
+                   {user_sessions_clause}
                    ORDER BY created_at DESC LIMIT ?""",
-                (f"%{q}%", session_id, limit)
+                (f"%{q}%", session_id, uid, limit)
             )
         else:
             rows = await db.execute_fetchall(
-                """SELECT * FROM messages WHERE content LIKE ?
+                f"""SELECT * FROM messages WHERE content LIKE ?
+                   {user_sessions_clause}
                    ORDER BY created_at DESC LIMIT ?""",
-                (f"%{q}%", limit)
+                (f"%{q}%", uid, limit)
             )
         results = []
         for row in rows:
@@ -13854,23 +13861,28 @@ async def admin_stats(token: str = ""):
 
 @app.get("/search")
 async def search_conversations(q: str, session_id: str = "", limit: int = 20, request: Request = None):
-    """会話全文検索（認証必須）"""
-    if request:
-        user = await _get_user_from_session(_extract_session_token(request))
-        if not user:
-            raise HTTPException(401, "ログインが必要です")
+    """会話全文検索（認証必須、ユーザーの会話のみ）"""
+    user = await _require_auth(request)
+    uid = user.get("id", "")
     if not q:
         return {"results": []}
     async with db_conn() as db:
+        # Scope to user's sessions only (via runs table)
         if session_id:
             cur = await db.execute(
-                "SELECT session_id, role, content, created_at FROM messages WHERE session_id=? AND content LIKE ? ORDER BY created_at DESC LIMIT ?",
-                (session_id, f"%{q}%", limit)
+                """SELECT session_id, role, content, created_at FROM messages
+                   WHERE session_id=? AND content LIKE ?
+                   AND session_id IN (SELECT DISTINCT session_id FROM runs WHERE user_id=?)
+                   ORDER BY created_at DESC LIMIT ?""",
+                (session_id, f"%{q}%", uid, limit)
             )
         else:
             cur = await db.execute(
-                "SELECT session_id, role, content, created_at FROM messages WHERE content LIKE ? ORDER BY created_at DESC LIMIT ?",
-                (f"%{q}%", limit)
+                """SELECT session_id, role, content, created_at FROM messages
+                   WHERE content LIKE ?
+                   AND session_id IN (SELECT DISTINCT session_id FROM runs WHERE user_id=?)
+                   ORDER BY created_at DESC LIMIT ?""",
+                (f"%{q}%", uid, limit)
             )
         rows = await cur.fetchall()
     results = []
