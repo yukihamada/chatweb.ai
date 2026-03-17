@@ -992,6 +992,35 @@ body {
   </div>
 </div>
 
+<!-- Agent Manager Modal -->
+<div id="agent-manager-modal" class="modal" hidden onclick="if(event.target===this)document.getElementById('agent-manager-modal').hidden=true">
+  <div class="modal-box" style="max-width:700px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0">🧩 エージェント管理</h3>
+      <button onclick="document.getElementById('agent-manager-modal').hidden=true" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div id="agent-manager-list" style="display:flex;flex-direction:column;gap:8px">
+      <div style="color:var(--muted);font-size:13px">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Prompt Editor Modal -->
+<div id="agent-edit-modal" class="modal" hidden onclick="if(event.target===this)document.getElementById('agent-edit-modal').hidden=true">
+  <div class="modal-box" style="max-width:600px;max-height:85vh;overflow-y:auto">
+    <h3 id="agent-edit-title" style="margin-bottom:12px">エージェント編集</h3>
+    <input id="agent-edit-name" placeholder="エージェント名" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;margin-bottom:8px">
+    <input id="agent-edit-desc" placeholder="説明" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;margin-bottom:8px">
+    <textarea id="agent-edit-prompt" rows="12" placeholder="システムプロンプト" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:monospace;line-height:1.5;resize:vertical;margin-bottom:12px"></textarea>
+    <input type="hidden" id="agent-edit-id">
+    <input type="hidden" id="agent-edit-fork-from">
+    <div class="modal-btns">
+      <button onclick="saveAgentEdit()" style="background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600">保存（自分用にフォーク）</button>
+      <button onclick="document.getElementById('agent-edit-modal').hidden=true" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);padding:8px 16px;border-radius:8px;cursor:pointer">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- Dashboard Modal -->
 <div id="dashboard-modal" hidden onclick="if(event.target===this)closeDashboard()">
   <div id="dashboard-box">
@@ -1084,6 +1113,7 @@ body {
         <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 <span data-i18n="menu_workflow">ワークフロー</span></button>
         <button class="dropdown-item" onclick="openWebhookModal();toggleMoreMenu()">🔗 Webhook URL</button>
         <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ <span data-i18n="menu_create_agent">エージェント作成</span></button>
+        <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 エージェント管理</button>
         <!-- ── 分析 ── -->
         <div class="dropdown-sep"></div>
         <div class="dropdown-label">分析・統計</div>
@@ -1832,15 +1862,15 @@ const ALL_CHIPS = [
   "🧩 毎週金曜にKPIをまとめてレポートを送るエージェントを作って",
   "🧩 受信メールの内容に応じて返信ドラフトを自動生成するエージェントを作って",
   "🧩 競合のWebサイトを毎日チェックして変更があったら通知するエージェントを作って",
-  "🧩 採用候補者の職務経歴書をスクリーニングするエージェントを作って",
-  "🧩 ECサイトの在庫が少なくなったら自動発注するエージェントを作って",
+  "🧩 Slackで質問するとナレッジベースから回答するボットエージェントを作って",
+  "🧩 毎日の売上データをグラフ化してチームに共有するエージェントを作って",
 
   // ⚡ マルチエージェント連携（複数が協力する例）
   "⚡ 競合サイトをスクショ撮影 → 分析 → 改善提案 → スライドにまとめて",
   "⚡ 最新AI論文を検索 → 要約 → 社内向け解説記事を書いて → Slackに投稿して",
   "⚡ 求人票を書いて → 法務チェック → 採用サイトのHTMLを作って公開して",
   "⚡ 株価を調べて → チャートを作って → 投資判断レポートを書いて → メールで送って",
-  "⚡ バグ報告を分析 → 原因コードを特定 → 修正パッチを書いて → テストして",
+  "⚡ chatweb.aiの現在のアクセス数を調べて → 改善案を出して → レポートにまとめて",
 
   // 🌐 Webサイト公開（即URL発行）
   "🌐 ポートフォリオサイトを作って myname.chatweb.ai で公開して",
@@ -1870,7 +1900,7 @@ const ALL_CHIPS = [
 
   // ⚖️ 法務・契約
   "⚖️ SaaS利用規約を作って（月額課金・解約・免責・日本法準拠）",
-  "⚖️ 英語のNDAを日本語訳して問題ある条項をハイライトして",
+  "⚖️ 業務委託と正社員雇用のメリット・デメリットを法的に比較して",
   "⚖️ 業務委託契約書の雛形を作って（月60万・3ヶ月・NDA付き）",
   "⚖️ プライバシーポリシーを作って（個人情報保護法・GDPR対応）",
 
@@ -1897,7 +1927,7 @@ const ALL_CHIPS = [
 
   // 📅 Google連携
   "📅 今日15:00に「山田さんとMTG」をGoogleカレンダーに追加して",
-  "📧 提案書の送付メールをGmailで田中さんに送って",
+  "📧 今週の進捗報告メールを自分宛にドラフトして",
   "📊 今週の作業ログをGoogleスプレッドシートに記録して共有URLを教えて",
 
   // 🔍 リサーチ
@@ -1912,9 +1942,9 @@ const ALL_CHIPS = [
   "🎨 テックスタートアップ向けのロゴ（紫系・ミニマル）を生成して",
   "🎨 「AI×未来」テーマのXヘッダー画像を作って",
 
-  // 📄 ファイル解析
-  "📄 添付PDFの契約書から問題になりそうな条項だけ抜き出して",
-  "📄 添付Excelの売上データを分析してトレンドを教えて",
+  // 🏨 宿泊管理
+  "🏨 今月の予約一覧をBeds24から取得して",
+  "🏨 来週の空室状況を確認して",
 ];
 
 function initQuickChips() {
@@ -2391,7 +2421,15 @@ function escHtml(s) {
 }
 
 function _applyMarkdown(text) {
+  // Handle Qwen3 <think> tags — collapse into details
+  text = text.replace(/<think>([\s\S]*?)<\/think>/gi, (_, content) =>
+    `\n<THINK_BLOCK>${content.trim()}</THINK_BLOCK>\n`);
+  // Remove unclosed <think> (streaming)
+  text = text.replace(/<think>[\s\S]*$/gi, '');
   let t = escHtml(text);
+  // Render think blocks as collapsible
+  t = t.replace(/&lt;THINK_BLOCK&gt;([\s\S]*?)&lt;\/THINK_BLOCK&gt;/g,
+    '<details style="margin:6px 0;border:1px solid var(--border);border-radius:8px;padding:2px 10px;background:rgba(139,92,246,0.04)"><summary style="cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0">💭 思考プロセス</summary><pre style="font-size:11px;color:var(--muted);white-space:pre-wrap;margin:4px 0 8px;max-height:200px;overflow-y:auto">$1</pre></details>');
   t = t.replace(/```[\w]*\n?([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
   t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   t = t.replace(/^#{3}\s(.+)$/gm, '<h3>$1</h3>');
@@ -2883,6 +2921,96 @@ if ('serviceWorker' in navigator) {
 // ── Feature 6: Custom Agent Creation UI ───────────────────────────────────
 function openAgentModal() {
   document.getElementById('agent-modal').removeAttribute('hidden');
+}
+
+async function openAgentManager() {
+  const modal = document.getElementById('agent-manager-modal');
+  modal.hidden = false;
+  const list = document.getElementById('agent-manager-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px">読み込み中...</div>';
+  try {
+    const r = await fetch('/agents');
+    const data = await r.json();
+    const entries = Object.entries(data).filter(([k,v]) => !v.admin_only);
+    list.innerHTML = entries.map(([id, a]) => `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface);cursor:pointer"
+           onclick="openAgentEdit('${id}')">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:18px">${a.emoji || '🤖'}</span>
+          <strong style="font-size:14px;color:var(--text)">${escHtml(a.name)}</strong>
+          ${a.is_forked ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px">カスタム</span>' : ''}
+          ${a.is_builtin && !a.is_forked ? '<span style="font-size:10px;color:var(--muted);border:1px solid var(--border);padding:1px 6px;border-radius:4px">ビルトイン</span>' : ''}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${escHtml(a.description || '')}</div>
+        <details onclick="event.stopPropagation()">
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer">システムプロンプトを見る</summary>
+          <pre style="font-size:11px;color:var(--muted);background:var(--card);padding:8px;border-radius:6px;margin-top:4px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">${escHtml((a.system || '').slice(0, 2000))}</pre>
+        </details>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = `<div style="color:var(--red)">読み込めませんでした: ${escHtml(e.message)}</div>`;
+  }
+}
+
+function openAgentEdit(agentId) {
+  const agentData = window._agentCache?.[agentId];
+  // Fetch fresh data
+  fetch('/agents').then(r => r.json()).then(data => {
+    const a = data[agentId];
+    if (!a) return;
+    document.getElementById('agent-edit-title').textContent = `${a.emoji || '🤖'} ${a.name} を編集`;
+    document.getElementById('agent-edit-name').value = a.name;
+    document.getElementById('agent-edit-desc').value = a.description || '';
+    document.getElementById('agent-edit-prompt').value = a.system || '';
+    document.getElementById('agent-edit-id').value = agentId;
+    document.getElementById('agent-edit-fork-from').value = a.is_builtin ? agentId : '';
+    const btn = document.querySelector('#agent-edit-modal .modal-btns button:first-child');
+    btn.textContent = a.is_builtin ? '自分用にカスタマイズ' : '保存';
+    document.getElementById('agent-edit-modal').hidden = false;
+  });
+}
+
+async function saveAgentEdit() {
+  const id = document.getElementById('agent-edit-id').value;
+  const forkFrom = document.getElementById('agent-edit-fork-from').value;
+  const name = document.getElementById('agent-edit-name').value.trim();
+  const desc = document.getElementById('agent-edit-desc').value.trim();
+  const prompt = document.getElementById('agent-edit-prompt').value.trim();
+  if (!name || !prompt) { showToast('名前とプロンプトは必須です'); return; }
+  try {
+    if (forkFrom) {
+      // Fork built-in agent
+      const r = await fetch(`/agents/${forkFrom}/fork`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description: desc, system_prompt: prompt}),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        showToast(`✅ ${name} を作成しました`);
+        document.getElementById('agent-edit-modal').hidden = true;
+        openAgentManager(); // refresh list
+        loadAgents(); // refresh selector
+      }
+    } else {
+      // Update existing custom agent
+      const r = await fetch(`/agents/custom/${id}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, description: desc, system_prompt: prompt}),
+      });
+      const d = await r.json();
+      if (d.ok || r.ok) {
+        showToast(`✅ ${name} を更新しました`);
+        document.getElementById('agent-edit-modal').hidden = true;
+        openAgentManager();
+        loadAgents();
+      }
+    }
+  } catch(e) {
+    showToast('保存できませんでした: ' + e.message);
+  }
 }
 
 function closeAgentModal() {

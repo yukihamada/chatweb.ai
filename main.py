@@ -124,7 +124,7 @@ TIER_CONFIG = {
     "cheap": {
         "label":    "💰 エコノミー",
         "provider": "groq",
-        "model":    "llama-3.3-70b-versatile",
+        "model":    "qwen/qwen3-32b",
         "fallback_provider": "claude",
         "fallback_model":    "claude-haiku-4-5-20251001",
         # Code-quality agents use Haiku even in cheap tier
@@ -5078,6 +5078,7 @@ async def init_db():
             "ALTER TABLE custom_agents ADD COLUMN owner_user_id TEXT",
             "ALTER TABLE custom_agents ADD COLUMN required_plan TEXT DEFAULT 'free'",
             "ALTER TABLE custom_agents ADD COLUMN allowed_emails TEXT DEFAULT '[]'",
+            "ALTER TABLE custom_agents ADD COLUMN forked_from TEXT DEFAULT ''",
         ]:
             try:
                 await db.execute(col_def)
@@ -7735,15 +7736,73 @@ async def admin_backup(token: str = ""):
 async def get_agents(request: Request):
     user = await _get_user_from_session(_extract_session_token(request))
     user_email = user.get("email", "") if user else ""
-    user_plan  = user.get("plan", "free") if user else "free"
+    user_id = user.get("id", "") if user else ""
     result = {}
     for k, v in AGENTS.items():
         if v.get("admin_only") and not _is_admin(user_email):
-            continue  # hide admin agents from non-admins
-        # Strip internal fields before returning
-        entry = {ek: ev for ek, ev in v.items() if ek not in ("system", "admin_only")}
+            continue
+        entry = {ek: ev for ek, ev in v.items() if ek not in ("admin_only",)}
+        entry["is_builtin"] = True
+        entry["is_forked"] = False
         result[k] = entry
+    # Load user's forked agents (override built-in with personal version)
+    if user_id:
+        try:
+            async with db_conn() as db:
+                async with db.execute(
+                    "SELECT id, name, emoji, color, description, system_prompt, forked_from "
+                    "FROM custom_agents WHERE owner_user_id=?", (user_id,)
+                ) as c:
+                    for row in await c.fetchall():
+                        aid = row["id"]
+                        result[aid] = {
+                            "name": row["name"],
+                            "emoji": row["emoji"] or "🤖",
+                            "color": row["color"] or "#6366f1",
+                            "description": row["description"] or "",
+                            "system": row["system_prompt"] or "",
+                            "mcp_tools": [],
+                            "real_tools": [],
+                            "is_builtin": False,
+                            "is_forked": bool(row["forked_from"]),
+                            "forked_from": row["forked_from"] or "",
+                        }
+        except Exception:
+            pass
     return result
+
+
+@app.post("/agents/{agent_id}/fork")
+async def fork_agent(agent_id: str, request: Request):
+    """Fork a built-in agent into a personal copy with custom prompt."""
+    user = await _require_user(request)
+    body = await request.json()
+    original = AGENTS.get(agent_id)
+    if not original:
+        raise HTTPException(404, "エージェントが見つかりません")
+    custom_name = body.get("name", original["name"] + "（カスタム）")
+    custom_prompt = body.get("system_prompt", original["system"])
+    custom_desc = body.get("description", original.get("description", ""))
+    fork_id = f"fork_{agent_id}_{user['id'][:8]}"
+    async with db_conn() as db:
+        await db.execute(
+            """INSERT OR REPLACE INTO custom_agents
+               (id, name, emoji, color, description, system_prompt, owner_user_id, visibility, forked_from)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?)""",
+            (fork_id, custom_name, original.get("emoji", "🤖"), original.get("color", "#6366f1"),
+             custom_desc, custom_prompt, user["id"], agent_id))
+        await db.commit()
+    # Register in runtime AGENTS dict
+    AGENTS[fork_id] = {
+        "name": custom_name,
+        "emoji": original.get("emoji", "🤖"),
+        "color": original.get("color", "#6366f1"),
+        "description": custom_desc,
+        "system": custom_prompt,
+        "mcp_tools": original.get("mcp_tools", []),
+        "real_tools": original.get("real_tools", []),
+    }
+    return {"ok": True, "agent_id": fork_id, "name": custom_name}
 
 
 @app.get("/user/settings")
