@@ -3027,8 +3027,9 @@ function _applyMarkdown(text) {
     }).join('');
     return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
   });
-  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => `<img src="${url.replace(/&amp;/g,'&')}" alt="${alt}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;">`);
-  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, url) => `<a href="${url.replace(/&amp;/g,'&')}" target="_blank" rel="noopener">${txt}</a>`);
+  const _safeUrl = u => { const d = u.replace(/&amp;/g,'&').trim(); return /^(https?:|\/|\.)/i.test(d) ? d : '#blocked'; };
+  t = t.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => `<img src="${_safeUrl(url)}" alt="${alt}" style="max-width:100%;border-radius:8px;margin:6px 0;display:block;">`);
+  t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, txt, url) => `<a href="${_safeUrl(url)}" target="_blank" rel="noopener">${txt}</a>`);
   t = t.replace(/^[\*\-]\s(.+)$/gm, '<li>$1</li>');
   t = t.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
   t = t.replace(/^\d+\.\s(.+)$/gm, '<li>$1</li>');

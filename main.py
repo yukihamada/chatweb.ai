@@ -505,6 +505,16 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https: blob:; "
+        "connect-src 'self' https:; "
+        "font-src 'self' https:; "
+        "media-src 'self' blob:; "
+        "frame-ancestors 'none'"
+    )
     if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
@@ -1495,40 +1505,12 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
         except Exception as e:
             return f"E2B execution error: {e}"
-    # ── C10: Local fallback — subprocess sandbox (no in-process exec) ──
-    # exec() in the same process is inherently unsafe (type.__subclasses__,
-    # __class__.__mro__ etc. can escape any restricted_globals).
-    # Instead, run in a subprocess with resource limits.
-    try:
-        import tempfile, stat
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
-            tmp.write(code)
-            tmp_path = tmp.name
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                "python3", "-u", tmp_path,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                env={  # minimal env — no secrets leak
-                    "PATH": "/usr/bin:/usr/local/bin",
-                    "HOME": "/tmp",
-                    "PYTHONDONTWRITEBYTECODE": "1",
-                },
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=15)
-            out = stdout.decode(errors="replace")[:3000]
-            err = stderr.decode(errors="replace")[:1000]
-            result = out if out else "(実行完了、出力なし)"
-            if err:
-                result += f"\n[stderr] {err}"
-            return result
-        finally:
-            import os as _os
-            _os.unlink(tmp_path)
-    except asyncio.TimeoutError:
-        return "Local execution timed out (15s limit)"
-    except Exception as e:
-        return f"Local execution error: {e}"
+    # Local fallback — use shared sandboxed runner (no secrets in env)
+    r = await _run_sandboxed_python(code, timeout=15.0)
+    out = r["stdout"] if r["stdout"] else "(実行完了、出力なし)"
+    if r["stderr"]:
+        out += f"\n[stderr] {r['stderr']}"
+    return out
 
 
 async def tool_whisper_transcribe(audio_path: str) -> str:
@@ -1681,9 +1663,19 @@ async def tool_git_source(command: str) -> str:
     BLOCKED_GIT = ["git push --force", "git push -f", "git reset --hard", "git clean -f"]
     if any(b in command for b in BLOCKED_GIT):
         return f"Blocked destructive git op: {command}"
+    # Parse and use exec (not shell) to prevent injection
+    import shlex as _shlex
     try:
-        proc = await asyncio.create_subprocess_shell(
-            command, cwd=_APP_SOURCE_ROOT,
+        tokens = _shlex.split(command)
+    except ValueError:
+        return "Blocked: unable to parse git command"
+    # Block shell metacharacters
+    for meta in ["|", ";", "&", "`", "$("]:
+        if meta in command:
+            return f"Blocked: shell metacharacter '{meta}' not allowed in git commands"
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *tokens, cwd=_APP_SOURCE_ROOT,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
         out = stdout.decode(errors="replace")[:4000]
@@ -1921,9 +1913,13 @@ async def tool_shell(command: str, cwd: str = None) -> str:
     base_cmd = tokens[0].split("/")[-1]  # handle /usr/bin/python3 → python3
     if base_cmd not in ALLOWED_COMMANDS:
         return f"Blocked: '{base_cmd}' is not in the allowed commands list. Allowed: {', '.join(sorted(ALLOWED_COMMANDS))}"
-    # Extra safety: block destructive rm patterns
-    if base_cmd == "rm" and ("rf" in " ".join(tokens) and "/" == tokens[-1] if len(tokens) > 1 else False):
-        return "Blocked: dangerous rm command"
+    # Extra safety: block rm -rf with broad paths
+    if base_cmd == "rm" and any(f in tokens for f in ["-rf", "-fr", "--recursive"]):
+        # Block rm -rf on root-like or broad paths
+        targets = [t for t in tokens if not t.startswith("-") and t != "rm"]
+        for t in targets:
+            if t in ("/", "/*", ".", "..", "~") or t.startswith("/") and t.count("/") <= 1:
+                return f"Blocked: dangerous rm target '{t}'"
     try:
         work_dir = _safe_path(cwd or ".") if cwd else _WORKSPACE_ROOT
         # W6: Use exec (not shell) since tokens are already parsed — no shell injection
@@ -1958,25 +1954,30 @@ async def tool_git(command: str, cwd: str = None) -> str:
     return await tool_shell(command, cwd=cwd)
 
 async def tool_grep(pattern: str, path: str = ".", file_glob: str = "*") -> str:
-    """Search code for pattern using ripgrep or grep."""
+    """Search code for pattern using grep (subprocess_exec, no shell)."""
     try:
-        import shlex
         p = _safe_path(path)
-        cmd = f'grep -r --include={shlex.quote(file_glob)} -n -l {shlex.quote(pattern)} {shlex.quote(str(p))} 2>/dev/null | head -20'
-        proc = await asyncio.create_subprocess_shell(
-            cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        # Use exec instead of shell to prevent injection
+        proc = await asyncio.create_subprocess_exec(
+            "grep", "-r", f"--include={file_glob}", "-n", "-l", pattern, str(p),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=10)
         files = stdout.decode(errors="replace").strip()
         if not files:
             return f"No matches for '{pattern}' in {path}"
-        # Get actual lines for first few files
+        # Get actual lines for first few files (limit to 20 files, 10 lines each)
+        all_files = files.split("\n")[:20]
         results = []
-        for fpath in files.split("\n")[:5]:
-            cmd2 = f'grep -n {shlex.quote(pattern)} {shlex.quote(fpath.strip())} 2>/dev/null | head -10'
-            p2 = await asyncio.create_subprocess_shell(
-                cmd2, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        for fpath in all_files[:5]:
+            fp = fpath.strip()
+            if not fp:
+                continue
+            p2 = await asyncio.create_subprocess_exec(
+                "grep", "-n", pattern, fp,
+                stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
             out2, _ = await p2.communicate()
-            results.append(f"--- {fpath.strip()} ---\n{out2.decode(errors='replace')}")
+            lines = out2.decode(errors="replace").strip().split("\n")[:10]
+            results.append(f"--- {fp} ---\n" + "\n".join(lines))
         return "\n".join(results)
     except Exception as e:
         return f"grep error: {e}"
@@ -1997,35 +1998,42 @@ def sanitize_external_content(text: str, source: str = "external") -> str:
     sanitized = _INJECTION_PATTERNS.sub('[FILTERED]', str(text))
     return f"<external_content source=\"{source}\">\n{sanitized[:1500]}\n</external_content>"
 
-async def tool_code_executor(code: str) -> dict:
-    m = re.search(r"```(?:python)?\n([\s\S]+?)```", code)
-    if m:
-        code = m.group(1)
-    for b in BLOCKED_IMPORTS:
-        if b in code:
-            return {"ok": False, "stdout": "", "stderr": f"実行拒否: '{b}' は禁止", "exit_code": -1}
+async def _run_sandboxed_python(code: str, timeout: float = 10.0) -> dict:
+    """Run Python code in a sandboxed subprocess with minimal env (no secrets)."""
     with tempfile.NamedTemporaryFile(suffix=".py", mode="w", delete=False) as f:
         f.write(code)
         fname = f.name
     try:
         proc = await asyncio.create_subprocess_exec(
-            "python3", fname,
+            "python3", "-u", fname,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env={  # minimal env — no secrets leak
+                "PATH": "/usr/bin:/usr/local/bin",
+                "HOME": "/tmp",
+                "PYTHONDONTWRITEBYTECODE": "1",
+            },
         )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
         return {
             "ok": proc.returncode == 0,
-            "stdout": stdout.decode()[:2000],
-            "stderr": stderr.decode()[:500],
+            "stdout": stdout.decode(errors="replace")[:2000],
+            "stderr": stderr.decode(errors="replace")[:500],
             "exit_code": proc.returncode,
         }
     except asyncio.TimeoutError:
-        return {"ok": False, "stdout": "", "stderr": "タイムアウト (10秒超過)", "exit_code": -1}
+        return {"ok": False, "stdout": "", "stderr": f"タイムアウト ({timeout}秒超過)", "exit_code": -1}
     except Exception as e:
         return {"ok": False, "stdout": "", "stderr": str(e), "exit_code": -1}
     finally:
         os.unlink(fname)
+
+
+async def tool_code_executor(code: str) -> dict:
+    m = re.search(r"```(?:python)?\n([\s\S]+?)```", code)
+    if m:
+        code = m.group(1)
+    return await _run_sandboxed_python(code)
 
 
 async def tool_github_search(query: str) -> str:
@@ -3178,13 +3186,19 @@ async def tool_shinkansen_book_hitl(
 
 async def tool_fastlane_run(lane: str, platform: str = "ios", project_path: str = "") -> str:
     """Run a fastlane lane (simulated - generates the command and explains what it would do)."""
-    cmd = f"fastlane {platform} {lane}"
-    if project_path:
-        cmd = f"cd {project_path} && {cmd}"
+    import shlex as _shlex
+    # Sanitize inputs — only allow alphanumeric + underscore for lane/platform
+    import re as _re
+    if not _re.match(r'^[a-zA-Z0-9_\-]+$', lane):
+        return f"Blocked: invalid lane name '{lane}'"
+    if not _re.match(r'^[a-zA-Z0-9_\-]+$', platform):
+        return f"Blocked: invalid platform name '{platform}'"
+    tokens = ["fastlane", platform, lane]
+    work_dir = _safe_path(project_path) if project_path else None
 
     # Check if fastlane is available
-    proc = await asyncio.create_subprocess_shell(
-        "which fastlane",
+    proc = await asyncio.create_subprocess_exec(
+        "which", "fastlane",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -3192,19 +3206,18 @@ async def tool_fastlane_run(lane: str, platform: str = "ios", project_path: str 
     fastlane_path = stdout.decode().strip()
 
     if fastlane_path:
-        # Try to run (in real env with Xcode/Android SDK this would work)
         try:
-            proc = await asyncio.create_subprocess_shell(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *tokens,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=project_path or None,
+                cwd=str(work_dir) if work_dir else None,
             )
             out, err = await asyncio.wait_for(proc.communicate(), timeout=120)
             output = out.decode() + err.decode()
-            return f"✅ `{cmd}` 実行完了\n\n```\n{output[:2000]}\n```"
+            return f"✅ `{' '.join(tokens)}` 実行完了\n\n```\n{output[:2000]}\n```"
         except asyncio.TimeoutError:
-            return f"⏱️ `{cmd}` がタイムアウト (120s)"
+            return f"⏱️ `{' '.join(tokens)}` がタイムアウト (120s)"
         except Exception as e:
             return f"❌ 実行エラー: {e}"
     else:
@@ -9200,12 +9213,13 @@ async def admin_backup(token: str = ""):
         tmp_path = tmp.name
     shutil.copy2(db_path, tmp_path)
     from fastapi.responses import FileResponse
+    from starlette.background import BackgroundTask
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return FileResponse(
         tmp_path,
         media_type="application/octet-stream",
         filename=f"chatweb_backup_{ts}.db",
-        background=None,
+        background=BackgroundTask(os.unlink, tmp_path),
     )
 
 
@@ -13301,22 +13315,16 @@ try:
 except Exception as e:
     print(json.dumps({{"ok": False, "error": str(e)}}))
 """
+    # Use shared sandboxed runner (no env secrets leak)
+    sandbox_result = await _run_sandboxed_python(wrapper)
     try:
-        proc = await asyncio.create_subprocess_exec(
-            "python3", "-c", wrapper,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10.0)
-        output_str = stdout.decode().strip()
+        output_str = sandbox_result["stdout"].strip()
         if output_str:
             result = json.loads(output_str)
         else:
-            result = {"ok": False, "error": stderr.decode().strip() or "No output"}
-    except asyncio.TimeoutError:
-        result = {"ok": False, "error": "Execution timed out (10s limit)"}
-    except Exception as e:
-        result = {"ok": False, "error": str(e)}
+            result = {"ok": False, "error": sandbox_result["stderr"].strip() or "No output"}
+    except (json.JSONDecodeError, Exception) as e:
+        result = {"ok": False, "error": f"Parse error: {e}. Output: {sandbox_result['stdout'][:200]}"}
     return result
 
 
