@@ -19,7 +19,7 @@
     { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [
-    { "src": "/static/og-image.png", "sizes": "1200x630", "type": "image/svg+xml", "form_factor": "wide" }
+    { "src": "/static/og-image.png", "sizes": "1200x630", "type": "image/png", "form_factor": "wide" }
   ],
   "shortcuts": [
     {

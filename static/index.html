@@ -1169,14 +1169,6 @@ body {
         <button class="dropdown-item" onclick="setLanguage('es','ES','Español')">🇪🇸 Español</button>
         <button class="dropdown-item" onclick="setLanguage('de','DE','Deutsch')">🇩🇪 Deutsch</button>
         <button class="dropdown-item" onclick="setLanguage('pt','PT','Português')">🇧🇷 Português</button>
-        <button class="dropdown-item" onclick="setLanguage('ar','AR','العربية')">🇸🇦 العربية</button>
-        <button class="dropdown-item" onclick="setLanguage('hi','HI','हिन्दी')">🇮🇳 हिन्दी</button>
-        <button class="dropdown-item" onclick="setLanguage('th','TH','ไทย')">🇹🇭 ไทย</button>
-        <button class="dropdown-item" onclick="setLanguage('vi','VI','Tiếng Việt')">🇻🇳 Tiếng Việt</button>
-        <button class="dropdown-item" onclick="setLanguage('id','ID','Indonesia')">🇮🇩 Indonesia</button>
-        <button class="dropdown-item" onclick="setLanguage('ru','RU','Русский')">🇷🇺 Русский</button>
-        <button class="dropdown-item" onclick="setLanguage('it','IT','Italiano')">🇮🇹 Italiano</button>
-        <button class="dropdown-item" onclick="setLanguage('tr','TR','Türkçe')">🇹🇷 Türkçe</button>
       </div>
     </div>
     <!-- Model tier (moved to input area) -->
@@ -1262,7 +1254,7 @@ body {
           <div class="msg-ai-body">
             <div class="msg-ai-name">chatweb.ai</div>
             <div class="msg-ai-bubble" id="welcome-bubble">
-              <span id="welcome-typed"></span>
+              <span id="welcome-typed">chatweb.ai へようこそ</span>
             </div>
           </div>
         </div>
@@ -3289,6 +3281,8 @@ document.getElementById('file-input').addEventListener('change', (e) => {
 async function uploadFile(file) {
   const form = new FormData();
   form.append('file', file);
+  // Show uploading indicator
+  renderFileChip(file.name, true);
   try {
     const r = await fetch('/upload', { method: 'POST', body: form });
     if (r.ok) {
@@ -3297,7 +3291,6 @@ async function uploadFile(file) {
       _attachedFileName = file.name;
       renderFileChip(file.name);
     } else {
-      // Fallback: store file name only if server doesn't support /upload yet
       _attachedFileId   = 'local_' + Date.now();
       _attachedFileName = file.name;
       renderFileChip(file.name);
@@ -3309,12 +3302,12 @@ async function uploadFile(file) {
   }
 }
 
-function renderFileChip(name) {
+function renderFileChip(name, uploading = false) {
   const chips = document.getElementById('file-chips');
   chips.innerHTML = `
-    <div class="file-chip">
-      📎 ${escHtml(name)}
-      <button class="file-chip-del" onclick="clearAttachment()" title="削除">✕</button>
+    <div class="file-chip" style="${uploading ? 'opacity:0.6' : ''}">
+      ${uploading ? '<span class="sp-dot" style="margin-right:4px"></span>' : '📎'} ${escHtml(name)}${uploading ? ' ...' : ''}
+      <button class="file-chip-del" onclick="clearAttachment()" title="削除"${uploading ? ' disabled' : ''}>✕</button>
     </div>`;
 }
 
@@ -3371,7 +3364,9 @@ function toggleTheme() {
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
 }
 function loadTheme() {
-  if (localStorage.getItem('theme') === 'light') {
+  const saved = localStorage.getItem('theme');
+  const preferLight = saved === 'light' || (!saved && window.matchMedia('(prefers-color-scheme: light)').matches);
+  if (preferLight) {
     document.body.classList.add('light-mode');
     const btn = document.getElementById('theme-btn');
     if (btn) btn.textContent = '☀️';
