@@ -2464,6 +2464,8 @@ async def tool_site_deploy(html: str, subdomain: str = "", title: str = "", sess
     return {"ok": ok, "url": site_url, "subdomain": subdomain}
 
 async def tool_fly_deploy(app_name: str = "", cwd: str = None) -> dict:
+    if not _is_admin(_ctx_user_email.get()):
+        return {"ok": False, "error": "Fly.ioデプロイは管理者のみ利用できます"}
     args = ["fly", "deploy", "--remote-only"]
     if app_name:
         args += ["-a", app_name]
@@ -2471,6 +2473,8 @@ async def tool_fly_deploy(app_name: str = "", cwd: str = None) -> dict:
 
 
 async def tool_fly_status(app_name: str = "") -> str:
+    if not _is_admin(_ctx_user_email.get()):
+        return "Fly.ioは管理者のみ利用できます"
     args = ["fly", "status"]
     if app_name:
         args += ["-a", app_name]
@@ -2479,6 +2483,8 @@ async def tool_fly_status(app_name: str = "") -> str:
 
 
 async def tool_fly_logs(app_name: str = "", lines: int = 40) -> str:
+    if not _is_admin(_ctx_user_email.get()):
+        return "Fly.ioは管理者のみ利用できます"
     args = ["fly", "logs", "--no-tail"]
     if app_name:
         args += ["-a", app_name]

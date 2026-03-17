@@ -3114,36 +3114,34 @@ function onboardConnect() {
   const q = document.createElement('div');
   q.className = 'msg-container';
   q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>どうですか？エージェントが自動で選ばれて処理しました 🎉</strong><br><br>
-    次は<strong>スマホからもアクセス</strong>できるようにしましょう！<br>
-    LINEまたはTelegramを連携すると、いつでもAIに話しかけられます。<br><br>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardLinkCode()" type="button" style="min-height:40px">📱 LINE / Telegram を連携する</button>
-      <button class="chip" onclick="onboardAgent()" type="button" style="min-height:40px;opacity:0.7">⏩ スキップ</button>
+    <strong>いい感じですね！🎉</strong><br><br>
+    次は<strong>LINE / Telegram</strong>を連携しましょう。<br>
+    連携すると、スマホからいつでもAIに話しかけられます。<br>
+    さらに、気になるニュースや株価を<strong>毎朝自動で届ける</strong>こともできます。<br><br>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" class="chip" style="min-height:40px;background:#06c755;color:#fff;border-color:#06c755;text-decoration:none;font-weight:600">📱 LINEで友達追加</a>
+      <a href="https://t.me/chatweb_aichat_bot" target="_blank" class="chip" style="min-height:40px;background:#229ed9;color:#fff;border-color:#229ed9;text-decoration:none;font-weight:600">✈️ Telegramで開く</a>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">追加したら、ボットに何でも話しかけてみてください。</div>
+    <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 追加した！次へ</button>
+    <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
   </div></div>`;
   getMessages().appendChild(q);
   scrollToBottom();
 }
 
-async function onboardLinkCode() {
-  appendUserMsg('LINE / Telegram を連携する');
-  await showLinkCode();  // Show QR code modal
-  // After they close the modal, continue to agent creation
-  setTimeout(() => onboardAgent(), 3000);
-}
-
-function onboardAgent() {
+function onboardNotify() {
   const q = document.createElement('div');
   q.className = 'msg-container';
   q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>最後に、あなた専用のエージェントを作ってみましょう！</strong><br><br>
-    例えば「毎朝○○をして」「○○を自動化して」と話しかけるだけでエージェントが作れます。<br><br>
+    <strong>最後に、毎日届く通知を設定しましょう 📬</strong><br><br>
+    LINE / Telegramに、あなたが気になる情報を毎朝届けます。<br>
+    何を受け取りたいですか？<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardFinish('毎朝9時にLINEに今日のタスクと天気をまとめて送るエージェントを作って')" type="button" style="min-height:36px">🧩 毎朝LINE通知</button>
-      <button class="chip" onclick="onboardFinish('問い合わせメールを自動分類してLINEに通知するエージェントを作って')" type="button" style="min-height:36px">🧩 メール自動分類</button>
-      <button class="chip" onclick="onboardFinish('毎週金曜にKPIレポートをまとめてTelegramに送るエージェントを作って')" type="button" style="min-height:36px">🧩 週次レポート</button>
-      <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:40px;opacity:0.5">あとで作る</button>
+      <button class="chip" onclick="onboardFinish('毎朝9時にAI・テックニュースのまとめをLINEに送って')" type="button" style="min-height:36px">📰 AIニュースまとめ</button>
+      <button class="chip" onclick="onboardFinish('毎朝9時にNVIDIA・Apple・Googleの株価をLINEに送って')" type="button" style="min-height:36px">💹 気になる株価</button>
+      <button class="chip" onclick="onboardFinish('毎朝9時に今日の天気と予定をまとめてLINEに送って')" type="button" style="min-height:36px">🌤️ 天気と予定</button>
+      <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:36px;opacity:0.5">あとで設定する</button>
     </div>
   </div></div>`;
   getMessages().appendChild(q);
@@ -3158,8 +3156,9 @@ function onboardFinish(msg) {
     const done = document.createElement('div');
     done.className = 'msg-container';
     done.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-      セットアップ完了です！🚀<br>
-      何でも聞いてくださいね。メニューの 🧩 からエージェントの管理もできます。
+      セットアップ完了！🚀<br><br>
+      これからLINE / Telegramに毎朝届きます。<br>
+      何でも聞いてくださいね。メニューの ⏰ からスケジュールの変更もできます。
     </div></div>`;
     getMessages().appendChild(done);
     scrollToBottom();
@@ -3171,7 +3170,7 @@ function onboardFinishSkip() {
   const doneQ = document.createElement('div');
   doneQ.className = 'msg-container';
   doneQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    了解です！いつでもメニューの 🧩 エージェント管理 から作れます。<br>
+    了解です！いつでもメニューから設定できます。<br>
     何でも聞いてくださいね 🚀
   </div></div>`;
   getMessages().appendChild(doneQ);
