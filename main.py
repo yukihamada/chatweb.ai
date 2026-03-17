@@ -3375,20 +3375,32 @@ async def tool_send_telegram(text: str) -> dict:
         return {"channel": "Slack→Telegram(デモ)", "ok": False, "error": str(e)}
 
 
-async def tool_send_line(text: str) -> dict:
+async def tool_send_line(text: str, user_id: str = "") -> dict:
+    # Determine LINE user ID: current user's linked LINE, or admin fallback
+    line_uid = user_id
+    if not line_uid:
+        # Try to get from current user context
+        _email = _ctx_user_email.get()
+        if _email:
+            try:
+                async with db_conn() as db:
+                    async with db.execute("SELECT line_user_id FROM users WHERE email=?", (_email,)) as c:
+                        row = await c.fetchone()
+                        if row and row[0]:
+                            line_uid = row[0]
+            except Exception:
+                pass
+    if not line_uid:
+        line_uid = LINE_USER_ID  # admin fallback
+    if not line_uid:
+        return {"channel": "LINE", "ok": False, "error": "LINE連携がされていません"}
     try:
-        async with httpx.AsyncClient() as h:
-            r = await h.post(
-                "https://api.line.me/v2/bot/message/push",
-                headers={"Authorization": f"Bearer {LINE_TOKEN}", "Content-Type": "application/json"},
-                json={"to": LINE_USER_ID, "messages": [{"type": "text", "text": text[:2000]}]},
-                timeout=10,
-            )
-        if r.status_code == 200:
-            return {"channel": "LINE", "ok": True, "status": 200}
-        log.warning(f"LINE {r.status_code}, falling back to Telegram")
+        r = await line_push(line_uid, text[:4500])
+        if r.get("ok"):
+            return {"channel": "LINE", "ok": True, "to": line_uid[:8] + "...", "status": 200}
+        log.warning(f"LINE send failed, falling back to Telegram")
         tg = await tool_send_telegram(f"[LINE→Telegram fallback]\n{text}")
-        return {**tg, "channel": "LINE→Telegram(fallback)", "line_status": r.status_code}
+        return {**tg, "channel": "LINE→Telegram(fallback)"}
     except Exception as e:
         tg = await tool_send_telegram(f"[LINE fallback]\n{text}")
         return {**tg, "channel": "LINE→Telegram(fallback)", "error": str(e)}
@@ -4355,7 +4367,8 @@ AGENTS = {
 あなたが動いているシステム「chatweb.ai」は、複数のAIエージェントが協調するマルチエージェントプラットフォームです。
 - URL: https://chatweb.ai
 - 搭載エージェント: research(情報収集)・code(コード生成)・qa(ブラウザ操作)・schedule(スケジュール)・notify(通知)・analyst(データ分析)・legal(法務)・finance(金融)・critic(批評)・synthesizer(統合)・image(画像生成)・travel(旅行)・deployer(Fly.ioデプロイ)・devops(GitHub)・mobile(fastlane/iOS)
-- 機能: SSEストリーミング・長期記憶・マルチエージェント並列実行・Telegram/LINEボット・ファイルアップロード・画像生成・サイト自動生成デプロイ・スケジュールタスク・カスタムエージェント作成・PWA対応
+- 機能: SSEストリーミング・長期記憶・マルチエージェント連携・LINE/Telegramボット（標準機能）・ファイルアップロード・画像/動画生成・サイト公開(xxx.chatweb.ai)・スケジュールタスク・カスタムエージェント作成
+- LINE/Telegram連携はchatweb.aiの**標準機能**です。外部サービスではありません。開発工数は不要です。
 - 「chatweb.aiとは？」と聞かれたらこの情報を基に回答してください。
 
 【最重要: 字数・語数制約】
@@ -6960,10 +6973,27 @@ async def run_tools_for_agent(agent_id: str, message: str, queue, session_id: st
                 await emit("shell", "done", real=True)
 
     elif agent_id == "notify":
-        # Inject user's email so notify agent knows who "自分" is
+        # Inject user's email and LINE/TG link status
         user_email = _ctx_user_email.get()
         if user_email:
-            results["user_context"] = f"ログインユーザーのメールアドレス: {user_email}（宛先未指定の場合はこのアドレスに送信してください）"
+            line_linked = False
+            tg_linked = False
+            try:
+                async with db_conn() as db:
+                    async with db.execute("SELECT line_user_id, telegram_chat_id FROM users WHERE email=?", (user_email,)) as c:
+                        _row = await c.fetchone()
+                        if _row:
+                            line_linked = bool(_row[0])
+                            tg_linked = bool(_row[1])
+            except Exception:
+                pass
+            ctx = f"ログインユーザー: {user_email}\n"
+            ctx += f"LINE連携: {'✅ 連携済み（LINEに直接送信可能）' if line_linked else '❌ 未連携'}\n"
+            ctx += f"Telegram連携: {'✅ 連携済み' if tg_linked else '❌ 未連携'}\n"
+            if line_linked:
+                ctx += "→ 「LINEに送って」と言われたら送信チャネル: LINEで送信してください。chatweb.aiのLINE送信は標準機能です。\n"
+            ctx += f"→ 宛先未指定の場合: {'LINE' if line_linked else 'Gmail (' + user_email + ')'}に送信"
+            results["user_context"] = ctx
         # Zapier integration if available
         if ZAPIER_WEBHOOK_URL and re.search(r'zapier|webhook|自動化|オートメーション', message, re.I):
             await emit("zapier", "calling", real=True)
