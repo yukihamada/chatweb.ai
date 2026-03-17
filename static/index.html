@@ -1774,7 +1774,7 @@ function appendAiMsg(text, agentId = 'research', agentName = 'AI', realTools = [
   div.innerHTML = `
     <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
     <div class="msg-ai-body">
-      <div class="msg-ai-name">${agentName}</div>
+      <div class="msg-ai-name">${stripEmojiFromName(agentName)}</div>
       <div class="msg-ai-bubble">${renderMarkdown(text)}</div>
       <div class="msg-ai-footer">${badge}${qbadge}</div>
     </div>`;
@@ -1823,7 +1823,7 @@ function startStreamBubble(agentId, agentName) {
     <div class="msg-ai-avatar" style="background:${getAgentBg(agentId)}">${getAgentEmoji(agentId)}</div>
     <div class="msg-ai-body">
       <div class="msg-ai-name" style="display:flex;align-items:center;gap:8px">
-        ${agentName}
+        ${stripEmojiFromName(agentName)}
         <span data-stream-stats="${seq}" style="font-size:10px;color:var(--muted);font-weight:400"></span>
       </div>
       <div class="msg-ai-bubble streaming" data-stream-content="${seq}"><span class="cursor"></span></div>
@@ -1936,7 +1936,7 @@ function appendPlanCard(id, steps) {
       <div class="plan-step">
         <div class="plan-num idle" id="${id}_n${i}">${i+1}</div>
         <div class="plan-step-info">
-          <div class="plan-step-agent" style="color:${agents[s.agent_id]?.color||'#fff'}">${s.agent_name}</div>
+          <div class="plan-step-agent" style="color:${agents[s.agent_id]?.color||'#fff'}">${stripEmojiFromName(s.agent_name)}</div>
           <div class="plan-step-task">${escHtml(s.task.slice(0,80))}</div>
         </div>
       </div>`).join('')}`;
@@ -1994,7 +1994,7 @@ function appendHITLCard(taskId, agentName, draft, agentId) {
   div.id = 'hitl_' + taskId;
   div.className = 'hitl-card';
   div.innerHTML = `
-    <div class="hitl-header">⚠️ 承認が必要 — ${agentName}</div>
+    <div class="hitl-header">⚠️ 承認が必要 — ${stripEmojiFromName(agentName)}</div>
     <div class="hitl-sub">以下の内容を実行します。よろしいですか？</div>
     <div class="hitl-draft">${renderMarkdown(draft)}</div>
     <div class="hitl-actions">
@@ -2271,9 +2271,9 @@ async function sendMessage() {
         currentAgentId = data.agent_id;
         setAgentBusy(data.agent_id, true);
         stats.agent = data.agent_name;
-        document.getElementById('s-agent').textContent = data.agent_name;
+        document.getElementById('s-agent').textContent = stripEmojiFromName(data.agent_name);
         // Don't change pill — keep "エージェント自動選択" unless user explicitly chose
-        setStatus(`${data.agent_name} が処理中 (${Math.round(data.confidence*100)}%)`);
+        setStatus(`${stripEmojiFromName(data.agent_name)} が処理中 (${Math.round(data.confidence*100)}%)`);
         addTraceRow(traceCardId, `→ ${data.agent_name} (信頼度 ${Math.round(data.confidence*100)}%)`, 'done');
         break;
 
@@ -2349,9 +2349,9 @@ async function sendMessage() {
       case 'agent_start':
         currentAgentId = data.agent_id;
         setAgentBusy(data.agent_id, true);
-        document.getElementById('s-agent').textContent = data.agent_name;
+        document.getElementById('s-agent').textContent = stripEmojiFromName(data.agent_name);
         updatePlanStep(planCardId, data.index, 'active');
-        setStatus(`${data.agent_name} が処理中…`);
+        setStatus(`${stripEmojiFromName(data.agent_name)} が処理中…`);
         break;
 
       case 'agent_done':
@@ -2368,7 +2368,7 @@ async function sendMessage() {
             <details ${isLow ? '' : 'open'} style="border:1px solid var(--border);border-radius:10px;padding:0;background:var(--surface);overflow:hidden">
               <summary style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px">
                 <span>${getAgentEmoji(data.agent_id)}</span>
-                <strong>${escHtml(data.agent_name)}</strong>
+                <strong>${escHtml(stripEmojiFromName(data.agent_name))}</strong>
                 <span style="font-size:11px;color:var(--muted);margin-left:auto">${score ? '★'+score+'/10' : ''}</span>
               </summary>
               <div style="padding:4px 14px 12px;font-size:13px" class="msg-ai-bubble">${renderMarkdown(data.response)}</div>
@@ -2767,7 +2767,10 @@ function renderMarkdownStreaming(text) {
 }
 
 function getAgentEmoji(id) {
-  return { research:'🔍', code:'⚙️', qa:'🌐', schedule:'📅', notify:'📨', analyst:'📊', legal:'⚖️', finance:'💹', critic:'🎯', synthesizer:'🔮', deployer:'🚀', devops:'🛠️', mobile:'📱', image:'🎨', travel:'🚄', coder:'💻', rag:'📚', sql:'🗄️', gmail:'📧', calendar:'📅', drive:'💾', sheets:'📊', docs:'📝', contacts:'👥', tasks:'✅' }[id] || '◈';
+  return { research:'🔍', code:'⚙️', qa:'🌐', schedule:'📅', notify:'📨', analyst:'📊', legal:'⚖️', finance:'💹', critic:'🎯', synthesizer:'🔮', deployer:'🚀', devops:'🛠️', mobile:'📱', image:'🎨', travel:'🚄', coder:'💻', rag:'📚', sql:'🗄️', gmail:'📧', calendar:'📅', drive:'💾', sheets:'📊', docs:'📝', contacts:'👥', tasks:'✅', video:'🎬', beds24:'🏨', site_publisher:'🌐', presentation:'🎤', crm:'💼', sns:'📣', meeting:'📝' }[id] || '◈';
+}
+function stripEmojiFromName(name) {
+  return (name || '').replace(/^[\p{Emoji}\p{Emoji_Presentation}\p{Emoji_Modifier_Base}\p{Emoji_Component}\s]+/u, '').trim();
 }
 
 // ── Agent Detail & Edit ───────────────────────────────────────────────────────
