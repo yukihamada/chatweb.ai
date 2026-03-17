@@ -2342,6 +2342,12 @@ function toggleInputTierMenu() {
 async function selectInputTier(tier) {
   document.getElementById('input-tier-menu').style.display = 'none';
   if (tier === _currentTier) return;
+  // Block non-cheap tiers when credit < $1
+  const balance = currentUser?.credit_balance ?? 0;
+  if (tier !== 'cheap' && balance < 1.0) {
+    showToast(`クレジット残高が$1未満のため高速モードのみ利用できます。プランをアップグレードしてください。`);
+    return;
+  }
   try {
     const r = await fetch('/settings/tier', {
       method: 'POST',
@@ -3798,15 +3804,19 @@ async function loadDashboard() {
 
 function renderDashboard(d) {
   const content = document.getElementById('dashboard-content');
-  const totalRuns  = d.total_runs  ?? stats.msg;
-  const totalCost  = d.total_cost_usd != null ? (d.total_cost_usd < 0.01 ? `$${(d.total_cost_usd*1000).toFixed(3)}m` : `$${d.total_cost_usd.toFixed(4)}`) : `$${_sessionCost.toFixed(4)}`;
-  const avgResp    = d.avg_response_ms != null ? d.avg_response_ms + 'ms' : (d.avg_tool_latency_ms != null ? d.avg_tool_latency_ms + 'ms' : '—');
+  const ss = d.system_stats || {};
+  const totalRuns  = ss.total_runs ?? d.total_runs ?? stats.msg;
+  const totalCostNum = ss.total_cost_usd ?? d.total_cost_usd ?? _sessionCost;
+  const totalCost  = `$${totalCostNum.toFixed(4)}`;
+  const avgResp    = ss.avg_response_sec ? ss.avg_response_sec + 's' : (d.avg_response_ms != null ? d.avg_response_ms + 'ms' : '—');
   const agentCosts = d.cost_by_agent   || {};
   const dailyUsage = d.daily_usage     || [];
   const topMsgs    = d.top_messages    || [];
 
-  const agentLabels = Object.keys(agentCosts);
-  const agentValues = Object.values(agentCosts);
+  const creditBalance = currentUser?.credit_balance ?? 0;
+  const costByAgent = d.cost_by_agent || [];
+  const agentLabels = costByAgent.map(a => a.agent_id);
+  const agentValues = costByAgent.map(a => a.total_cost_usd || 0);
 
   const dailyLabels = dailyUsage.map(x => x.date || x.day || '');
   const dailyCounts = dailyUsage.map(x => x.count || x.runs || 0);
