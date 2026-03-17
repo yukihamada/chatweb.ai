@@ -8041,8 +8041,8 @@ async def _auto_backup_db():
             )
             for old in backups[:-14]:
                 os.remove(os.path.join(backup_dir, old))
-            # Notify admin on first backup and weekly thereafter
-            if cycle == 0 or cycle % 7 == 0:
+            # Notify admin weekly only (not on every restart)
+            if cycle > 0 and cycle % 7 == 0:
                 await _notify_admin_linked(
                     f"💾 DB自動バックアップ完了\nサイズ: {size_mb:.1f} MB\n保存先: {dest}\n保持数: {min(len(backups), 14)}世代")
         except Exception as e:

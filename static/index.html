@@ -1447,6 +1447,7 @@ let activeTab  = 'agents';
 let stats = { msg:0, a2a:0, mcp:0, hitl:0, quality:[], agent:'—' };
 
 let isStreaming = false;
+let _abortController = null;
 let currentStreamEl   = null;
 let currentStreamText = '';
 let currentAgentId    = null;
@@ -2055,58 +2056,54 @@ function autoResize(ta) {
 // ── Quick Chips — ペルソナ対応・編集可能 ──────────────────────────────
 const _CHIPS_BY_ROLE = {
   'エンジニア': [
-    "⚙️ FastAPI+JWT+SQLiteのCRUD APIを書いて実行して",
-    "⚙️ Pythonで売上CSVデータの月別集計と利益率を計算して実行して",
-    "⚙️ GitHub Actionsでtest→build→deployのCI/CDを書いて",
-    "🌐 QRコード生成ツールを作ってchatweb.aiで公開して",
-    "⚙️ yukihamada/chatweb.aiのGitHub情報を取得して表示するスクリプトを書いて実行して",
+    "⚙️ 1から100までの合計を計算して実行して",
+    "⚙️ 今日の日付と曜日をPythonで表示して実行して",
+    "🌐 ストップウォッチを作ってchatweb.aiで公開して",
+    "🌐 パスワード生成ツールを作ってchatweb.aiで公開して",
+    "📊 chatweb.aiのGitHubリポジトリ情報を調べて",
   ],
   '経営者・マネージャー': [
-    "📊 競合3社の強み・弱みを調べてSWOT分析して",
-    "📝 MTGメモ「9/15リリース、佐藤FE、鈴木API」→ 議事録にして",
     "💹 今日のNVIDIA・Apple・Googleの株価をまとめて",
-    "🎤 投資家向けピッチデック10枚を作って公開して",
-    "📧 取引先の山田さんに提案フォローメールを書いて",
+    "📝 「9/15リリース、佐藤FE、鈴木API、予算120万」→ 議事録にして",
+    "📊 Notion・Asana・Mondayの料金と機能を比較表にして",
+    "🎤 chatweb.ai紹介スライドを作って公開して",
+    "📧 来週の会議リマインドメールを自分宛に送って",
   ],
   'マーケター': [
-    "📣 新機能リリースのX投稿を3パターン書いて",
-    "📣 LinkedIn用の創業者プロフィールを書いて",
-    "📊 先月のマーケ施策の効果をデータ分析してレポートにして",
-    "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
-    "📧 先週デモした顧客にフォローメールを書いて送って",
+    "📣 「AIで業務効率50%改善」のX投稿を3パターン書いて",
+    "🌐 セミナー告知ページを作ってchatweb.aiで公開して",
+    "📊 ChatGPT・Claude・Geminiの料金を比較表にして",
+    "🎬 新サービス紹介の15秒動画を作って",
+    "📧 セミナー参加者へのお礼メールを自分宛に下書きして",
   ],
   '営業': [
-    "📧 取引先の山田さんに初回営業メールを書いて",
-    "💼 値段が高いと言われた時の営業トーク5パターン書いて",
-    "💼 展示会の名刺リストからフォローメール3通書いて",
-    "📝 今日の商談メモを議事録にしてTODO整理して",
-    "📊 競合3社の製品・価格を調べて比較表にして",
+    "💼 「御社の課題を解決できます」初回営業メールを書いて",
+    "💼 「高い」と言われた時の切り返し5パターン書いて",
+    "📊 Salesforce・HubSpot・Zohoの料金を比較表にして",
+    "📝 「田中様と商談、予算500万、来月決裁」→ 議事録にして",
+    "💹 今日の日経平均とドル円を教えて",
   ],
   'デザイナー': [
-    "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
-    "🌐 ポートフォリオサイトを作ってchatweb.aiで公開して",
-    "🌐 BMI計算機をダークテーマで作って公開して",
-    "📣 Instagram 1週間コンテンツカレンダーを作って",
-    "🔍 https://chatweb.ai のスクショを撮って改善点を教えて",
+    "🎨 chatweb.aiのロゴを紫×ミニマルで生成して",
+    "🌐 カフェのメニュー表をおしゃれに作って公開して",
+    "🎬 ロゴが回転するアニメーション動画を作って",
+    "🔍 https://chatweb.ai のスクショを撮ってUI改善点を教えて",
+    "📣 Instagramの1週間投稿カレンダーを作って",
   ],
 };
 const _CHIPS_COMMON = [
-  "📱 LINEを連携して毎朝ニュースを届けてほしい",
-  "📱 Telegramを連携して通知を受け取りたい",
-  "💹 今日のNVIDIA・Apple・Googleの株価をまとめて",
-  "📊 競合3社の強み・弱みを調べてSWOT分析して",
-  "📧 取引先の山田さんに提案フォローメールを書いて",
-  "📝 MTGメモ「9/15リリース、佐藤FE、鈴木API」→ 議事録にして",
-  "🌐 QRコード生成ツールを作ってchatweb.aiで公開して",
-  "⚖️ SaaS利用規約を日本法準拠で作って",
-  "📣 新機能リリースのX投稿を3パターン書いて",
-  "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
-  "🎬 猫がボールで遊んでいる動画を作って",
-  "🚄 来週火曜の東京→名古屋の新幹線を検索して",
-  "📅 今日15時にチームMTGをGoogleカレンダーに入れて",
-  "📅 毎朝9時にAIニュースまとめをLINEに届けて",
-  "⚙️ Pythonでパスワードを5個生成して実行して",
-  "⚙️ このデータの平均・中央値・標準偏差を計算して実行して",
+  "💹 今日のNVIDIA・Apple・Googleの株価を教えて",
+  "🌐 QRコード生成ツールを作って公開して",
+  "🎨 かわいい猫のイラストを生成して",
+  "🎬 桜が舞う春の風景動画を作って",
+  "📝 「9/15リリース、佐藤FE、鈴木API」→ 議事録にして",
+  "⚖️ SaaS利用規約を日本法で作って",
+  "⚙️ 1+1を計算して実行して",
+  "📣 「AI導入で売上2倍」のX投稿を書いて",
+  "🚄 明日の東京→大阪の新幹線を検索して",
+  "📅 毎朝AIニュースをLINEに届けて",
+  "🔍 https://chatweb.ai のスクショを撮って",
+  "📧 来週のMTGリマインドを自分にメールして",
 ];
 
 function initQuickChips() {
@@ -2187,7 +2184,11 @@ async function sendMessage() {
   if (!msg) return;
   _lastUserMsg = msg;
   isStreaming = true;
-  document.getElementById('sendBtn').disabled = true;
+  _abortController = new AbortController();
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = false;
+  sendBtn.innerHTML = '⬛';
+  sendBtn.onclick = () => { _abortController.abort(); sendBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'; sendBtn.onclick = () => sendMessage(); };
   input.value = ''; input.style.height = 'auto';
   stats.msg++; document.getElementById('s-msg').textContent = stats.msg;
 
@@ -2216,6 +2217,7 @@ async function sendMessage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(_body),
+      signal: _abortController?.signal,
     });
     if (resp.status === 401) { showLoginGate(); openLoginModal(); return; }
     const reader = resp.body.getReader();
@@ -2243,12 +2245,16 @@ async function sendMessage() {
   } finally {
     setStatus('');
     isStreaming = false;
+    _abortController = null;
     // Clear attachments
     _attachedImageData = null;
     _attachedFileId = null;
     _attachedFileName = null;
     document.getElementById('file-chips').innerHTML = '';
-    document.getElementById('sendBtn').disabled = false;
+    const _sb = document.getElementById('sendBtn');
+    _sb.disabled = false;
+    _sb.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+    _sb.onclick = () => sendMessage();
     if (currentAgentId) setAgentBusy(currentAgentId, false);
     currentStreamEl = null; currentStreamText = '';
   }
