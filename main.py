@@ -1487,26 +1487,38 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
         except Exception as e:
             return f"E2B execution error: {e}"
-    # Local fallback with restricted exec
+    # ── C10: Local fallback — subprocess sandbox (no in-process exec) ──
+    # exec() in the same process is inherently unsafe (type.__subclasses__,
+    # __class__.__mro__ etc. can escape any restricted_globals).
+    # Instead, run in a subprocess with resource limits.
     try:
-        restricted_globals = {"__builtins__": {"print": print, "range": range, "len": len,
-                                                "str": str, "int": int, "float": float,
-                                                "list": list, "dict": dict, "tuple": tuple,
-                                                "bool": bool, "type": type, "enumerate": enumerate,
-                                                "zip": zip, "map": map, "filter": filter,
-                                                "sum": sum, "min": min, "max": max, "abs": abs,
-                                                "round": round, "sorted": sorted, "reversed": reversed}}
-        import io as _io
-        _stdout_capture = _io.StringIO()
-        import sys as _sys
-        _old_stdout = _sys.stdout
-        _sys.stdout = _stdout_capture
+        import tempfile, stat
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
+            tmp.write(code)
+            tmp_path = tmp.name
         try:
-            exec(code, restricted_globals)
+            proc = await asyncio.create_subprocess_exec(
+                "python3", "-u", tmp_path,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env={  # minimal env — no secrets leak
+                    "PATH": "/usr/bin:/usr/local/bin",
+                    "HOME": "/tmp",
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                },
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=15)
+            out = stdout.decode(errors="replace")[:3000]
+            err = stderr.decode(errors="replace")[:1000]
+            result = out if out else "(実行完了、出力なし)"
+            if err:
+                result += f"\n[stderr] {err}"
+            return result
         finally:
-            _sys.stdout = _old_stdout
-        output = _stdout_capture.getvalue()
-        return output or "(実行完了、出力なし)"
+            import os as _os
+            _os.unlink(tmp_path)
+    except asyncio.TimeoutError:
+        return "Local execution timed out (15s limit)"
     except Exception as e:
         return f"Local execution error: {e}"
 
@@ -1873,12 +1885,37 @@ async def tool_file_list(path: str = ".") -> str:
         return f"file_list error: {e}"
 
 async def tool_shell(command: str, cwd: str = None) -> str:
-    """Run shell command in workspace. Blocks dangerous commands."""
-    BLOCKED = ["rm -rf /", ":(){ :|:& };:", "mkfs", "dd if=", "> /dev/sda",
-               "chmod 777 /", "curl.*|.*sh", "wget.*|.*sh"]
-    for b in BLOCKED:
-        if b in command:
-            return f"Blocked dangerous command: {b}"
+    """Run shell command in workspace. Allowlist-based — only safe commands permitted."""
+    import shlex
+    # ── C9: Allowlist approach (blocklist is trivially bypassable) ──
+    ALLOWED_COMMANDS = {
+        "ls", "cat", "head", "tail", "wc", "grep", "find", "echo", "pwd",
+        "date", "env", "whoami", "uname", "df", "du", "file", "sort",
+        "uniq", "cut", "tr", "sed", "awk", "diff", "tree", "less", "more",
+        "python3", "python", "pip", "node", "npm", "npx",
+        "git", "gh", "fly", "flyctl", "curl", "wget", "jq",
+        "tar", "zip", "unzip", "gzip", "gunzip",
+        "mkdir", "touch", "cp", "mv", "rm", "chmod", "ln",
+        "docker", "docker-compose",
+        "pytest", "ruff", "black", "mypy", "cargo", "rustc",
+    }
+    # Parse first token (the command binary) — reject pipes/chains/subshells
+    SHELL_METACHARS = {"|", ";", "&", "`", "$(",  "$(", ">>", "<<"}
+    for meta in SHELL_METACHARS:
+        if meta in command:
+            return f"Blocked: shell metacharacter '{meta}' not allowed. Use separate tool_shell calls instead."
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return "Blocked: unable to parse command"
+    if not tokens:
+        return "Blocked: empty command"
+    base_cmd = tokens[0].split("/")[-1]  # handle /usr/bin/python3 → python3
+    if base_cmd not in ALLOWED_COMMANDS:
+        return f"Blocked: '{base_cmd}' is not in the allowed commands list. Allowed: {', '.join(sorted(ALLOWED_COMMANDS))}"
+    # Extra safety: block destructive rm patterns
+    if base_cmd == "rm" and ("rf" in " ".join(tokens) and "/" == tokens[-1] if len(tokens) > 1 else False):
+        return "Blocked: dangerous rm command"
     try:
         work_dir = _safe_path(cwd or ".") if cwd else _WORKSPACE_ROOT
         proc = await asyncio.create_subprocess_shell(
@@ -2281,9 +2318,40 @@ async def tool_browser_close(session_id: str) -> dict:
     return {"ok": True}
 
 
+def _is_url_safe(url: str) -> bool:
+    """W7: SSRF prevention — block internal/private/metadata IPs."""
+    import ipaddress
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        hostname = parsed.hostname or ""
+        # Block common metadata endpoints
+        if hostname in ("169.254.169.254", "metadata.google.internal",
+                        "metadata.internal", "100.100.100.200"):
+            return False
+        # Block non-http(s) schemes
+        if parsed.scheme not in ("http", "https"):
+            return False
+        # Resolve hostname and check if private
+        import socket
+        try:
+            addrs = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            for _, _, _, _, sockaddr in addrs:
+                ip = ipaddress.ip_address(sockaddr[0])
+                if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                    return False
+        except (socket.gaierror, ValueError):
+            return False  # can't resolve → block
+        return True
+    except Exception:
+        return False
+
+
 async def _fast_fetch(url: str) -> tuple[str, str] | None:
     """httpxで高速HTML取得。JSが不要なページはブラウザ不要。
     Returns (title, text) or None if fetch failed / likely JS-heavy."""
+    if not _is_url_safe(url):
+        return None
     try:
         async with httpx.AsyncClient(follow_redirects=True, timeout=8, verify=False) as h:
             r = await h.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; A2ABot/1.0)"})
@@ -2340,6 +2408,9 @@ async def tool_browser_screenshot(url: str) -> dict:
 
 async def tool_browser_navigate(url: str) -> str:
     """httpx高速パス → 失敗時のみブラウザ（10〜100倍速）"""
+    # ── W7: SSRF prevention ────────────────────────────────────────────────
+    if not _is_url_safe(url):
+        return f"Blocked: URL '{url}' resolves to a private/internal address (SSRF prevention)"
     # ── Fast path: httpx (no browser) ──────────────────────────────────────
     result = await _fast_fetch(url)
     if result:
