@@ -926,16 +926,18 @@ _LINE_QUICK_ITEMS = [
 ]
 
 
+def _strip_think_tags(text: str) -> str:
+    """Remove <think> tags from any AI output."""
+    text = re.sub(r'<think>[\s\S]*?</think>', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'<think>[\s\S]*$', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
 def _clean_for_messenger(text: str) -> str:
     """Clean AI response for LINE/Telegram: remove <think> tags, trim length."""
-    # Remove <think>...</think> blocks
-    text = re.sub(r'<think>[\s\S]*?</think>', '', text, flags=re.IGNORECASE)
-    # Remove unclosed <think>
-    text = re.sub(r'<think>[\s\S]*$', '', text, flags=re.IGNORECASE)
+    text = _strip_think_tags(text)
     # Remove markdown headers (# ## ###)
     text = re.sub(r'^#{1,3}\s+', '', text, flags=re.MULTILINE)
-    # Clean up excessive newlines
-    text = re.sub(r'\n{3,}', '\n\n', text)
     # Trim to messenger limit (LINE=5000, TG=4096)
     if len(text) > 3500:
         text = text[:3497] + "..."
@@ -6454,7 +6456,7 @@ PLANNER_PROMPT = """マルチエージェントプランナー。タスクが複
 - rag: ドキュメント検索
 - sql: データベース・CSV分析
 - gmail/calendar/drive/sheets/docs/contacts/tasks: Google Workspace操作
-- coder: ファイル操作・シェル実行
+- coder: ファイル操作（管理者専用、プランナーは使わない）
 - sns: SNS投稿文・コピーライティング・マーケティングコンテンツ
 - meeting: 議事録・会議メモ・アクションアイテム抽出
 - presentation: スライド・プレゼン資料・発表用HTML
@@ -7662,7 +7664,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         await save_hitl_task(hitl_task_id, agent_id, agent["name"], message, draft, session_id)
 
     return {
-        "response": draft,
+        "response": _strip_think_tags(draft),
         "hitl_task_id": hitl_task_id,
         "used_real_tools": list(tool_results.keys()) + (["code_executor"] if exec_info else []),
         "screenshots": screenshots,
