@@ -3684,7 +3684,7 @@ def _google_oauth_url(state: str = "default", scopes: list = None) -> str:
         )
         flow.redirect_uri = f"{os.getenv('APP_BASE_URL','https://chatweb.ai')}/auth/google/callback"
         auth_url, _ = flow.authorization_url(
-            access_type="offline", include_granted_scopes="true", state=state, prompt="consent"
+            access_type="offline", state=state, prompt="consent"
         )
         # Save code_verifier and scopes for callback
         if getattr(flow, "code_verifier", None):
