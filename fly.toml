@@ -15,8 +15,8 @@ primary_region = "nrt"
   min_machines_running = 1
   [http_service.concurrency]
     type = "connections"
-    hard_limit = 25
-    soft_limit = 20
+    hard_limit = 100
+    soft_limit = 80
 
   [[http_service.checks]]
     interval = "30s"

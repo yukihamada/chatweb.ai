@@ -333,7 +333,7 @@ async def a2a_jsonrpc(request: Request):
     req_id = body.get("id")
 
     if method == "SendMessage":
-        return JSONResponse(await _a2a_send_message(params, request))
+        return JSONResponse(await _a2a_send_message(params, req_id))
     elif method == "GetTask":
         task_id = params.get("id", "")
         task = _a2a_tasks.get(task_id)
@@ -361,9 +361,8 @@ async def a2a_jsonrpc(request: Request):
     else:
         return JSONResponse(_jsonrpc_error(-32601, f"Method not found: {method}", req_id))
 
-async def _a2a_send_message(params: dict, request: Request) -> dict:
+async def _a2a_send_message(params: dict, req_id=None) -> dict:
     """Handle A2A SendMessage — route and execute task."""
-    req_id = (await request.json()).get("id")
     msg = params.get("message", {})
     parts = msg.get("parts", [])
     text_parts = [p.get("text", "") for p in parts if "text" in p]
@@ -473,14 +472,23 @@ def _is_provider_healthy(name: str) -> bool:
 
 # Rate limiting
 _rate_limit: dict = {}  # ip → [timestamps]
+_rate_limit_last_cleanup = 0.0  # last global cleanup time
 _RATE_LIMIT_WINDOW = 60   # seconds
 _RATE_LIMIT_MAX    = 30   # requests per window
+_RATE_LIMIT_MAX_IPS = 10000  # max tracked IPs before forced cleanup
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     if request.url.path.startswith("/chat") or request.url.path.startswith("/a2a") or request.url.path.startswith("/api/"):
         ip = request.headers.get("fly-client-ip") or request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "unknown")
         now = time.time()
+        # Periodic cleanup: evict stale IPs every 5 minutes or when dict grows too large
+        global _rate_limit_last_cleanup
+        if now - _rate_limit_last_cleanup > 300 or len(_rate_limit) > _RATE_LIMIT_MAX_IPS:
+            _rate_limit_last_cleanup = now
+            stale = [k for k, v in _rate_limit.items() if not v or now - v[-1] > _RATE_LIMIT_WINDOW]
+            for k in stale:
+                del _rate_limit[k]
         hits = _rate_limit.get(ip, [])
         hits = [t for t in hits if now - t < _RATE_LIMIT_WINDOW]
         if len(hits) >= _RATE_LIMIT_MAX:
@@ -1918,8 +1926,9 @@ async def tool_shell(command: str, cwd: str = None) -> str:
         return "Blocked: dangerous rm command"
     try:
         work_dir = _safe_path(cwd or ".") if cwd else _WORKSPACE_ROOT
-        proc = await asyncio.create_subprocess_shell(
-            command, cwd=work_dir,
+        # W6: Use exec (not shell) since tokens are already parsed — no shell injection
+        proc = await asyncio.create_subprocess_exec(
+            *tokens, cwd=work_dir,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -2353,7 +2362,7 @@ async def _fast_fetch(url: str) -> tuple[str, str] | None:
     if not _is_url_safe(url):
         return None
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=8, verify=False) as h:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=8) as h:
             r = await h.get(url, headers={"User-Agent": "Mozilla/5.0 (compatible; A2ABot/1.0)"})
         if r.status_code != 200:
             return None
@@ -8286,9 +8295,9 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                 # Non-admin without E2B: skip execution
                 exec_info = None
 
-            if exec_result["ok"] and exec_result["stdout"]:
-                draft += f"\n\n✅ **実行確認済み**\n```\n{exec_result['stdout'][:500]}\n```"
-            elif not exec_result["ok"] and exec_result["stderr"]:
+            if exec_info and exec_info.get("ok") and exec_info.get("stdout"):
+                draft += f"\n\n✅ **実行確認済み**\n```\n{exec_info['stdout'][:500]}\n```"
+            elif exec_info and not exec_info.get("ok") and exec_info.get("stderr"):
                 if queue:
                     await queue.put({"type": "step", "step": "code_fix",
                                      "label": "🔧 実行エラー検出 → 自動修正中..."})
@@ -8299,7 +8308,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                         *messages,
                         {"role": "assistant", "content": draft},
                         {"role": "user", "content":
-                            f"このコードを実行したところエラーが発生しました:\n```\n{exec_result['stderr']}\n```\n"
+                            f"このコードを実行したところエラーが発生しました:\n```\n{exec_info['stderr']}\n```\n"
                             "エラーを修正した完全なコードを提供してください。"},
                     ],
                 )
