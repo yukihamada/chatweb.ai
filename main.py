@@ -8451,7 +8451,12 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                              "draft": step_response,
                                              "label": "⚠️ 承認後に実際に送信します（HITL）"})
                             await save_run(sid, aid, task, step_response,
-                                           is_multi_agent=True)
+                                           is_multi_agent=True,
+                                           input_tokens=result.get("input_tokens", 0),
+                                           output_tokens=result.get("output_tokens", 0),
+                                           cost_usd=result.get("cost_usd", 0.0),
+                                           user_id=_uid,
+                                           model_name=result.get("model_name", ""))
                         else:
                             ev = await evaluate_draft(step_response, task)
                             score, issues = ev.get("score", 8), ev.get("issues", [])
@@ -8467,8 +8472,16 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                              "screenshots": result.get("screenshots", []),
                                              "quality_score": score})
                             await save_message(sid, "assistant", step_response, aid)
+                            _step_cost = result.get("cost_usd", 0.0)
                             await save_run(sid, aid, task, step_response,
-                                           eval_score=score, is_multi_agent=True)
+                                           eval_score=score, is_multi_agent=True,
+                                           input_tokens=result.get("input_tokens", 0),
+                                           output_tokens=result.get("output_tokens", 0),
+                                           cost_usd=_step_cost,
+                                           user_id=_uid,
+                                           model_name=result.get("model_name", ""))
+                            if _uid and _step_cost > 0:
+                                await _deduct_credit(_uid, _step_cost)
 
                     # Synthesize sequential outputs if no HITL
                     if not has_hitl:
