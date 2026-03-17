@@ -1913,25 +1913,25 @@ const _CHIPS_BY_ROLE = {
     "📊 Claude・GPT-4o・Gemini 2.0の料金と性能を比較表にして",
   ],
   '経営者・マネージャー': [
-    "📊 競合（○○・△△・□□）をSWOT分析して表にして",
-    "📝 MTGメモ「決定事項, 担当, 期限」→ 議事録にして",
+    "📊 競合3社の強み・弱みを調べてSWOT分析して",
+    "📝 MTGメモ「9/15リリース、佐藤FE、鈴木API」→ 議事録にして",
     "💹 今日のNVIDIA・Apple・Googleの株価をまとめて",
     "🎤 投資家向けピッチデック10枚を作って公開して",
-    "📧 ○○会社の△△さんに初回営業メールを書いて送って",
+    "📧 取引先の山田さんに提案フォローメールを書いて",
   ],
   'マーケター': [
     "📣 新機能リリースのX投稿を3パターン書いて",
     "📣 LinkedIn用の創業者プロフィールを書いて",
-    "📊 A/Bテスト結果（A:CVR2.9% B:3.6% n=800）の有意差を検定して",
+    "📊 先月のマーケ施策の効果をデータ分析してレポートにして",
     "🌐 イベント告知ページ（申し込みフォーム付き）を作って公開して",
     "📧 先週デモした顧客にフォローメールを書いて送って",
   ],
   '営業': [
-    "📧 ○○会社の△△さんに初回営業メールを書いて送って",
-    "💼 「高い」と言われた時の切り返しトーク5パターン",
-    "💼 展示会で交換した名刺へのフォローメールを書いて",
-    "📝 この会議メモからTODOを担当者別に整理して",
-    "📊 競合（○○・△△・□□）をSWOT分析して表にして",
+    "📧 取引先の山田さんに初回営業メールを書いて",
+    "💼 値段が高いと言われた時の営業トーク5パターン書いて",
+    "💼 展示会の名刺リストからフォローメール3通書いて",
+    "📝 今日の商談メモを議事録にしてTODO整理して",
+    "📊 競合3社の製品・価格を調べて比較表にして",
   ],
   'デザイナー': [
     "🎨 テックスタートアップのロゴ（紫系・ミニマル）を生成して",
@@ -3201,11 +3201,11 @@ function onboardConnect() {
     次は<strong>LINE / Telegram</strong>を連携しましょう。<br>
     連携すると、スマホからいつでもAIに話しかけられます。<br>
     さらに、気になるニュースや株価を<strong>毎朝自動で届ける</strong>こともできます。<br><br>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" class="chip" style="min-height:40px;background:#06c755;color:#fff;border-color:#06c755;text-decoration:none;font-weight:600">📱 LINEで友達追加</a>
-      <a href="https://t.me/chatweb_aichat_bot" target="_blank" class="chip" style="min-height:40px;background:#229ed9;color:#fff;border-color:#229ed9;text-decoration:none;font-weight:600">✈️ Telegramで開く</a>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:#06c755;color:#fff;text-decoration:none;font-weight:600;font-size:14px">📱 LINEで友達追加</a>
+      <a href="https://t.me/chatweb_aichat_bot" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;background:#229ed9;color:#fff;text-decoration:none;font-weight:600;font-size:14px">✈️ Telegramで開く</a>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">追加したら、ボットに何でも話しかけてみてください。</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">👆 タップして友達追加 → ボットに「こんにちは」と送ってみてください</div>
     <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 追加した！次へ</button>
     <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
   </div></div>`;
