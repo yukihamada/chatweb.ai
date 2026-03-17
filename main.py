@@ -7558,12 +7558,18 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                 draft += f"\n\n✅ **E2B実行確認済み**\n```\n{e2b_output[:500]}\n```"
             exec_info = {"ok": "error" not in e2b_output.lower(), "stdout": e2b_output, "stderr": ""}
         else:
-            if queue:
-                await queue.put({"type": "tool", "tool": "code_executor", "status": "calling", "real": True})
-            exec_result = await tool_code_executor(draft)
-            if queue:
-                await queue.put({"type": "tool", "tool": "code_executor", "status": "done", "real": True})
-            exec_info = exec_result
+            # code_executor (local execution) — admin only for safety
+            _exec_email = _ctx_user_email.get()
+            if _is_admin(_exec_email):
+                if queue:
+                    await queue.put({"type": "tool", "tool": "code_executor", "status": "calling", "real": True})
+                exec_result = await tool_code_executor(draft)
+                if queue:
+                    await queue.put({"type": "tool", "tool": "code_executor", "status": "done", "real": True})
+                exec_info = exec_result
+            else:
+                # Non-admin without E2B: skip execution
+                exec_info = None
 
             if exec_result["ok"] and exec_result["stdout"]:
                 draft += f"\n\n✅ **実行確認済み**\n```\n{exec_result['stdout'][:500]}\n```"
