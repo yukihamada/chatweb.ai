@@ -214,6 +214,34 @@ async def serve_manifest():
 async def serve_sw():
     return FileResponse("static/sw.js", media_type="application/javascript",
                         headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
+
+@app.get("/.well-known/agent-card.json")
+async def agent_card():
+    skills = []
+    for agent_id, agent in AGENTS.items():
+        if agent.get("admin_only"):
+            continue
+        skills.append({
+            "id": agent_id,
+            "name": agent.get("name", agent_id),
+            "description": agent.get("description", ""),
+            "tags": agent.get("tags", []),
+            "inputModes": ["text/plain"],
+            "outputModes": ["text/markdown"],
+        })
+    return {
+        "name": "chatweb-ai",
+        "description": "Multi-agent AI platform with 30+ specialized agents",
+        "url": "https://chatweb.ai",
+        "version": "1.0.0",
+        "provider": {"organization": "chatweb.ai", "url": "https://chatweb.ai"},
+        "protocolVersion": "0.3.0",
+        "capabilities": {"streaming": True, "pushNotifications": False},
+        "defaultInputModes": ["text/plain"],
+        "defaultOutputModes": ["text/markdown"],
+        "skills": skills
+    }
+
 # Serve screenshots from persistent volume (survives deploys)
 if os.path.isdir("/data"):
     os.makedirs("/data/screenshots", exist_ok=True)
@@ -4372,27 +4400,33 @@ AGENTS = {
         "description": "情報収集・調査 (web_search + Wikipedia)",
         "mcp_tools": ["web_search", "tavily_search", "perplexity", "wikipedia", "pdf_reader"],
         "real_tools": ["web_search", "tavily_search", "perplexity", "wikipedia"],
-        "system": """あなたは優秀なリサーチエージェントです。
+        "system": """# ROLE
+chatweb.aiの情報収集・調査専門エージェント。
 
-【chatweb.ai について】
-あなたが動いているシステム「chatweb.ai」は、複数のAIエージェントが協調するマルチエージェントプラットフォームです。
-- URL: https://chatweb.ai
-- 搭載エージェント: research(情報収集)・code(コード生成)・qa(ブラウザ操作)・schedule(スケジュール)・notify(通知)・analyst(データ分析)・legal(法務)・finance(金融)・critic(批評)・synthesizer(統合)・image(画像生成)・travel(旅行)・deployer(Fly.ioデプロイ)・devops(GitHub)・mobile(fastlane/iOS)
-- 機能: SSEストリーミング・長期記憶・マルチエージェント連携・LINE/Telegramボット（標準機能）・ファイルアップロード・画像/動画生成・サイト公開(xxx.chatweb.ai)・スケジュールタスク・カスタムエージェント作成
-- LINE/Telegram連携はchatweb.aiの**標準機能**です。外部サービスではありません。開発工数は不要です。
-- 「chatweb.aiとは？」と聞かれたらこの情報を基に回答してください。
+# CONTEXT
+プラットフォーム: chatweb.ai (https://chatweb.ai) — 30以上のAIエージェントが連携するマルチエージェントAI
+利用ツール: web_search, tavily_search, perplexity, wikipedia
+LINE/Telegram連携はchatweb.aiの標準機能です。
 
-【最重要: 字数・語数制約】
-ユーザーが「100字で」「3行で」「一言で」等の制約を指定した場合、**その制約を必ず守ること**。
-検索結果があっても、制約を超えた長文は絶対に出力しない。
+# CONSTRAINTS
+- 字数・語数制約が指定された場合、最優先で厳守
+- 情報源を必ず明示（「検索結果によると」「Wikipediaによると」）
+- 事実と推測を明確に分離
+- chatweb.aiの機能について聞かれたら正確に回答
 
-【重要】以下に【Web検索結果】【Wikipedia】の実際のデータがあれば、必ず引用して回答してください。
-回答ルール:
-- 字数・語数指定がある場合はそれを最優先で守る
-- 情報源を「検索結果によると」「Wikipediaによると」と明示する（字数に余裕がある場合のみ）
-- 構造化（見出し・箇条書き）して日本語で回答する
+# TASK_FLOW
+1. クエリを分析し最適な検索戦略を決定
+2. web_search/wikipedia等で情報収集
+3. 複数ソースをクロスチェック
+4. 構造化された回答を生成
+
+# OUTPUT_FORMAT
+- 見出し・箇条書きで構造化
 - 具体的な数字・事例を含める
-- 字数制約がない場合のみ「💡 さらに詳しく知りたい点があればお知らせください」と添える""",
+- 字数制約がない場合のみ「💡 さらに詳しく知りたい点があればお知らせください」
+
+# UNCERTAINTY
+確信度が低い情報は「※未確認」と明記""",
     },
     "code": {
         "name": "⚙️ コードAI",
