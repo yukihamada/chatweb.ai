@@ -6178,6 +6178,7 @@ async def init_db():
                 reward_granted INTEGER DEFAULT 0,
                 created_at TEXT DEFAULT (datetime('now','localtime'))
             )""")
+        await db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_referral_referred ON referrals(referred_user_id)")
         for col_def in [
             "ALTER TABLE users ADD COLUMN referral_code TEXT",
             "ALTER TABLE users ADD COLUMN referred_by TEXT",
@@ -6976,10 +6977,11 @@ JSONのみ: {"memories": [{"content": "記憶内容（日本語）", "importance
 
 async def _save_memory(session_id: str, content: str, importance: int = 5, mem_type: str = "semantic", user_id: str | None = None):
     async with db_conn() as db:
-        # Avoid near-duplicate (check first 40 chars)
+        # Avoid near-duplicate (check first 40 chars, escape LIKE wildcards)
+        _dedup_prefix = content[:40].replace("%", "\\%").replace("_", "\\_")
         async with db.execute(
-            "SELECT id FROM memories WHERE content LIKE ? LIMIT 1",
-            (f"%{content[:40]}%",)
+            "SELECT id FROM memories WHERE content LIKE ? ESCAPE '\\' AND user_id IS ? LIMIT 1",
+            (f"%{_dedup_prefix}%", user_id)
         ) as c:
             if await c.fetchone():
                 return
@@ -8946,6 +8948,18 @@ async def _cleanup_screenshots():
                     deleted += 1
             if deleted:
                 log.info(f"Cleanup: deleted {deleted} old screenshots")
+            # Prune low-value old memories (30+ days, low importance, never accessed)
+            try:
+                async with db_conn() as db:
+                    cur = await db.execute(
+                        "DELETE FROM memories WHERE importance <= 2 AND last_accessed IS NULL "
+                        "AND created_at < datetime('now', '-30 days')")
+                    await db.commit()
+                    pruned = cur.rowcount
+                    if pruned:
+                        log.info(f"Cleanup: pruned {pruned} stale memories")
+            except Exception as e2:
+                log.warning(f"Memory pruning error: {e2}")
         except Exception as e:
             log.error(f"Screenshot cleanup error: {e}")
 
