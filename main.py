@@ -23,7 +23,7 @@ import resend
 import yfinance as yf
 import pdfplumber
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, StreamingResponse, Response, JSONResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, Response, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -165,6 +165,16 @@ app.add_middleware(CORSMiddleware,
     allow_credentials=True,
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve manifest.json and sw.js from root (PWA requires root-level access)
+@app.get("/manifest.json")
+async def serve_manifest():
+    return FileResponse("static/manifest.json", media_type="application/manifest+json")
+
+@app.get("/sw.js")
+async def serve_sw():
+    return FileResponse("static/sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"})
 # Serve screenshots from persistent volume (survives deploys)
 if os.path.isdir("/data"):
     os.makedirs("/data/screenshots", exist_ok=True)
@@ -5270,6 +5280,8 @@ async def init_db():
             pass
         try:
             await db.execute("ALTER TABLE users ADD COLUMN telegram_chat_id TEXT")
+        except Exception:
+            pass
         for col_def in [
             "ALTER TABLE users ADD COLUMN credit_granted REAL DEFAULT 0.0",
             "ALTER TABLE users ADD COLUMN credit_purchased REAL DEFAULT 0.0",
@@ -5280,8 +5292,6 @@ async def init_db():
                 await db.execute(col_def)
             except Exception:
                 pass
-        except Exception:
-            pass
         await db.execute("""
             CREATE TABLE IF NOT EXISTS link_codes (
                 code TEXT PRIMARY KEY,
