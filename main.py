@@ -8409,8 +8409,10 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                 asyncio.create_task(_background_memory_extract(
                     req.message, final_response, sid, queue, user_id=_uid))
 
+                # Send final synthesis to frontend
                 await queue.put({"type": "plan_done", "total": len(plan_steps),
-                                 "screenshots": all_screenshots})
+                                 "screenshots": all_screenshots,
+                                 "synthesis": final_response})
 
             else:
                 # ── Single agent path ─────────────────────────────────────

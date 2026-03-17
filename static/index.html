@@ -1133,7 +1133,7 @@ body {
 
   <div class="topbar-right">
     <span id="credit-balance" style="font-size:11px;color:var(--muted);cursor:pointer;display:none" onclick="openBillingModal()" title="クレジット残高"></span>
-    <span id="cost-display" title="このセッションのAPIコスト"></span>
+    <span id="cost-display" style="display:none"></span>
     <!-- Language selector (hidden, in menu) -->
     <div style="position:relative;display:none;">
       <button id="lang-btn" onclick="toggleLangMenu()">🌐 <span id="lang-label">JA</span></button>
@@ -2194,14 +2194,44 @@ async function sendMessage() {
         if (data.agent_id) setAgentBusy(data.agent_id, false);
         updatePlanStep(planCardId, data.index, 'done');
         if (!data.hitl) {
-          finalizeStreamBubble(data.response, data.used_real_tools, data.quality_score ?? null);
+          const score = data.quality_score ?? 8;
+          const preview = (data.response || '').slice(0, 150).replace(/\n/g, ' ');
+          // Show as collapsible summary (full content in details)
+          const stepDiv = document.createElement('div');
+          stepDiv.className = 'msg-container';
+          const isLow = score < 5;
+          stepDiv.innerHTML = `<div class="msg-ai">
+            <details ${isLow ? '' : 'open'} style="border:1px solid var(--border);border-radius:10px;padding:0;background:var(--surface);overflow:hidden">
+              <summary style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px">
+                <span>${getAgentEmoji(data.agent_id)}</span>
+                <strong>${escHtml(data.agent_name)}</strong>
+                <span style="font-size:11px;color:var(--muted);margin-left:auto">${score ? '★'+score+'/10' : ''}</span>
+              </summary>
+              <div style="padding:4px 14px 12px;font-size:13px" class="msg-ai-bubble">${renderMarkdown(data.response)}</div>
+            </details>
+          </div>`;
+          getMessages().appendChild(stepDiv);
           if (data.screenshots?.length) appendScreenshots(data.screenshots);
+          scrollToBottom();
         }
         break;
 
       case 'plan_done':
         if (data.screenshots?.length) appendScreenshots(data.screenshots);
-        updateFollowUpChips('', '');
+        // Show synthesizer's final summary as main response
+        if (data.synthesis) {
+          const synthDiv = document.createElement('div');
+          synthDiv.className = 'msg-container';
+          synthDiv.innerHTML = `<div class="msg-ai">
+            <div class="msg-ai-bubble" style="border:2px solid var(--accent);border-radius:12px">
+              <div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:8px">🔮 最終まとめ</div>
+              ${renderMarkdown(data.synthesis)}
+            </div>
+          </div>`;
+          getMessages().appendChild(synthDiv);
+          scrollToBottom();
+        }
+        updateFollowUpChips(data.synthesis || '', '');
         break;
 
       // ── Memory ─────────────────────────────────────────────────────────────
