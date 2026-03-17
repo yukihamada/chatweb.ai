@@ -10099,11 +10099,13 @@ code{{font-family:monospace}}
 @app.post("/webhook/{agent_id}")
 async def webhook_trigger(agent_id: str, request: Request):
     """外部サービスからのWebhookでエージェントをトリガー（API Key or session required）"""
-    # Auth: require API key or logged-in session
+    # Auth: require valid API key or logged-in session
     api_key = request.headers.get("X-API-Key", "")
     user = await _get_user_from_session(_extract_session_token(request))
-    if not user and not api_key:
-        raise HTTPException(401, "Authentication required. Provide X-API-Key header or session cookie.")
+    if not user and api_key:
+        user = await _get_user_by_api_key(api_key)
+    if not user:
+        raise HTTPException(401, "Authentication required. Provide a valid X-API-Key header or session cookie.")
     try:
         body = await request.json()
     except:
@@ -11473,11 +11475,17 @@ async def line_webhook(request: Request):
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), request: Request = None):
     """Accept multipart file uploads and extract content."""
+    if request:
+        await _require_auth(request)
     file_id = str(uuid.uuid4())
     filename = file.filename or "upload"
-    content_bytes = await file.read()
+    # Size limit: 50MB
+    _MAX_UPLOAD = 50 * 1024 * 1024
+    content_bytes = await file.read(_MAX_UPLOAD + 1)
+    if len(content_bytes) > _MAX_UPLOAD:
+        raise HTTPException(413, f"ファイルサイズが上限（50MB）を超えています")
     ext = os.path.splitext(filename)[1].lower()
 
     # Determine type
@@ -11625,8 +11633,16 @@ async def chat_stream_with_file(session_id: str, req: ChatWithFileRequest, reque
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/export/{session_id}")
-async def export_conversation(session_id: str, fmt: str = "markdown"):
+async def export_conversation(session_id: str, fmt: str = "markdown", request: Request = None):
     """Export full conversation as Markdown or JSON attachment."""
+    if request:
+        user = await _require_auth(request)
+        uid = user.get("id", "")
+        # Verify session belongs to user
+        async with db_conn() as db:
+            cur = await db.execute("SELECT 1 FROM runs WHERE session_id=? AND user_id=? LIMIT 1", (session_id, uid))
+            if not await cur.fetchone():
+                raise HTTPException(403, "このセッションへのアクセス権がありません")
     history = await get_history(session_id, limit=200)
 
     if fmt == "json":
@@ -12053,26 +12069,28 @@ async def csv_to_db_endpoint(req: CSVToDBRequest, request: Request):
 @app.post("/slack/events")
 async def slack_events(request: Request):
     """Handle Slack Event API (url_verification + message events)."""
-    try:
-        data = await request.json()
-    except Exception:
-        raise HTTPException(400, "Invalid JSON")
+    # Read body once (needed for both signature verification and JSON parsing)
+    raw_body = await request.body()
 
-    # Slack URL verification challenge
-    if data.get("type") == "url_verification":
-        return {"challenge": data.get("challenge", "")}
-
-    # Verify Slack signature if secret is set
+    # Verify Slack signature FIRST (before processing any event)
     if SLACK_SIGNING_SECRET:
-        body = await request.body()
         ts = request.headers.get("X-Slack-Request-Timestamp", "")
         sig = request.headers.get("X-Slack-Signature", "")
-        base = f"v0:{ts}:{body.decode()}"
+        base = f"v0:{ts}:{raw_body.decode()}"
         expected = "v0=" + hmac.new(
             SLACK_SIGNING_SECRET.encode(), base.encode(), hashlib.sha256
         ).hexdigest()
         if not hmac.compare_digest(sig, expected):
             raise HTTPException(403, "Invalid Slack signature")
+
+    try:
+        data = json.loads(raw_body)
+    except Exception:
+        raise HTTPException(400, "Invalid JSON")
+
+    # Slack URL verification challenge (after signature verification)
+    if data.get("type") == "url_verification":
+        return {"challenge": data.get("challenge", "")}
 
     event = data.get("event", {})
     if event.get("type") == "message" and not event.get("bot_id"):
@@ -12402,6 +12420,7 @@ async def zapier_trigger_endpoint(req: ZapierTriggerRequest, request: Request):
 
 @app.post("/webhook/inbound/{event_type}")
 async def webhook_inbound(event_type: str, request: Request):
+    await _require_auth(request)
     try:
         body = await request.json()
     except Exception:
