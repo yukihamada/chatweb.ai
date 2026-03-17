@@ -103,6 +103,7 @@ MODEL_COSTS = {
     "gpt-4o":                    {"input": 2.5,   "output": 10.0},
     "gpt-4o-mini":               {"input": 0.15,  "output": 0.60},
     "qwen/qwen3-32b":            {"input": 0.20,  "output": 0.20},  # Groq
+    "gemini-2.0-flash":          {"input": 0.10,  "output": 0.40},  # Google
 }
 
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -124,12 +125,11 @@ _CODE_QUALITY_AGENTS = {"code", "coder", "deployer", "devops", "mobile"}
 
 TIER_CONFIG = {
     "cheap": {
-        "label":    "💰 エコノミー",
+        "label":    "⚡ 高速",
         "provider": "groq",
         "model":    "qwen/qwen3-32b",
         "fallback_provider": "claude",
         "fallback_model":    "claude-haiku-4-5-20251001",
-        # Code-quality agents use Haiku even in cheap tier
         "code_provider": "claude",
         "code_model":    "claude-haiku-4-5-20251001",
     },
@@ -141,6 +141,15 @@ TIER_CONFIG = {
         "fallback_model":    "claude-haiku-4-5-20251001",
         "code_provider": "claude",
         "code_model":    "claude-sonnet-4-6",
+    },
+    "gemini": {
+        "label":    "💎 Gemini",
+        "provider": "gemini",
+        "model":    "gemini-2.0-flash",
+        "fallback_provider": "claude",
+        "fallback_model":    "claude-haiku-4-5-20251001",
+        "code_provider": "gemini",
+        "code_model":    "gemini-2.0-flash",
     },
 }
 
