@@ -3351,7 +3351,7 @@ async function exportConversation(fmt = 'markdown') {
   const url = `/export/${sid}?fmt=${fmt}`;
   const a = document.createElement('a');
   a.href = url;
-  a.download = `synapse_${sid.slice(0,8)}.${fmt === 'json' ? 'json' : 'md'}`;
+  a.download = `chatweb_${sid.slice(0,8)}.${fmt === 'json' ? 'json' : 'md'}`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -4331,7 +4331,7 @@ const TEMPLATES = [
   { icon:'📊', label:'データ分析', prompt:'以下のデータを分析して、主要なトレンドと改善点を教えてください:\n[データをここに貼り付け]' },
   { icon:'⚖️', label:'契約書レビュー', prompt:'以下の契約書の法的リスクと重要条項をレビューしてください:\n[契約書テキスト]' },
   { icon:'💹', label:'株価調査', prompt:'[銘柄]の現在の株価、直近の業績、今後の見通しを教えてください' },
-  { icon:'🚀', label:'Fly.ioデプロイ', prompt:'synapse-demoアプリの現在のデプロイ状況とログを確認してください' },
+  { icon:'🚀', label:'Fly.ioデプロイ', prompt:'chatweb-aiアプリの現在のデプロイ状況とログを確認してください' },
   { icon:'🎨', label:'画像生成', prompt:'[テーマ]の美しいイラストを生成してください。スタイル: リアリスティック、高解像度' },
   { icon:'🚄', label:'新幹線検索', prompt:'新大阪から東京まで、明日の午前中に出発できる新幹線を検索してください' },
   { icon:'📧', label:'メール作成', prompt:'以下の件名でビジネスメールを作成してください:\n件名: [件名]\n宛先: [相手の名前]\n内容: [要件]' },

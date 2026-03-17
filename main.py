@@ -6866,8 +6866,10 @@ def _estimate_tokens(messages: list) -> int:
     return sum(len(m.get("content", "") or "") for m in messages) // 3
 
 
-# Per-session summary cache (session_id → summary text)
-_session_summaries: dict[str, str] = {}
+# Per-session summary cache (session_id → (summary_text, msg_count))
+# Bounded to prevent memory leak — evict oldest when full
+_session_summaries: dict[str, tuple[str, int]] = {}
+_SESSION_SUMMARY_MAX = 500
 
 async def compress_history(messages: list, session_id: str = "",
                            max_tokens: int = 6000, keep_recent: int = 4) -> tuple[list, str | None]:
@@ -6884,12 +6886,15 @@ async def compress_history(messages: list, session_id: str = "",
     old_msgs = messages[:-keep_recent]
     recent_msgs = messages[-keep_recent:]
 
-    # Check if we already have a cached summary for this session
+    # Check if we already have a cached summary for this session (with freshness check)
     cached = _session_summaries.get(session_id)
-    if cached and _estimate_tokens(recent_msgs) + _estimate_tokens([{"content": cached}]) <= max_tokens:
-        compressed = [{"role": "user", "content": f"[前の会話の要約]\n{cached}"},
-                      {"role": "assistant", "content": "はい、前の会話の内容を把握しました。続けましょう。"}]
-        return compressed + recent_msgs, cached
+    old_msg_count = len(old_msgs)
+    if cached:
+        cached_text, cached_count = cached
+        if cached_count == old_msg_count and _estimate_tokens(recent_msgs) + _estimate_tokens([{"content": cached_text}]) <= max_tokens:
+            compressed = [{"role": "user", "content": f"[前の会話の要約]\n{cached_text}"},
+                          {"role": "assistant", "content": "はい、前の会話の内容を把握しました。続けましょう。"}]
+            return compressed + recent_msgs, cached_text
 
     # Generate summary with Haiku
     summary_prompt = "以下の会話を簡潔に要約してください。重要な情報（ユーザーの要望、決定事項、コンテキスト）を漏らさず、200-400文字程度にまとめてください:\n\n"
@@ -6910,9 +6915,13 @@ async def compress_history(messages: list, session_id: str = "",
         # Fallback: just truncate
         return messages[-keep_recent:], None
 
-    # Cache the summary
+    # Cache the summary (bounded to prevent memory leak)
     if session_id:
-        _session_summaries[session_id] = summary
+        if len(_session_summaries) >= _SESSION_SUMMARY_MAX:
+            # Evict oldest entry
+            oldest = next(iter(_session_summaries))
+            del _session_summaries[oldest]
+        _session_summaries[session_id] = (summary, old_msg_count)
 
     compressed = [{"role": "user", "content": f"[前の会話の要約]\n{summary}"},
                   {"role": "assistant", "content": "はい、前の会話の内容を把握しました。続けましょう。"}]
@@ -9071,10 +9080,19 @@ _CLEAN_ROUTES = {
     "landing":                     "static/landing.html",
 }
 
+_static_html_cache: dict[str, tuple[str, float]] = {}  # path → (content, mtime)
+
 def _serve_html(file_path: str):
     try:
-        with open(file_path, encoding="utf-8") as f:
-            return HTMLResponse(f.read(), headers={"Cache-Control": "no-cache, must-revalidate"})
+        mtime = os.path.getmtime(file_path)
+        cached = _static_html_cache.get(file_path)
+        if cached and cached[1] == mtime:
+            content = cached[0]
+        else:
+            with open(file_path, encoding="utf-8") as f:
+                content = f.read()
+            _static_html_cache[file_path] = (content, mtime)
+        return HTMLResponse(content, headers={"Cache-Control": "public, max-age=300"})
     except FileNotFoundError:
         raise HTTPException(404, "Page not found")
 
@@ -12886,6 +12904,7 @@ async def image_generate(req: ImageGenerateRequest, request: Request):
 @app.get("/search/messages")
 async def search_messages(request: Request, q: str = "", session_id: str = "", limit: int = 20):
     """Full-text search across messages table."""
+    user = await _require_auth(request)
     if not q:
         raise HTTPException(400, "Query parameter 'q' is required")
     async with db_conn() as db:
