@@ -9686,7 +9686,10 @@ async def get_hitl(task_id: str):
 
 
 @app.post("/hitl/{task_id}/decide")
-async def decide_hitl(task_id: str, decision: HITLDecision):
+async def decide_hitl(task_id: str, decision: HITLDecision, request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     task = await get_hitl_task_db(task_id)
     if not task:
         raise HTTPException(404)
@@ -9851,7 +9854,12 @@ code{{font-family:monospace}}
 
 @app.post("/webhook/{agent_id}")
 async def webhook_trigger(agent_id: str, request: Request):
-    """外部サービスからのWebhookでエージェントをトリガー"""
+    """外部サービスからのWebhookでエージェントをトリガー（API Key or session required）"""
+    # Auth: require API key or logged-in session
+    api_key = request.headers.get("X-API-Key", "")
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user and not api_key:
+        raise HTTPException(401, "Authentication required. Provide X-API-Key header or session cookie.")
     try:
         body = await request.json()
     except:
@@ -10397,7 +10405,10 @@ async def memory_search(request: Request, q: str = "", limit: int = 10):
 
 
 @app.delete("/memory/{memory_id}")
-async def memory_delete(memory_id: str):
+async def memory_delete(memory_id: str, request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     await delete_memory(memory_id)
     return {"status": "deleted", "id": memory_id}
 
@@ -12030,7 +12041,10 @@ class MCPToolRegister(BaseModel):
     endpoint: str = ""  # optional HTTP endpoint for external tools
 
 @app.post("/mcp/tools/register")
-async def mcp_register_tool(req: MCPToolRegister):
+async def mcp_register_tool(req: MCPToolRegister, request: Request):
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        raise HTTPException(401, "ログインが必要です")
     _mcp_registry[req.name] = {
         "name": req.name,
         "description": req.description,
@@ -13610,8 +13624,12 @@ async def admin_stats(token: str = ""):
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/search")
-async def search_conversations(q: str, session_id: str = "", limit: int = 20):
-    """会話全文検索"""
+async def search_conversations(q: str, session_id: str = "", limit: int = 20, request: Request = None):
+    """会話全文検索（認証必須）"""
+    if request:
+        user = await _get_user_from_session(_extract_session_token(request))
+        if not user:
+            raise HTTPException(401, "ログインが必要です")
     if not q:
         return {"results": []}
     async with db_conn() as db:
