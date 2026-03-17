@@ -2005,25 +2005,26 @@ const _CHIPS_COMMON = [
 function initQuickChips() {
   const chips = document.getElementById('quickChips');
   if (!chips) return;
-  // Get user's role from settings or localStorage
   const role = localStorage.getItem('user_role') || '';
   const roleChips = _CHIPS_BY_ROLE[role] || [];
-  // Combine: LINE/TG first, then role-specific, then common
-  const lineChips = _CHIPS_COMMON.filter(c => c.startsWith('📱'));
   const otherCommon = _CHIPS_COMMON.filter(c => !c.startsWith('📱'));
   const seed = Math.floor(Date.now() / 1800000);
   const rng = (i) => { let x = (seed * 9301 + 49297 + i * 233) % 233280; return x / 233280; };
   const shuffledCommon = [...otherCommon].map((v,i) => ({v,r:rng(i)})).sort((a,b)=>a.r-b.r).map(x=>x.v);
-  const picked = [...lineChips.slice(0,1), ...roleChips.slice(0,4), ...shuffledCommon.slice(0,8)];
+
+  // Show LINE/TG connect chip FIRST if not linked
+  const isLinked = currentUser?.line_linked || currentUser?.telegram_linked;
+  const connectChip = isLinked ? [] : ["📱 LINE・Telegramを連携してスマホからも使えるようにする"];
+  const picked = [...connectChip, ...roleChips.slice(0, isLinked ? 5 : 4), ...shuffledCommon.slice(0, isLinked ? 9 : 7)];
   chips.innerHTML = picked.map(c =>
-    `<button class="chip" onclick="editChip(this)" type="button">${c}</button>`
+    `<button class="chip" onclick="editChip(this)" type="button"${c.startsWith('📱') ? ' style="background:rgba(6,199,85,0.1);border-color:rgba(6,199,85,0.3);color:#06c755"' : ''}>${c}</button>`
   ).join('');
 }
 
 function editChip(el) {
   const raw = el.textContent.trim();
   // LINE/Telegram chips → show link code modal directly
-  if (raw.includes('LINEを連携') || raw.includes('Telegramを連携')) {
+  if (raw.includes('LINE') && (raw.includes('連携') || raw.includes('Telegram'))) {
     showLinkCode();
     return;
   }
