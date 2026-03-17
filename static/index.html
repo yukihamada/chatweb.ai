@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>chatweb.ai — Multi-Agent AI Platform</title>
 <!-- SEO -->
 <meta name="description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで対応するマルチエージェントAIプラットフォーム。">
@@ -123,7 +123,7 @@ body.light-mode .chip { background: #ffffff; }
 .cmd-item-hint { font-size: 11px; color: var(--muted2); }
 #cmd-results { max-height: 360px; overflow-y: auto; }
 
-html, body { height:100%; }
+html, body { height:100%; overflow-x: hidden; }
 body {
   font-family: -apple-system, 'Helvetica Neue', sans-serif;
   font-size: 15px;
@@ -133,6 +133,9 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background: transparent; }
