@@ -5079,6 +5079,7 @@ async def init_db():
             "ALTER TABLE custom_agents ADD COLUMN required_plan TEXT DEFAULT 'free'",
             "ALTER TABLE custom_agents ADD COLUMN allowed_emails TEXT DEFAULT '[]'",
             "ALTER TABLE custom_agents ADD COLUMN forked_from TEXT DEFAULT ''",
+            "ALTER TABLE runs ADD COLUMN model_name TEXT DEFAULT ''",
         ]:
             try:
                 await db.execute(col_def)
@@ -5890,16 +5891,16 @@ async def save_run(session_id: str, agent_id: str, message: str, response: str,
                    tool_latency_ms: int = None, hitl_approved: bool = None,
                    is_multi_agent: bool = False,
                    input_tokens: int = 0, output_tokens: int = 0, cost_usd: float = 0,
-                   user_id: str = None):
+                   user_id: str = None, model_name: str = ""):
     async with db_conn() as db:
         await db.execute(
             "INSERT INTO runs(id,session_id,user_id,agent_id,message,response,routing_confidence,"
-            "eval_score,tool_latency_ms,hitl_approved,is_multi_agent,input_tokens,output_tokens,cost_usd)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "eval_score,tool_latency_ms,hitl_approved,is_multi_agent,input_tokens,output_tokens,cost_usd,model_name)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (str(uuid.uuid4()), session_id, user_id, agent_id, message[:200], response[:500],
              routing_confidence, eval_score, tool_latency_ms,
              (1 if hitl_approved else 0) if hitl_approved is not None else None,
-             1 if is_multi_agent else 0, input_tokens, output_tokens, cost_usd)
+             1 if is_multi_agent else 0, input_tokens, output_tokens, cost_usd, model_name)
         )
         await db.commit()
 
@@ -7157,6 +7158,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
         "cost_usd": cost_usd,
+        "model_name": f"{model_provider}/{model_name}" if model_provider else model_name,
     }
 
 
@@ -7281,6 +7283,94 @@ async def _notify_admin_linked(text: str):
             await line_push(line_uid, text[:4500])
     except Exception as e:
         log.warning(f"Admin notify failed: {e}")
+
+
+async def _run_feedback_loop():
+    """Periodic feedback loop: analyze logs → identify issues → improve prompts/routing."""
+    while True:
+        await asyncio.sleep(3600 * 6)  # every 6 hours
+        try:
+            async with db_conn() as db:
+                # 1. Get recent runs with low ratings
+                async with db.execute(
+                    """SELECT agent_id, message, response, rating, model_name, routing_confidence,
+                              input_tokens, output_tokens, cost_usd
+                       FROM runs WHERE created_at > datetime('now','-24 hours')
+                       ORDER BY created_at DESC LIMIT 100"""
+                ) as c:
+                    recent_runs = [dict(r) for r in await c.fetchall()]
+
+                # 2. Get unresolved feedback logs
+                async with db.execute(
+                    "SELECT * FROM feedback_logs WHERE resolved=0 ORDER BY created_at DESC LIMIT 30"
+                ) as c:
+                    unresolved = [dict(r) for r in await c.fetchall()]
+
+            if not recent_runs and not unresolved:
+                continue
+
+            # 3. Analyze patterns
+            total = len(recent_runs)
+            if total == 0:
+                continue
+            thumbs_down = [r for r in recent_runs if r.get("rating", 0) < 0]
+            low_confidence = [r for r in recent_runs if (r.get("routing_confidence") or 1.0) < 0.7]
+            by_agent = {}
+            for r in recent_runs:
+                aid = r.get("agent_id", "unknown")
+                by_agent.setdefault(aid, {"count": 0, "bad": 0, "tokens": 0, "cost": 0.0})
+                by_agent[aid]["count"] += 1
+                by_agent[aid]["tokens"] += (r.get("input_tokens") or 0) + (r.get("output_tokens") or 0)
+                by_agent[aid]["cost"] += r.get("cost_usd") or 0.0
+                if r.get("rating", 0) < 0:
+                    by_agent[aid]["bad"] += 1
+
+            # 4. Build report
+            lines = [
+                f"📊 **フィードバックループレポート** ({datetime.now().strftime('%Y-%m-%d %H:%M')})",
+                f"直近24時間: {total}件のリクエスト",
+                f"👎 低評価: {len(thumbs_down)}件",
+                f"⚠️ 低信頼ルーティング: {len(low_confidence)}件",
+                f"🔧 未解決フィードバック: {len(unresolved)}件",
+                "",
+                "**エージェント別:**",
+            ]
+            for aid, stats in sorted(by_agent.items(), key=lambda x: -x[1]["count"]):
+                bad_pct = f" (👎{stats['bad']})" if stats["bad"] else ""
+                lines.append(f"- {aid}: {stats['count']}回{bad_pct}, {stats['tokens']:,}トークン, ${stats['cost']:.4f}")
+
+            if thumbs_down:
+                lines.append("\n**低評価の例:**")
+                for r in thumbs_down[:3]:
+                    lines.append(f"- [{r['agent_id']}] {r['message'][:60]}...")
+
+            if low_confidence:
+                lines.append("\n**ルーティング信頼度が低い:**")
+                for r in low_confidence[:3]:
+                    lines.append(f"- conf={r['routing_confidence']:.0%} → {r['agent_id']}: {r['message'][:50]}...")
+
+            report = "\n".join(lines)
+            log.info(f"Feedback loop report:\n{report}")
+
+            # 5. Save report to feedback_logs
+            await _log_feedback("feedback_loop", "auto", report)
+
+            # 6. Notify admin if there are issues
+            if thumbs_down or unresolved:
+                await _notify_admin_linked(report[:3000])
+
+            # 7. Auto-fix: if same agent gets 3+ thumbs down, suggest prompt improvement
+            for aid, stats in by_agent.items():
+                if stats["bad"] >= 3 and aid in AGENTS:
+                    bad_msgs = [r["message"][:100] for r in thumbs_down if r.get("agent_id") == aid][:3]
+                    await _log_feedback(
+                        "auto_improvement_needed", f"agent:{aid}",
+                        f"エージェント '{aid}' が24時間で{stats['bad']}件の低評価。"
+                        f"改善候補メッセージ: {'; '.join(bad_msgs)}",
+                    )
+
+        except Exception as e:
+            log.warning(f"Feedback loop error: {e}")
 
 
 async def _ensure_self_heal_task():
@@ -7529,6 +7619,8 @@ async def startup():
     asyncio.create_task(_cron_runner())
     # Ensure self-healing cron task exists
     asyncio.create_task(_ensure_self_heal_task())
+    # Start feedback loop (6h cycle)
+    asyncio.create_task(_run_feedback_loop())
     # Start screenshot auto-cleanup (24h TTL)
     asyncio.create_task(_cleanup_screenshots())
     # Start browser session TTL cleanup (30min idle)
@@ -8190,7 +8282,8 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                    input_tokens=result.get("input_tokens", 0),
                                    output_tokens=result.get("output_tokens", 0),
                                    cost_usd=result.get("cost_usd", 0.0),
-                                   user_id=_uid)
+                                   user_id=_uid,
+                                   model_name=result.get("model_name", ""))
                     # Background memory extraction
                     asyncio.create_task(_background_memory_extract(
                         req.message, final, sid, queue, user_id=_uid))
@@ -11964,6 +12057,48 @@ async def admin_resolve_feedback(log_id: int, request: Request):
             (log_id,))
         await db.commit()
     return {"ok": True}
+
+
+@app.get("/admin/feedback-report")
+async def admin_feedback_report(request: Request):
+    """Get feedback loop analytics — agent performance, ratings, costs."""
+    user = await _require_user(request)
+    if not _is_admin(user.get("email", "")):
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
+    hours = int(request.query_params.get("hours", "24"))
+    async with db_conn() as db:
+        # Recent runs stats
+        async with db.execute(
+            f"""SELECT agent_id, model_name, COUNT(*) as cnt,
+                       SUM(CASE WHEN rating < 0 THEN 1 ELSE 0 END) as bad,
+                       SUM(CASE WHEN rating > 0 THEN 1 ELSE 0 END) as good,
+                       SUM(input_tokens) as in_tok, SUM(output_tokens) as out_tok,
+                       SUM(cost_usd) as cost, AVG(routing_confidence) as avg_conf
+                FROM runs WHERE created_at > datetime('now','-{hours} hours')
+                GROUP BY agent_id ORDER BY cnt DESC"""
+        ) as c:
+            agent_stats = [dict(r) for r in await c.fetchall()]
+        # Model usage
+        async with db.execute(
+            f"""SELECT model_name, COUNT(*) as cnt, SUM(input_tokens+output_tokens) as tokens,
+                       SUM(cost_usd) as cost
+                FROM runs WHERE created_at > datetime('now','-{hours} hours') AND model_name != ''
+                GROUP BY model_name ORDER BY cnt DESC"""
+        ) as c:
+            model_stats = [dict(r) for r in await c.fetchall()]
+        # Recent low-rated
+        async with db.execute(
+            f"SELECT agent_id, message, model_name, rating FROM runs "
+            f"WHERE rating < 0 AND created_at > datetime('now','-{hours} hours') "
+            f"ORDER BY created_at DESC LIMIT 10"
+        ) as c:
+            low_rated = [dict(r) for r in await c.fetchall()]
+    return {
+        "period_hours": hours,
+        "agent_stats": agent_stats,
+        "model_stats": model_stats,
+        "low_rated": low_rated,
+    }
 
 
 @app.post("/admin/route-test")
