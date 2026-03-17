@@ -8304,53 +8304,12 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                 has_hitl = any(AGENTS.get(s["agent_id"], {}).get("hitl_required") for s in plan_steps)
 
                 if not has_hitl and len(plan_steps) > 1:
-                    # Parallel execution for non-HITL multi-step plans
-                    await queue.put({"type": "step", "step": "parallel",
-                                     "label": f"⚡ {len(plan_steps)}エージェントを並列実行中..."})
+                    # Sequential execution — each step feeds into the next
+                    await queue.put({"type": "step", "step": "sequential",
+                                     "label": f"🔗 {len(plan_steps)}ステップを順次実行中..."})
 
-                    async def _run_step(i, step):
-                        aid = step["agent_id"]
-                        task = step["task"]
-                        t0 = _time.monotonic()
-                        await queue.put({"type": "agent_start", "index": i,
-                                         "agent_id": aid, "agent_name": step["agent_name"],
-                                         "task": task})
-                        result = await execute_agent(aid, task, session_id, history,
-                                                     memory_context=memory_context if i == 0 else "")
-                        latency = int((_time.monotonic() - t0) * 1000)
-                        ev = await evaluate_draft(result["response"], task)
-                        score = ev.get("score", 8)
-                        if score < 7 and ev.get("issues"):
-                            result["response"] = await self_reflect(aid, result["response"], task, ev["issues"])
-                        await queue.put({"type": "agent_done", "index": i, "agent_id": aid,
-                                         "agent_name": step["agent_name"],
-                                         "response": result["response"], "hitl": False,
-                                         "used_real_tools": result.get("used_real_tools", []),
-                                         "screenshots": result.get("screenshots", []),
-                                         "quality_score": score})
-                        await save_message(sid, "assistant", result["response"], aid)
-                        await save_run(sid, aid, task, result["response"],
-                                       eval_score=score, is_multi_agent=True)
-                        return step, result
-
-                    parallel_results = await asyncio.gather(
-                        *[_run_step(i, step) for i, step in enumerate(plan_steps)],
-                        return_exceptions=True
-                    )
-
-                    for pr in parallel_results:
-                        if isinstance(pr, Exception):
-                            log.warning(f"Parallel step error: {pr}")
-                            continue
-                        step_info, result = pr
-                        all_step_results.append((step_info, result["response"]))
-                        all_screenshots.extend(result.get("screenshots", []))
-
-                    # Synthesize all outputs
-                    final_response = await run_synthesizer(all_step_results, req.message, queue)
-
-                else:
-                    # Sequential execution (for HITL plans or single step)
+                # Always sequential — each step's output feeds into the next
+                if True:
                     for i, step in enumerate(plan_steps):
                         aid = step["agent_id"]
                         task = step["task"]
