@@ -1832,11 +1832,11 @@ function autoResize(ta) {
 // ── Quick Chips — テスト済み・具体的な質問のみ ──────────────────────────
 const ALL_CHIPS = [
   // 🧩 カスタムエージェント（目玉・常に2つ表示）
-  "🧩 毎朝9時にSlackに日報をまとめて投稿するエージェントを作って",
+  "🧩 毎朝9時にLINEに今日のタスクと天気をまとめて送るエージェントを作って",
   "🧩 問い合わせメールを自動分類して担当者に転送するエージェントを作って",
   "🧩 毎週金曜にKPIレポートをメールで送るエージェントを作って",
   "🧩 GitHubのPRが来たら自動レビューするエージェントを作って",
-  "🧩 競合サイトを毎日チェックして変更があればSlackに通知するエージェントを作って",
+  "🧩 競合サイトを毎日チェックして変更があればLINEに通知するエージェントを作って",
 
   // 💹 株価（99%正確ルーティング）
   "💹 今日のNVIDIAの株価と前日比を教えて",
@@ -3033,9 +3033,9 @@ async function onboardRole(role) {
     <strong>${role}ですね！</strong>ぴったりのエージェントがたくさんあります。<br><br>
     さっそく試してみましょう！タップするとAIが実際に動きます。<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardDemo('今日のNVIDIAの株価を教えて')" type="button" style="min-height:36px">💹 株価を調べる</button>
-      <button class="chip" onclick="onboardDemo('副業の業務委託契約で気をつけるポイントを3つ教えて')" type="button" style="min-height:36px">⚖️ 法的リスクを聞く</button>
-      <button class="chip" onclick="onboardDemo('ポートフォリオサイトを作って公開して')" type="button" style="min-height:36px">🌐 サイトを作る</button>
+      <button class="chip" onclick="onboardDemo('chatweb.ai導入提案スライドを作ってURLで公開して。機能一覧・料金・導入メリットを含めて')" type="button" style="min-height:36px">🎤 提案スライドを作って公開</button>
+      <button class="chip" onclick="onboardDemo('QRコード生成ツールを作ってchatweb.aiで公開して')" type="button" style="min-height:36px">🌐 ツールを作って即公開</button>
+      <button class="chip" onclick="onboardDemo('https://chatweb.ai のスクリーンショットを撮って見せて')" type="button" style="min-height:36px">📸 Webサイトのスクショを撮る</button>
     </div>
   </div></div>`;
   getMessages().appendChild(demoQ);
@@ -3082,9 +3082,9 @@ function onboardAgent() {
     <strong>最後に、あなた専用のエージェントを作ってみましょう！</strong><br><br>
     例えば「毎朝○○をして」「○○を自動化して」と話しかけるだけでエージェントが作れます。<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardFinish('毎朝9時にSlackに日報をまとめて投稿するエージェントを作って')" type="button" style="min-height:40px">🧩 日報自動投稿</button>
-      <button class="chip" onclick="onboardFinish('問い合わせメールを自動分類して担当者に転送するエージェントを作って')" type="button" style="min-height:40px">🧩 メール自動分類</button>
-      <button class="chip" onclick="onboardFinish('毎週金曜にKPIレポートをメールで送るエージェントを作って')" type="button" style="min-height:40px">🧩 週次レポート</button>
+      <button class="chip" onclick="onboardFinish('毎朝9時にLINEに今日のタスクと天気をまとめて送るエージェントを作って')" type="button" style="min-height:36px">🧩 毎朝LINE通知</button>
+      <button class="chip" onclick="onboardFinish('問い合わせメールを自動分類してLINEに通知するエージェントを作って')" type="button" style="min-height:36px">🧩 メール自動分類</button>
+      <button class="chip" onclick="onboardFinish('毎週金曜にKPIレポートをまとめてTelegramに送るエージェントを作って')" type="button" style="min-height:36px">🧩 週次レポート</button>
       <button class="chip" onclick="onboardFinishSkip()" type="button" style="min-height:40px;opacity:0.5">あとで作る</button>
     </div>
   </div></div>`;

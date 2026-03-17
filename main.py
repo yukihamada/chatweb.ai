@@ -78,7 +78,7 @@ def _is_admin(email: str) -> bool:
     return bool(email) and email.strip() in ADMIN_EMAILS
 # On Fly.io, /data is a persistent volume; locally use current dir
 DB_PATH            = os.getenv("DB_PATH", "/data/hitl.db" if os.path.isdir("/data") else "hitl.db")
-SCREENSHOTS_DIR    = "static/screenshots"
+SCREENSHOTS_DIR    = "/data/screenshots" if os.path.isdir("/data") else "static/screenshots"
 UPLOADS_DIR        = os.getenv("UPLOADS_DIR", "/data/uploads" if os.path.isdir("/data") else "/tmp/chatweb_uploads")
 os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -165,6 +165,10 @@ app.add_middleware(CORSMiddleware,
     allow_credentials=True,
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve screenshots from persistent volume (survives deploys)
+if os.path.isdir("/data"):
+    os.makedirs("/data/screenshots", exist_ok=True)
+    app.mount("/screenshots", StaticFiles(directory="/data/screenshots"), name="screenshots")
 
 # Rate limiting
 _rate_limit: dict = {}  # ip → [timestamps]
@@ -983,6 +987,41 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
             await _reply(f"処理できませんでした: {e}")
         return
 
+    # ── HITL approve/reject from LINE ──
+    if text.startswith("/approve "):
+        tid = text.split(maxsplit=1)[1].strip()
+        task = await get_hitl_task_db(tid)
+        if not task:
+            await _reply("このタスクは見つかりませんでした")
+        else:
+            send_result = await execute_hitl_action(task)
+            await update_hitl_task(tid, True, send_result)
+            await _reply(f"✅ 承認しました — {task.get('agent_name','')}")
+        return
+
+    if text.startswith("/reject "):
+        tid = text.split(maxsplit=1)[1].strip()
+        task = await get_hitl_task_db(tid)
+        if not task:
+            await _reply("このタスクは見つかりませんでした")
+        else:
+            await update_hitl_task(tid, False)
+            await _reply(f"❌ 却下しました — {task.get('agent_name','')}")
+        return
+
+    if text in ("/pending", "待機", "/tasks"):
+        tasks = await list_hitl_tasks(10)
+        pending = [t for t in tasks if not t.get("resolved")]
+        if not pending:
+            await _reply("⏳ 待機中のタスクはありません")
+        else:
+            lines = [f"⏳ 待機中: {len(pending)}件\n"]
+            for t in pending[:5]:
+                lines.append(f"• {t.get('agent_name','?')}: {t.get('draft','')[:50]}...")
+                lines.append(f"  /approve {t['id']}  |  /reject {t['id']}")
+            await _reply("\n".join(lines))
+        return
+
     # ── AI message processing ──────────────────────────────────────────────
     try:
         history = await get_history(session_id)
@@ -1690,7 +1729,7 @@ async def tool_browser_open(session_id: str, url: str) -> dict:
         sid = str(uuid.uuid4())[:8]
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
-        url_path = f"/static/screenshots/{sid}.png"
+        url_path = f"/screenshots/{sid}.png"
         _browser_sessions[session_id]["last_used"] = time.time()
         return {"ok": True, "title": title, "url": url, "url_path": url_path}
     except Exception as e:
@@ -1728,7 +1767,7 @@ async def tool_browser_click(session_id: str, selector: str, text: str = "") -> 
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
         _browser_sessions[session_id]["last_used"] = time.time()
-        return {"ok": True, "title": title, "url": url, "url_path": f"/static/screenshots/{sid}.png"}
+        return {"ok": True, "title": title, "url": url, "url_path": f"/screenshots/{sid}.png"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -1774,7 +1813,7 @@ async def tool_browser_key(session_id: str, key: str) -> dict:
         sid = str(uuid.uuid4())[:8]
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
-        return {"ok": True, "key": key, "url": page.url, "url_path": f"/static/screenshots/{sid}.png"}
+        return {"ok": True, "key": key, "url": page.url, "url_path": f"/screenshots/{sid}.png"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -1798,7 +1837,7 @@ async def tool_browser_scroll(session_id: str, direction: str = "down", pixels: 
         sid = str(uuid.uuid4())[:8]
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         await page.screenshot(path=path, type="png")
-        return {"ok": True, "direction": direction, "url_path": f"/static/screenshots/{sid}.png"}
+        return {"ok": True, "direction": direction, "url_path": f"/screenshots/{sid}.png"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -1857,7 +1896,7 @@ async def tool_browser_get_content(session_id: str) -> dict:
         await page.screenshot(path=path, type="png")
         return {
             "ok": True, "title": title, "url": url,
-            "text": text[:3000], "url_path": f"/static/screenshots/{sid}.png"
+            "text": text[:3000], "url_path": f"/screenshots/{sid}.png"
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -1921,7 +1960,7 @@ async def tool_browser_screenshot(url: str) -> dict:
         path = f"{SCREENSHOTS_DIR}/{sid}.png"
         with open(path, "wb") as f:
             f.write(screenshot_bytes)
-        url_path = f"/static/screenshots/{sid}.png"
+        url_path = f"/screenshots/{sid}.png"
         log.info(f"Screenshot saved: {url_path}")
         return {"ok": True, "url": url, "title": title, "url_path": url_path}
     except Exception as e:
@@ -5760,6 +5799,69 @@ async def save_hitl_task(tid, agent_id, agent_name, message, draft, session_id):
             "INSERT INTO hitl_tasks(id,agent_id,agent_name,message,draft,session_id) VALUES(?,?,?,?,?,?)",
             (tid, agent_id, agent_name, message, draft, session_id))
         await db.commit()
+    # Notify user via LINE/Telegram if linked
+    asyncio.create_task(_notify_hitl_to_channels(tid, agent_name, draft, session_id))
+
+
+async def _notify_hitl_to_channels(tid: str, agent_name: str, draft: str, session_id: str):
+    """Send HITL approval request to LINE/Telegram if the user has linked accounts."""
+    try:
+        # Find user from session
+        uid = (_user_sessions.get(session_id) or {}).get("user_id")
+        if not uid:
+            return
+        async with db_conn() as db:
+            async with db.execute(
+                "SELECT line_user_id, telegram_chat_id FROM users WHERE id=?", (uid,)
+            ) as c:
+                row = await c.fetchone()
+        if not row:
+            return
+        line_uid = row[0] or ""
+        tg_chat = row[1] or ""
+        preview = draft[:300].replace("\n", " ")
+        base_url = os.getenv("APP_BASE_URL", "https://chatweb.ai")
+
+        # Telegram: inline keyboard with approve/reject buttons
+        if tg_chat:
+            kb = {"inline_keyboard": [
+                [{"text": "✅ 承認", "callback_data": f"hitl_approve:{tid}"},
+                 {"text": "❌ 却下", "callback_data": f"hitl_reject:{tid}"}],
+                [{"text": "🌐 Webで確認", "url": f"{base_url}"}],
+            ]}
+            await tg_send(tg_chat,
+                f"⚠️ *承認が必要です*\n\n"
+                f"📨 {agent_name}\n\n"
+                f"{preview}...\n\n"
+                f"承認しますか？",
+                reply_markup=kb)
+
+        # LINE: Flex Message with buttons
+        if line_uid:
+            flex = {
+                "type": "bubble", "size": "kilo",
+                "body": {
+                    "type": "box", "layout": "vertical", "spacing": "md",
+                    "contents": [
+                        {"type": "text", "text": "⚠️ 承認が必要です", "weight": "bold", "size": "md", "color": "#ef4444"},
+                        {"type": "text", "text": f"📨 {agent_name}", "size": "sm", "color": "#a1a1aa"},
+                        {"type": "separator"},
+                        {"type": "text", "text": preview[:200], "size": "xs", "color": "#d4d4d8", "wrap": True},
+                    ],
+                    "backgroundColor": "#16161a", "paddingAll": "16px",
+                },
+                "footer": {
+                    "type": "box", "layout": "horizontal", "spacing": "sm",
+                    "contents": [
+                        {"type": "button", "action": {"type": "message", "label": "✅ 承認", "text": f"/approve {tid}"}, "style": "primary", "height": "sm", "color": "#10b981"},
+                        {"type": "button", "action": {"type": "message", "label": "❌ 却下", "text": f"/reject {tid}"}, "style": "secondary", "height": "sm"},
+                    ],
+                    "backgroundColor": "#111113",
+                },
+            }
+            await line_push_flex(line_uid, f"承認が必要: {agent_name}", flex)
+    except Exception as e:
+        log.warning(f"HITL channel notify error: {e}")
 
 
 async def update_hitl_task(tid, approved, send_result=None):
@@ -9256,6 +9358,27 @@ async def telegram_webhook(request: Request):
         elif cb_data == "settings":
             await tg_answer_callback(cb_id)
             await _tg_send_settings(cb_chat_id, cb_user_id)
+
+        elif cb_data.startswith("hitl_approve:"):
+            tid = cb_data.split(":", 1)[1]
+            task = await get_hitl_task_db(tid)
+            if task:
+                send_result = await execute_hitl_action(task)
+                await update_hitl_task(tid, True, send_result)
+                await tg_answer_callback(cb_id, "✅ 承認しました")
+                await tg_send(cb_chat_id, f"✅ 承認しました — {task.get('agent_name','')}")
+            else:
+                await tg_answer_callback(cb_id, "タスクが見つかりません", show_alert=True)
+
+        elif cb_data.startswith("hitl_reject:"):
+            tid = cb_data.split(":", 1)[1]
+            task = await get_hitl_task_db(tid)
+            if task:
+                await update_hitl_task(tid, False)
+                await tg_answer_callback(cb_id, "❌ 却下しました")
+                await tg_send(cb_chat_id, f"❌ 却下しました — {task.get('agent_name','')}")
+            else:
+                await tg_answer_callback(cb_id, "タスクが見つかりません", show_alert=True)
 
         elif cb_data == "link":
             await tg_answer_callback(cb_id)
