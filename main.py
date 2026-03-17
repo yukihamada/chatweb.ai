@@ -5270,6 +5270,16 @@ async def init_db():
             pass
         try:
             await db.execute("ALTER TABLE users ADD COLUMN telegram_chat_id TEXT")
+        for col_def in [
+            "ALTER TABLE users ADD COLUMN credit_granted REAL DEFAULT 0.0",
+            "ALTER TABLE users ADD COLUMN credit_purchased REAL DEFAULT 0.0",
+            "ALTER TABLE users ADD COLUMN credit_granted_month TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN credit_balance REAL DEFAULT 3.0",
+        ]:
+            try:
+                await db.execute(col_def)
+            except Exception:
+                pass
         except Exception:
             pass
         await db.execute("""
@@ -5635,7 +5645,10 @@ async def auth_me(request: Request):
         if us:
             return {"logged_in": True, **us}
         return {"logged_in": False}
-    return {"logged_in": True, "email": user["email"], "user_id": user["id"]}
+    # Include credit balance
+    balance = await _get_credit_balance(user["id"])
+    return {"logged_in": True, "email": user["email"], "user_id": user["id"],
+            "plan": user.get("plan", "free"), "credit_balance": round(balance, 4)}
 
 
 @app.post("/auth/google/callback")
@@ -8178,11 +8191,8 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
     _user_email_val = user.get("email", "")
     # Quota check
     if _uid and not await _check_quota(_uid, _plan):
-        try:
-            limit = int(await _get_sys_cfg(f"quota_{_plan}"))
-        except (ValueError, TypeError):
-            limit = _PLAN_LIMITS.get(_plan, 100)
-        raise HTTPException(status_code=429, detail=f"今月の利用回数（{limit}回）を使い切りました。アップグレードするとさらに利用できます。")
+        balance = await _get_credit_balance(_uid)
+        raise HTTPException(status_code=429, detail=f"クレジット残高が不足しています（残り ${balance:.2f}）。プランをアップグレードするか、クレジットをチャージしてください。")
     # Language from header
     _req_lang = request.headers.get("X-Language", "ja")
     queue: asyncio.Queue = asyncio.Queue()
@@ -8436,13 +8446,17 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                         score = None
                         await queue.put({"type": "eval", "score": None, "needs_improve": False})
                     await save_message(sid, "assistant", final, agent_id)
+                    _run_cost = result.get("cost_usd", 0.0)
                     await save_run(sid, agent_id, req.message, final,
                                    routing_confidence=conf, eval_score=score,
                                    input_tokens=result.get("input_tokens", 0),
                                    output_tokens=result.get("output_tokens", 0),
-                                   cost_usd=result.get("cost_usd", 0.0),
+                                   cost_usd=_run_cost,
                                    user_id=_uid,
                                    model_name=result.get("model_name", ""))
+                    # Deduct credit
+                    if _uid and _run_cost > 0:
+                        await _deduct_credit(_uid, _run_cost)
                     # Background memory extraction
                     asyncio.create_task(_background_memory_extract(
                         req.message, final, sid, queue, user_id=_uid))
@@ -8857,8 +8871,14 @@ async def stripe_webhook(request: Request):
 
 _PLAN_LIMITS = {"free": 100, "pro": 2000, "team": 10000, "enterprise": 999999}
 
+# Monthly credit grants per plan (USD)
+_PLAN_CREDITS = {"free": 3.0, "pro": 30.0, "team": 100.0, "enterprise": 9999.0}
+
 # Default system settings (key -> (default_value, description))
 _SYSTEM_SETTING_DEFAULTS: dict[str, tuple[str, str]] = {
+    "credit_free":       ("3.0",     "無料プランの月間クレジット（USD）"),
+    "credit_pro":        ("30.0",    "プロプランの月間クレジット（USD）"),
+    "credit_team":       ("100.0",   "チームプランの月間クレジット（USD）"),
     "quota_free":        ("100",     "月間無料プランのメッセージ上限"),
     "quota_pro":         ("2000",    "月間プロプランのメッセージ上限"),
     "quota_team":        ("10000",   "月間チームプランのメッセージ上限"),
@@ -8887,23 +8907,83 @@ async def _get_sys_cfg(key: str) -> str:
         return default
 
 
-async def _check_quota(user_id: str, plan: str) -> bool:
-    """Returns True if user is within monthly quota."""
-    # Read plan limits from system_settings (live, overrides _PLAN_LIMITS)
-    try:
-        limit = int(await _get_sys_cfg(f"quota_{plan}"))
-    except (ValueError, TypeError):
-        limit = _PLAN_LIMITS.get(plan, 100)
-    if limit >= 999999:
-        return True
-    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0).isoformat()
+async def _ensure_monthly_credits(user_id: str, plan: str):
+    """Grant monthly credits (reset each month). Purchased credits are never reset."""
+    current_month = datetime.utcnow().strftime("%Y-%m")
     async with db_conn() as db:
         async with db.execute(
-            "SELECT COUNT(*) FROM runs WHERE user_id=? AND created_at>=?",
-            (user_id, month_start)
+            "SELECT credit_granted, credit_purchased, credit_granted_month FROM users WHERE id=?", (user_id,)
         ) as c:
             row = await c.fetchone()
-    return (row[0] if row else 0) < limit
+        if not row:
+            return
+        granted_month = row[2] or ""
+        if granted_month != current_month:
+            # Reset granted credits to this month's allowance
+            try:
+                grant = float(await _get_sys_cfg(f"credit_{plan}"))
+            except (ValueError, TypeError):
+                grant = _PLAN_CREDITS.get(plan, 3.0)
+            await db.execute(
+                "UPDATE users SET credit_granted=?, credit_granted_month=? WHERE id=?",
+                (grant, current_month, user_id))
+            await db.commit()
+            log.info(f"Monthly credits reset: {user_id[:8]} granted=${grant} ({plan}), purchased=${row[1] or 0}")
+
+
+async def _deduct_credit(user_id: str, cost_usd: float):
+    """Deduct cost: first from granted credits, then from purchased."""
+    if cost_usd <= 0:
+        return
+    async with db_conn() as db:
+        async with db.execute(
+            "SELECT credit_granted, credit_purchased FROM users WHERE id=?", (user_id,)
+        ) as c:
+            row = await c.fetchone()
+        if not row:
+            return
+        granted = float(row[0] or 0)
+        purchased = float(row[1] or 0)
+        # Deduct from granted first
+        if granted >= cost_usd:
+            await db.execute("UPDATE users SET credit_granted = credit_granted - ? WHERE id=?",
+                             (cost_usd, user_id))
+        elif granted > 0:
+            remainder = cost_usd - granted
+            await db.execute("UPDATE users SET credit_granted=0, credit_purchased = MAX(0, credit_purchased - ?) WHERE id=?",
+                             (remainder, user_id))
+        else:
+            await db.execute("UPDATE users SET credit_purchased = MAX(0, credit_purchased - ?) WHERE id=?",
+                             (cost_usd, user_id))
+        await db.commit()
+
+
+async def _get_credit_balance(user_id: str) -> float:
+    """Get total credit balance (granted + purchased)."""
+    async with db_conn() as db:
+        async with db.execute(
+            "SELECT COALESCE(credit_granted,0) + COALESCE(credit_purchased,0) FROM users WHERE id=?", (user_id,)
+        ) as c:
+            row = await c.fetchone()
+    return float(row[0]) if row and row[0] is not None else 0.0
+
+
+async def _add_purchased_credit(user_id: str, amount_usd: float):
+    """Add purchased credits (permanent, never expires)."""
+    async with db_conn() as db:
+        await db.execute("UPDATE users SET credit_purchased = COALESCE(credit_purchased,0) + ? WHERE id=?",
+                         (amount_usd, user_id))
+        await db.commit()
+
+
+async def _check_quota(user_id: str, plan: str) -> bool:
+    """Returns True if user has credit remaining."""
+    if plan == "enterprise":
+        return True
+    # Ensure monthly credits are granted
+    await _ensure_monthly_credits(user_id, plan)
+    balance = await _get_credit_balance(user_id)
+    return balance > 0.001  # need at least $0.001
 
 
 @app.get("/usage/{session_id}")

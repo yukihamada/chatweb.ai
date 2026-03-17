@@ -1084,14 +1084,8 @@ body {
         <button class="dropdown-item" onclick="setLanguage('pt','PT','Português')">🇧🇷 Português</button>
       </div>
     </div>
-    <!-- Model tier toggle -->
-    <button id="tier-btn" onclick="toggleTier()" title="モデルティアを切り替え"
-      style="display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;
-             border:1px solid var(--border2);background:rgba(255,255,255,0.04);cursor:pointer;
-             font-size:12px;font-weight:600;color:var(--text);transition:all 0.15s;white-space:nowrap">
-      <span id="tier-icon">💰</span>
-      <span id="tier-label">エコノミー</span>
-    </button>
+    <!-- Model tier (moved to input area) -->
+    <span id="tier-btn" style="display:none"><span id="tier-icon">💰</span><span id="tier-label">エコノミー</span></span>
     <div style="position:relative;">
       <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
       <div id="more-dropdown" class="dropdown">
@@ -1218,6 +1212,15 @@ body {
           aria-label="メッセージ入力"
           onkeydown="handleKey(event)"
           oninput="autoResize(this)"></textarea>
+        <div style="position:relative;flex-shrink:0">
+          <button id="input-tier-btn" onclick="toggleInputTierMenu()" style="display:flex;align-items:center;gap:3px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;color:var(--muted);transition:all 0.15s;white-space:nowrap;height:44px">
+            <span id="input-tier-label">高速</span><span style="font-size:8px">▾</span>
+          </button>
+          <div id="input-tier-menu" style="display:none;position:absolute;bottom:100%;right:0;background:#16161a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 -8px 24px rgba(0,0,0,0.5);z-index:600;margin-bottom:4px">
+            <button class="dropdown-item" onclick="selectInputTier('cheap')" style="font-size:12px">⚡ 高速 <span style="opacity:0.4;font-size:10px">Qwen3-32B</span></button>
+            <button class="dropdown-item" onclick="selectInputTier('pro')" style="font-size:12px">🚀 プロ <span style="opacity:0.4;font-size:10px">Claude Sonnet</span></button>
+          </div>
+        </div>
         <button id="mic-btn" title="音声入力" aria-label="音声入力" data-i18n-title="voice_input" onclick="toggleVoice()">🎤</button>
         <button id="sendBtn" aria-label="送信" onclick="sendMessage()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1555,10 +1558,16 @@ function wrap(el) {
   return c;
 }
 
-function appendUserMsg(text) {
+function appendUserMsg(text, attachment) {
   const div = document.createElement('div');
   div.className = 'msg-user';
-  div.innerHTML = `<div class="msg-user-bubble">${escHtml(text)}</div>`;
+  let attachHtml = '';
+  if (attachment?.type === 'image' && attachment.dataUrl) {
+    attachHtml = `<div style="margin-bottom:6px"><img src="${attachment.dataUrl}" style="max-width:200px;max-height:160px;border-radius:8px;border:1px solid var(--border)"></div>`;
+  } else if (attachment?.type === 'file' && attachment.name) {
+    attachHtml = `<div style="margin-bottom:6px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--muted)">📎 ${escHtml(attachment.name)}</div>`;
+  }
+  div.innerHTML = `<div class="msg-user-bubble">${attachHtml}${escHtml(text)}</div>`;
   getMessages().appendChild(wrap(div));
   scrollToBottom();
 }
@@ -1949,7 +1958,14 @@ async function sendMessage() {
   input.value = ''; input.style.height = 'auto';
   stats.msg++; document.getElementById('s-msg').textContent = stats.msg;
 
-  appendUserMsg(msg);
+  // Capture attachment before clearing
+  let _attachment = null;
+  if (_attachedImageData) {
+    _attachment = {type: 'image', dataUrl: 'data:image/jpeg;base64,' + _attachedImageData, name: 'image'};
+  } else if (_attachedFileId && _attachedFileName) {
+    _attachment = {type: 'file', name: _attachedFileName};
+  }
+  appendUserMsg(msg, _attachment);
   _taskStartTime = Date.now();
   const typingId = 'typing_active';
   appendTyping(typingId);
@@ -1958,11 +1974,15 @@ async function sendMessage() {
   currentStreamEl = null; currentStreamText = '';
   currentAgentId = null; planCardId = null; traceCardId = 'tr_' + Date.now();
 
+  // Build request body
+  const _body = { message: msg, session_id: SESSION_ID };
+  if (_attachedImageData) _body.image_data = _attachedImageData;
+
   try {
     const resp = await fetch(`/chat/stream/${SESSION_ID}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, session_id: SESSION_ID }),
+      body: JSON.stringify(_body),
     });
     if (resp.status === 401) { showLoginGate(); openLoginModal(); return; }
     const reader = resp.body.getReader();
@@ -1990,6 +2010,11 @@ async function sendMessage() {
   } finally {
     setStatus('');
     isStreaming = false;
+    // Clear attachments
+    _attachedImageData = null;
+    _attachedFileId = null;
+    _attachedFileName = null;
+    document.getElementById('file-chips').innerHTML = '';
     document.getElementById('sendBtn').disabled = false;
     if (currentAgentId) setAgentBusy(currentAgentId, false);
     currentStreamEl = null; currentStreamText = '';
@@ -2151,22 +2176,62 @@ async function sendMessage() {
 // ── Model Tier ────────────────────────────────────────────────────────────────
 let _currentTier = 'cheap';
 const _TIER_CONFIG = {
-  cheap: { icon: '💰', label: 'エコノミー', color: '#10b981', desc: 'Groq Llama 3.3 (高速・格安)' },
-  pro:   { icon: '🚀', label: 'プロ',       color: '#8b5cf6', desc: 'Claude Sonnet 4.6 (高品質)' },
+  cheap: { icon: '⚡', label: '高速', color: '#10b981', desc: 'Qwen3-32B' },
+  pro:   { icon: '🚀', label: 'プロ', color: '#8b5cf6', desc: 'Claude Sonnet' },
 };
 
 function renderTierBtn() {
   const cfg = _TIER_CONFIG[_currentTier];
+  // Header button
   const btn = document.getElementById('tier-btn');
   const icon = document.getElementById('tier-icon');
   const lbl  = document.getElementById('tier-label');
-  if (!btn) return;
-  icon.textContent = cfg.icon;
-  lbl.textContent  = cfg.label;
-  btn.style.borderColor = _currentTier === 'pro' ? 'rgba(139,92,246,0.5)' : 'rgba(16,185,129,0.4)';
-  btn.style.background  = _currentTier === 'pro' ? 'rgba(139,92,246,0.08)' : 'rgba(16,185,129,0.06)';
-  btn.title = `現在: ${cfg.desc}\nクリックで切替`;
+  if (btn) {
+    icon.textContent = cfg.icon;
+    lbl.textContent  = cfg.label;
+    btn.style.borderColor = _currentTier === 'pro' ? 'rgba(139,92,246,0.5)' : 'rgba(16,185,129,0.4)';
+    btn.style.background  = _currentTier === 'pro' ? 'rgba(139,92,246,0.08)' : 'rgba(16,185,129,0.06)';
+    btn.title = `現在: ${cfg.desc}\nクリックで切替`;
+  }
+  // Input area tier label
+  const inputLbl = document.getElementById('input-tier-label');
+  if (inputLbl) inputLbl.textContent = cfg.label;
+  const inputBtn = document.getElementById('input-tier-btn');
+  if (inputBtn) {
+    inputBtn.style.borderColor = _currentTier === 'pro' ? 'rgba(139,92,246,0.4)' : 'var(--border)';
+    inputBtn.style.color = _currentTier === 'pro' ? '#a78bfa' : 'var(--muted)';
+  }
 }
+
+function toggleInputTierMenu() {
+  const m = document.getElementById('input-tier-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+
+async function selectInputTier(tier) {
+  document.getElementById('input-tier-menu').style.display = 'none';
+  if (tier === _currentTier) return;
+  try {
+    const r = await fetch('/settings/tier', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ tier, session_id: _sessionId }),
+    });
+    if (r.ok) {
+      _currentTier = tier;
+      renderTierBtn();
+      const cfg = _TIER_CONFIG[tier];
+      showToast(`${cfg.icon} ${cfg.label}に切替 — ${cfg.desc}`);
+    }
+  } catch(e) { console.error(e); }
+}
+
+// Close tier menu on click outside
+document.addEventListener('click', e => {
+  const m = document.getElementById('input-tier-menu');
+  const b = document.getElementById('input-tier-btn');
+  if (m && b && !b.contains(e.target) && !m.contains(e.target)) m.style.display = 'none';
+});
 
 async function toggleTier() {
   const next = _currentTier === 'cheap' ? 'pro' : 'cheap';
@@ -2228,17 +2293,9 @@ function updateCostDisplay(model) {
   const txt = c < 0.001
     ? `$${(c * 1000).toFixed(3)}m`
     : `$${c.toFixed(4)}`;
-  // Short model label
-  const mLabel = _lastModel
-    .replace('claude-sonnet-4-6', 'Sonnet')
-    .replace('claude-haiku-4-5-20251001', 'Haiku')
-    .replace('llama-3.3-70b-versatile', 'Llama3.3')
-    .replace('llama3-8b-8192', 'Llama3-8B')
-    .replace('gpt-4o', 'GPT-4o')
-    .replace('gpt-4o-mini', 'GPT-4o-mini');
-  el.textContent = mLabel ? `${mLabel} · ${txt}` : txt;
-  el.title = `モデル: ${_lastModel}\n入力: ${_sessionInputTokens.toLocaleString()} tok / 出力: ${_sessionOutputTokens.toLocaleString()} tok`;
-  el.style.opacity = '1';
+  el.textContent = txt;
+  el.title = `セッションコスト: ${txt}\n入力: ${_sessionInputTokens.toLocaleString()} tok\n出力: ${_sessionOutputTokens.toLocaleString()} tok`;
+  el.style.opacity = c > 0 ? '1' : '0';
 }
 
 let _memTimer = null;
