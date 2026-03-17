@@ -1176,24 +1176,24 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
     """Execute code in E2B sandbox (real) or locally (fallback)."""
     if E2B_API_KEY:
         try:
-            # Try v1 API first, then v0
-            try:
-                from e2b_code_interpreter import Sandbox
-            except ImportError:
-                from e2b import Sandbox
+            from e2b_code_interpreter import Sandbox
+            os.environ["E2B_API_KEY"] = E2B_API_KEY  # v1 reads from env
             def _run():
-                with Sandbox(api_key=E2B_API_KEY) as sandbox:
-                    execution = sandbox.run_code(code)
-                    output = ""
-                    if hasattr(execution, 'results'):
-                        output = "\n".join(str(r) for r in execution.results)
-                    if hasattr(execution, 'logs'):
-                        logs = getattr(execution.logs, 'stdout', []) + getattr(execution.logs, 'stderr', [])
-                        if logs:
-                            output += "\n\nLogs:\n" + "\n".join(str(l) for l in logs)
-                    if hasattr(execution, 'text'):
-                        output = execution.text
-                    return output or "(no output)"
+                sandbox = Sandbox()
+                execution = sandbox.run_code(code)
+                output = ""
+                if hasattr(execution, 'results') and execution.results:
+                    output = "\n".join(str(r) for r in execution.results)
+                if hasattr(execution, 'logs') and execution.logs:
+                    stdout = getattr(execution.logs, 'stdout', []) or []
+                    stderr = getattr(execution.logs, 'stderr', []) or []
+                    log_lines = [str(l) for l in stdout + stderr]
+                    if log_lines:
+                        output += ("\n" if output else "") + "\n".join(log_lines)
+                if hasattr(execution, 'text') and execution.text:
+                    output = execution.text
+                sandbox.kill()
+                return output or "(no output)"
             return await asyncio.get_event_loop().run_in_executor(None, _run)
         except ImportError:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
