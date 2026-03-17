@@ -8855,9 +8855,43 @@ async def hitl_delete(task_id: str):
     return {"ok": True}
 
 
+@app.get("/sessions")
+async def list_user_sessions(request: Request):
+    """List user's chat sessions with first message as title."""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        return {"sessions": []}
+    uid = user["id"]
+    async with db_conn() as db:
+        async with db.execute(
+            """SELECT session_id,
+                      MIN(created_at) as started,
+                      MAX(created_at) as last_msg,
+                      COUNT(*) as msg_count,
+                      (SELECT content FROM messages m2 WHERE m2.session_id=m1.session_id AND m2.role='user' ORDER BY m2.created_at LIMIT 1) as first_msg
+               FROM messages m1
+               WHERE session_id LIKE ? OR session_id IN (
+                   SELECT DISTINCT session_id FROM runs WHERE user_id=?
+               )
+               GROUP BY session_id
+               HAVING msg_count > 0
+               ORDER BY last_msg DESC
+               LIMIT 30""",
+            (f"sess_%", uid)
+        ) as c:
+            rows = [dict(r) for r in await c.fetchall()]
+    return {"sessions": [{
+        "id": r["session_id"],
+        "title": (r["first_msg"] or "新しい会話")[:40],
+        "started": r["started"],
+        "last_msg": r["last_msg"],
+        "msg_count": r["msg_count"],
+    } for r in rows]}
+
+
 @app.get("/history/{session_id}")
 async def get_session_history(session_id: str):
-    h = await get_history(session_id, limit=20)
+    h = await get_history(session_id, limit=50)
     return {"messages": h}
 
 

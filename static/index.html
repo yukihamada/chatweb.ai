@@ -1407,10 +1407,9 @@ async function loadServerHistory(sid) {
   } catch {}
 }
 
-function showChatHistory() {
+async function showChatHistory() {
   let panel = document.getElementById('chat-history-panel');
   if (panel) { panel.remove(); return; }
-  const history = loadChatHistory();
   panel = document.createElement('div');
   panel.id = 'chat-history-panel';
   panel.style.cssText = 'position:fixed;top:50px;left:0;width:280px;height:calc(100vh - 50px);background:#111113;border-right:1px solid var(--border);z-index:400;overflow-y:auto;padding:12px;animation:fadeUp 0.15s ease';
@@ -1420,14 +1419,27 @@ function showChatHistory() {
       <button onclick="document.getElementById('chat-history-panel').remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
     </div>
     <button onclick="newChat();document.getElementById('chat-history-panel')?.remove()" style="width:100%;padding:10px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600;margin-bottom:12px">＋ 新しい会話</button>
-    ${history.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">履歴はまだありません</div>' :
-      history.map(h => `
-        <div onclick="switchChat('${h.id}')" style="padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'};border:1px solid ${h.id===SESSION_ID?'rgba(139,92,246,0.3)':'var(--border)'};transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'}'">
-          <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(h.title)}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px">${new Date(h.ts).toLocaleDateString('ja-JP')} ${new Date(h.ts).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</div>
-        </div>`).join('')}
-  `;
+    <div id="chat-history-list" style="color:var(--muted);font-size:12px">読み込み中...</div>`;
   document.body.appendChild(panel);
+
+  // Load from server
+  try {
+    const r = await fetch('/sessions');
+    const d = await r.json();
+    const sessions = d.sessions || [];
+    const listEl = document.getElementById('chat-history-list');
+    if (!sessions.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">履歴はまだありません</div>';
+      return;
+    }
+    listEl.innerHTML = sessions.map(h => `
+      <div onclick="switchChat('${escHtml(h.id)}')" style="padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'};border:1px solid ${h.id===SESSION_ID?'rgba(139,92,246,0.3)':'var(--border)'};transition:background 0.15s" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='${h.id===SESSION_ID?'rgba(139,92,246,0.1)':'var(--surface)'}'">
+        <div style="font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(h.title)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${h.msg_count}メッセージ · ${h.last_msg?.slice(0,10) || ''}</div>
+      </div>`).join('');
+  } catch {
+    document.getElementById('chat-history-list').innerHTML = '<div style="color:var(--red)">読み込めませんでした</div>';
+  }
 }
 let agents = {};
 let drawerOpen = false;
@@ -3589,6 +3601,18 @@ function showKeyLink(key) {
   }
 }
 
+function filterAgentManager(type) {
+  document.querySelectorAll('#am-tabs .chip').forEach(b => {
+    b.style.background = 'var(--surface)'; b.style.color = 'var(--text)';
+  });
+  const btn = document.getElementById('am-tab-' + type);
+  if (btn) { btn.style.background = 'var(--accent)'; btn.style.color = '#fff'; }
+  document.querySelectorAll('#agent-manager-list > div[data-agent-type]').forEach(el => {
+    if (type === 'all') el.style.display = '';
+    else el.style.display = el.dataset.agentType === type ? '' : 'none';
+  });
+}
+
 async function loadAgentKeys() {
   const list = document.getElementById('agent-keys-list');
   if (!list) return;
@@ -3643,29 +3667,49 @@ async function deleteAgentKey(name) {
 async function openAgentManager() {
   const modal = document.getElementById('agent-manager-modal');
   modal.hidden = false;
-  loadAgentKeys();  // Load API keys in the bottom section
+  loadAgentKeys();
   const list = document.getElementById('agent-manager-list');
   list.innerHTML = '<div style="color:var(--muted);font-size:13px">読み込み中...</div>';
+  // Tabs: builtin vs custom
+  const tabHtml = `<div style="display:flex;gap:8px;margin-bottom:10px">
+    <button onclick="filterAgentManager('all')" class="chip" id="am-tab-all" style="font-size:11px;background:var(--accent);color:#fff">すべて</button>
+    <button onclick="filterAgentManager('builtin')" class="chip" id="am-tab-builtin" style="font-size:11px">プリセット</button>
+    <button onclick="filterAgentManager('custom')" class="chip" id="am-tab-custom" style="font-size:11px">カスタム</button>
+  </div>`;
+  list.insertAdjacentHTML('beforebegin', list.previousElementSibling?.id === 'am-tabs' ? '' : `<div id="am-tabs">${tabHtml}</div>`);
   try {
     const r = await fetch('/agents');
     const data = await r.json();
-    const entries = Object.entries(data).filter(([k,v]) => !v.admin_only);
-    list.innerHTML = entries.map(([id, a]) => `
-      <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface);cursor:pointer"
-           onclick="openAgentEdit('${id}')">
+    window._agentManagerData = data;
+    const isAdmin = currentUser?.email === 'yuki@hamada.tokyo';
+    const entries = Object.entries(data).filter(([k,v]) => isAdmin || !v.admin_only);
+    list.innerHTML = entries.map(([id, a]) => {
+      const tools = (a.real_tools || a.mcp_tools || []).slice(0, 3).join(', ');
+      const model = a.model_name || a.model_provider || '';
+      const badge = a.is_forked ? '<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px">カスタム</span>'
+        : a.admin_only ? '<span style="font-size:9px;background:var(--red);color:#fff;padding:1px 6px;border-radius:4px">管理者</span>'
+        : a.is_builtin ? '<span style="font-size:9px;color:var(--muted);border:1px solid var(--border);padding:1px 6px;border-radius:4px">プリセット</span>' : '';
+      return `
+      <div data-agent-type="${a.is_forked ? 'custom' : a.is_builtin ? 'builtin' : 'custom'}"
+           style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--surface);cursor:pointer;transition:border-color 0.15s"
+           onclick="openAgentEdit('${id}')" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span style="font-size:18px">${a.emoji || '🤖'}</span>
-          <strong style="font-size:14px;color:var(--text)">${escHtml(a.name)}</strong>
-          ${a.is_forked ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px">カスタム</span>' : ''}
-          ${a.is_builtin && !a.is_forked ? '<span style="font-size:10px;color:var(--muted);border:1px solid var(--border);padding:1px 6px;border-radius:4px">ビルトイン</span>' : ''}
+          <strong style="font-size:13px;color:var(--text)">${escHtml(a.name)}</strong>
+          ${badge}
         </div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${escHtml(a.description || '')}</div>
-        <details onclick="event.stopPropagation()">
-          <summary style="font-size:11px;color:var(--muted);cursor:pointer">システムプロンプトを見る</summary>
-          <pre style="font-size:11px;color:var(--muted);background:var(--card);padding:8px;border-radius:6px;margin-top:4px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">${escHtml((a.system || '').slice(0, 2000))}</pre>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${escHtml(a.description || '')}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--muted)">
+          ${tools ? '<span style="background:var(--card);padding:1px 6px;border-radius:4px">🔌 '+escHtml(tools)+'</span>' : ''}
+          ${model ? '<span style="background:var(--card);padding:1px 6px;border-radius:4px">🤖 '+escHtml(model)+'</span>' : ''}
+          ${a.hitl_required ? '<span style="background:rgba(239,68,68,0.1);padding:1px 6px;border-radius:4px;color:var(--red)">⚠️ HITL</span>' : ''}
+        </div>
+        <details onclick="event.stopPropagation()" style="margin-top:6px">
+          <summary style="font-size:10px;color:var(--muted);cursor:pointer">プロンプト詳細</summary>
+          <pre style="font-size:10px;color:var(--muted);background:var(--card);padding:8px;border-radius:6px;margin-top:4px;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-break:break-all">${escHtml((a.system || '').slice(0, 1500))}</pre>
         </details>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch(e) {
     list.innerHTML = `<div style="color:var(--red)">読み込めませんでした: ${escHtml(e.message)}</div>`;
   }
