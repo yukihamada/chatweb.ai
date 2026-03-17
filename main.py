@@ -8875,11 +8875,36 @@ async def view_share(share_id: str):
     for m in history:
         role = m.get("role","")
         content = m.get("content","")
+        # Clean content: remove <think> tags, escape HTML
+        import html as _html
+        clean = re.sub(r'<think>[\s\S]*?</think>', '', content, flags=re.IGNORECASE)
+        clean = re.sub(r'<think>[\s\S]*$', '', clean, flags=re.IGNORECASE)
+        clean = _html.escape(clean.strip())
+        # Basic markdown: bold, code, newlines
+        clean = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', clean)
+        clean = re.sub(r'`([^`]+)`', r'<code style="background:rgba(139,92,246,0.15);padding:1px 4px;border-radius:3px">\1</code>', clean)
+        clean = clean.replace('\n', '<br>')
         if role == "user":
-            msgs_html += f'<div style="text-align:right;margin:8px 0"><span style="background:#8b5cf6;color:#fff;padding:8px 14px;border-radius:14px;display:inline-block;max-width:75%;text-align:left">{content}</span></div>'
+            msgs_html += f'<div style="display:flex;justify-content:flex-end;margin:12px 0"><div style="background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;padding:12px 16px;border-radius:18px 18px 4px 18px;max-width:75%;font-size:14px;line-height:1.5">{clean}</div></div>'
         elif role == "assistant":
-            msgs_html += f'<div style="margin:8px 0"><span style="background:#18181b;color:#fafafa;padding:8px 14px;border-radius:14px;display:inline-block;max-width:80%;border:1px solid rgba(255,255,255,0.1)">{content}</span></div>'
-    return HTMLResponse(f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synapse 共有</title><style>body{{font-family:-apple-system,sans-serif;background:#09090b;color:#fafafa;padding:20px;max-width:720px;margin:0 auto}}h1{{font-size:18px;margin-bottom:16px;color:#a78bfa}}a{{color:#8b5cf6}}</style></head><body><h1>◈ Synapse — 共有会話</h1>{msgs_html}<p style="margin-top:20px;font-size:12px;color:#52525b"><a href="/">Synapseを使ってみる →</a></p></body></html>""")
+            msgs_html += f'<div style="margin:12px 0"><div style="background:#18181b;color:#e4e4e7;padding:14px 16px;border-radius:18px 18px 18px 4px;max-width:85%;font-size:14px;line-height:1.6">{clean}</div></div>'
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>chatweb.ai — 共有会話</title>
+<meta property="og:title" content="chatweb.ai — 共有会話">
+<meta property="og:description" content="AIマルチエージェントとの会話を共有">
+<style>*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#09090b;color:#fafafa;min-height:100vh}}
+.container{{max-width:720px;margin:0 auto;padding:20px 16px 60px}}
+.header{{display:flex;align-items:center;gap:10px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:16px}}
+.logo{{font-size:20px;font-weight:700;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}}
+a{{color:#8b5cf6;text-decoration:none}}a:hover{{text-decoration:underline}}
+code{{font-family:monospace}}
+</style></head><body><div class="container">
+<div class="header"><span style="font-size:24px">◈</span><span class="logo">chatweb.ai</span><span style="color:#52525b;font-size:13px;margin-left:auto">共有会話</span></div>
+{msgs_html}
+<div style="margin-top:32px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);text-align:center">
+<a href="/" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:linear-gradient(135deg,#6d28d9,#8b5cf6);color:#fff;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none">◈ chatweb.ai を使ってみる</a>
+<p style="margin-top:12px;font-size:11px;color:#52525b">30以上のAIエージェントが連携するマルチエージェントプラットフォーム</p>
+</div></div></body></html>""")
 
 
 @app.post("/webhook/{agent_id}")
