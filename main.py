@@ -62,7 +62,8 @@ GCAL_SERVICE_ACCOUNT_JSON = os.getenv("GCAL_SERVICE_ACCOUNT_JSON", "")
 STRIPE_SECRET_KEY        = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET    = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_ID_PRO      = os.getenv("STRIPE_PRICE_ID_PRO", "") or os.getenv("STRIPE_PRICE_PRO", "")
-STRIPE_PRICE_ID_TEAM     = os.getenv("STRIPE_PRICE_ID_TEAM", "") or os.getenv("STRIPE_PRICE_ENTERPRISE", "")
+STRIPE_PRICE_ID_TEAM     = os.getenv("STRIPE_PRICE_ID_TEAM", "")
+STRIPE_PRICE_ID_ENTERPRISE = os.getenv("STRIPE_PRICE_ID_ENTERPRISE", "") or os.getenv("STRIPE_PRICE_ENTERPRISE", "")
 CF_ACCOUNT_ID         = os.getenv("CF_ACCOUNT_ID", "46bf2542468db352a9741f14b84d2744")
 CF_API_KEY            = os.getenv("CF_API_KEY", "")
 CF_API_EMAIL          = os.getenv("CF_API_EMAIL", "mail@yukihamada.jp")
@@ -8794,19 +8795,41 @@ async def billing_plans():
     return {
         "plans": [
             {
-                "id": "free", "name": "フリー", "price": 0, "requests_per_month": 100,
-                "quota_label": "月100メッセージ",
-                "features": ["33種類のAIエージェント", "長期記憶 50件", "ファイルアップロード", "サイト公開 3件まで", "Slack/Discord 連携"],
+                "id": "free", "name": "フリー", "price": 0,
+                "credit": "$2", "credit_usd": 2.0,
+                "quota_label": "$2/月のクレジット付き",
+                "features": ["30以上のAIエージェント", "高速モード（Qwen3-32B）", "長期記憶", "ファイルアップロード", "サイト公開 3件", "LINE / Telegram連携"],
             },
             {
-                "id": "pro", "name": "プロ", "price": 2980, "requests_per_month": 2000,
-                "quota_label": "月2,000メッセージ",
-                "features": ["全エージェント無制限", "長期記憶 無制限", "Proモデル優先処理", "サイト公開 無制限", "カスタムWebhook / API", "Google Calendar/Gmail 連携", "優先サポート"],
+                "id": "pro", "name": "プロ", "price": 2900,
+                "credit": "$19", "credit_usd": 19.0,
+                "quota_label": "$19/月のクレジット付き",
+                "features": ["フリーの全機能", "プロモード（Claude Sonnet）", "長期記憶 無制限", "サイト公開 無制限", "Google Workspace連携", "追加クレジットチャージ可", "優先サポート"],
+                "popular": True,
             },
             {
-                "id": "team", "name": "チーム", "price": 9800, "requests_per_month": 10000,
-                "quota_label": "月10,000メッセージ",
-                "features": ["プロの全機能", "チームワークスペース共有", "管理者ダッシュボード", "SLAサポート (1営業日)", "請求書払い対応"],
+                "id": "team", "name": "チーム", "price": 9800,
+                "credit": "$65", "credit_usd": 65.0,
+                "quota_label": "$65/月のクレジット付き",
+                "features": ["プロの全機能", "チームワークスペース共有", "管理者ダッシュボード", "追加クレジットチャージ可", "SLAサポート（1営業日）", "請求書払い対応"],
+            },
+            {
+                "id": "enterprise", "name": "エンタープライズ", "price": 98000,
+                "credit": "$650", "credit_usd": 650.0,
+                "quota_label": "$650/月のクレジット付き",
+                "features": [
+                    "チームの全機能",
+                    "専任AIコンサルタント",
+                    "カスタムエージェント開発代行",
+                    "業務フロー自動化設計",
+                    "オンプレミス対応相談",
+                    "専用Slackサポートチャネル",
+                    "SLA 4時間以内対応",
+                    "月次レビューMTG",
+                    "API呼び出し無制限",
+                    "セキュリティ監査レポート",
+                ],
+                "contact": True,
             },
         ]
     }
@@ -8820,7 +8843,8 @@ async def create_checkout(request: Request):
         stripe.api_key = STRIPE_SECRET_KEY
         body = await request.json()
         plan_id = body.get("plan_id", "pro")
-        price_id = STRIPE_PRICE_ID_TEAM if plan_id == "team" else STRIPE_PRICE_ID_PRO
+        _price_map = {"pro": STRIPE_PRICE_ID_PRO, "team": STRIPE_PRICE_ID_TEAM, "enterprise": STRIPE_PRICE_ID_ENTERPRISE}
+        price_id = _price_map.get(plan_id, STRIPE_PRICE_ID_PRO)
         if not price_id:
             return JSONResponse({"error": f"Price ID for plan '{plan_id}' is not configured"}, status_code=400)
         # Prefill email if user is logged in
@@ -8861,7 +8885,9 @@ async def stripe_webhook(request: Request):
         customer_email = sess.get("customer_details", {}).get("email", "")
         # Determine plan from price ID in metadata or line items
         price_ids_in_session = str(sess)
-        if STRIPE_PRICE_ID_TEAM and STRIPE_PRICE_ID_TEAM in price_ids_in_session:
+        if STRIPE_PRICE_ID_ENTERPRISE and STRIPE_PRICE_ID_ENTERPRISE in price_ids_in_session:
+            plan = "enterprise"
+        elif STRIPE_PRICE_ID_TEAM and STRIPE_PRICE_ID_TEAM in price_ids_in_session:
             plan = "team"
         else:
             plan = "pro"
@@ -8881,14 +8907,15 @@ async def stripe_webhook(request: Request):
 
 _PLAN_LIMITS = {"free": 100, "pro": 2000, "team": 10000, "enterprise": 999999}
 
-# Monthly credit grants per plan (USD)
-_PLAN_CREDITS = {"free": 3.0, "pro": 30.0, "team": 100.0, "enterprise": 9999.0}
+# Monthly credit grants per plan (USD) — ¥price ÷ 150 rounded down
+_PLAN_CREDITS = {"free": 2.0, "pro": 19.0, "team": 65.0, "enterprise": 650.0}
 
 # Default system settings (key -> (default_value, description))
 _SYSTEM_SETTING_DEFAULTS: dict[str, tuple[str, str]] = {
-    "credit_free":       ("3.0",     "無料プランの月間クレジット（USD）"),
-    "credit_pro":        ("30.0",    "プロプランの月間クレジット（USD）"),
-    "credit_team":       ("100.0",   "チームプランの月間クレジット（USD）"),
+    "credit_free":       ("2.0",     "無料プランの月間クレジット（USD）"),
+    "credit_pro":        ("19.0",    "プロプランの月間クレジット（USD） ¥2,900÷150"),
+    "credit_team":       ("65.0",    "チームプランの月間クレジット（USD） ¥9,800÷150"),
+    "credit_enterprise": ("650.0",   "エンタープライズの月間クレジット（USD） ¥98,000÷150"),
     "quota_free":        ("100",     "月間無料プランのメッセージ上限"),
     "quota_pro":         ("2000",    "月間プロプランのメッセージ上限"),
     "quota_team":        ("10000",   "月間チームプランのメッセージ上限"),
