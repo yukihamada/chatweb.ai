@@ -3152,7 +3152,8 @@ function addRatingButtons(bubbleEl, runId) {
     <button onclick="rateMessage(this, 1)" title="良い回答">👍 良い</button>
     <button onclick="rateMessage(this, -1)" title="改善が必要">👎 微妙</button>
     <button onclick="retryWithPro(this)" title="プロモデルで再回答" style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.3);color:#a78bfa">🚀 プロで再回答</button>
-    <button onclick="showFeedbackInput(this)" title="フィードバックで最大$1もらえる">💬 改善提案（$報酬）</button>`;
+    <button onclick="sendToMessenger(this)" title="LINE/Telegramに送信" style="background:rgba(6,199,85,0.1);border-color:rgba(6,199,85,0.3);color:#06c755">📱 LINE/TGに送る</button>
+    <button onclick="showFeedbackInput(this)" title="フィードバックで最大$1もらえる">💬 改善提案</button>`;
   footer.appendChild(ratingDiv);
 }
 
@@ -3205,6 +3206,47 @@ async function retryWithPro(btn) {
 
   // Restore tier after a delay
   setTimeout(() => { if (oldTier !== 'pro') selectInputTier(oldTier); }, 3000);
+}
+
+async function sendToMessenger(btn) {
+  // Get the AI response text from the parent bubble
+  const bubble = btn.closest('.msg-ai')?.querySelector('.msg-ai-bubble');
+  if (!bubble) { showToast('送信する内容が見つかりません'); return; }
+  const text = bubble.textContent?.trim()?.slice(0, 3000);
+  if (!text) return;
+
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 送信中...';
+
+  try {
+    const r = await fetch('/send-to-messenger', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, session_id: SESSION_ID}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      const channels = [];
+      if (d.line) channels.push('LINE');
+      if (d.telegram) channels.push('Telegram');
+      btn.textContent = '✅ 送信済み';
+      showToast(`📱 ${channels.join(' + ')} に送信しました`);
+    } else {
+      btn.textContent = origText;
+      btn.disabled = false;
+      if (d.error === 'not_linked') {
+        showToast('LINE/Telegramが連携されていません。メニューから連携してください');
+        showLinkCode();
+      } else {
+        showToast('送信できませんでした');
+      }
+    }
+  } catch {
+    btn.textContent = origText;
+    btn.disabled = false;
+    showToast('送信できませんでした');
+  }
 }
 
 function showFeedbackInput(btn) {

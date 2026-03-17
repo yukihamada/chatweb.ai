@@ -8929,6 +8929,33 @@ async def get_session_history(session_id: str):
     return {"messages": h}
 
 
+@app.post("/send-to-messenger")
+async def send_to_messenger(request: Request):
+    """Send AI response to user's linked LINE/Telegram."""
+    user = await _get_user_from_session(_extract_session_token(request))
+    if not user:
+        return JSONResponse({"ok": False, "error": "not_logged_in"}, status_code=401)
+    body = await request.json()
+    text = body.get("text", "")[:3500]
+    if not text:
+        return {"ok": False, "error": "empty"}
+    uid = user["id"]
+    async with db_conn() as db:
+        async with db.execute("SELECT line_user_id, telegram_chat_id FROM users WHERE id=?", (uid,)) as c:
+            row = await c.fetchone()
+    if not row or (not row[0] and not row[1]):
+        return {"ok": False, "error": "not_linked"}
+    line_ok = tg_ok = False
+    clean = _clean_for_messenger(text)
+    if row[0]:
+        r = await line_push(row[0], f"📋 chatweb.aiの結果:\n\n{clean}")
+        line_ok = r.get("ok", False)
+    if row[1]:
+        await tg_send(row[1], f"📋 *chatweb.aiの結果*\n\n{clean}")
+        tg_ok = True
+    return {"ok": line_ok or tg_ok, "line": line_ok, "telegram": tg_ok}
+
+
 @app.post("/share/{session_id}")
 async def create_share(session_id: str):
     """会話をパブリックシェアURLとして公開"""
