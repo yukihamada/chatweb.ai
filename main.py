@@ -1177,23 +1177,23 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
     if E2B_API_KEY:
         try:
             from e2b_code_interpreter import Sandbox
-            os.environ["E2B_API_KEY"] = E2B_API_KEY  # v1 reads from env
+            os.environ["E2B_API_KEY"] = E2B_API_KEY
             def _run():
-                sandbox = Sandbox()
+                sandbox = Sandbox.create()
                 execution = sandbox.run_code(code)
-                output = ""
-                if hasattr(execution, 'results') and execution.results:
-                    output = "\n".join(str(r) for r in execution.results)
+                output_parts = []
+                # Collect stdout/stderr from logs
                 if hasattr(execution, 'logs') and execution.logs:
-                    stdout = getattr(execution.logs, 'stdout', []) or []
-                    stderr = getattr(execution.logs, 'stderr', []) or []
-                    log_lines = [str(l) for l in stdout + stderr]
-                    if log_lines:
-                        output += ("\n" if output else "") + "\n".join(log_lines)
-                if hasattr(execution, 'text') and execution.text:
-                    output = execution.text
+                    for line in getattr(execution.logs, 'stdout', []) or []:
+                        output_parts.append(str(line).rstrip())
+                    for line in getattr(execution.logs, 'stderr', []) or []:
+                        output_parts.append(f"[stderr] {str(line).rstrip()}")
+                # Collect results (charts, dataframes, etc.)
+                if hasattr(execution, 'results') and execution.results:
+                    for r in execution.results:
+                        output_parts.append(str(r))
                 sandbox.kill()
-                return output or "(no output)"
+                return "\n".join(output_parts) or "(no output)"
             return await asyncio.get_event_loop().run_in_executor(None, _run)
         except ImportError:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
