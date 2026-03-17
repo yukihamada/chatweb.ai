@@ -6861,6 +6861,64 @@ async def get_history(session_id: str, limit: int = 8) -> list:
     return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
 
 
+def _estimate_tokens(messages: list) -> int:
+    """Rough token estimate: ~3.5 chars/token for mixed ja/en."""
+    return sum(len(m.get("content", "") or "") for m in messages) // 3
+
+
+# Per-session summary cache (session_id → summary text)
+_session_summaries: dict[str, str] = {}
+
+async def compress_history(messages: list, session_id: str = "",
+                           max_tokens: int = 6000, keep_recent: int = 4) -> tuple[list, str | None]:
+    """Compress conversation history if it exceeds max_tokens.
+    Returns (compressed_messages, summary_text_or_None).
+    Keeps the most recent `keep_recent` messages intact and summarizes the rest."""
+    if not messages or _estimate_tokens(messages) <= max_tokens:
+        return messages, None
+
+    # Split: old messages to summarize + recent to keep
+    if len(messages) <= keep_recent:
+        return messages, None
+
+    old_msgs = messages[:-keep_recent]
+    recent_msgs = messages[-keep_recent:]
+
+    # Check if we already have a cached summary for this session
+    cached = _session_summaries.get(session_id)
+    if cached and _estimate_tokens(recent_msgs) + _estimate_tokens([{"content": cached}]) <= max_tokens:
+        compressed = [{"role": "user", "content": f"[前の会話の要約]\n{cached}"},
+                      {"role": "assistant", "content": "はい、前の会話の内容を把握しました。続けましょう。"}]
+        return compressed + recent_msgs, cached
+
+    # Generate summary with Haiku
+    summary_prompt = "以下の会話を簡潔に要約してください。重要な情報（ユーザーの要望、決定事項、コンテキスト）を漏らさず、200-400文字程度にまとめてください:\n\n"
+    for m in old_msgs:
+        role_label = "ユーザー" if m["role"] == "user" else "AI"
+        content = (m.get("content") or "")[:500]
+        summary_prompt += f"{role_label}: {content}\n"
+
+    try:
+        resp = await aclient.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=500,
+            messages=[{"role": "user", "content": summary_prompt}],
+        )
+        summary = resp.content[0].text.strip()
+    except Exception as e:
+        log.warning(f"History compression failed: {e}")
+        # Fallback: just truncate
+        return messages[-keep_recent:], None
+
+    # Cache the summary
+    if session_id:
+        _session_summaries[session_id] = summary
+
+    compressed = [{"role": "user", "content": f"[前の会話の要約]\n{summary}"},
+                  {"role": "assistant", "content": "はい、前の会話の内容を把握しました。続けましょう。"}]
+    return compressed + recent_msgs, summary
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # LONG-TERM MEMORY
 # ══════════════════════════════════════════════════════════════════════════════
@@ -7963,8 +8021,12 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
     if memory_context:
         enhanced = memory_context + "\n\n" + enhanced
 
-    # 2. Build message array with history
+    # 2. Build message array with history (compress if too long)
     messages = list(history or [])
+    messages, _summary = await compress_history(messages, session_id)
+    if _summary and queue:
+        await queue.put({"type": "summary", "text": _summary,
+                         "label": "前の会話をまとめました"})
 
     # Collect screenshot URLs for SSE + extract base64 for vision
     screenshots = []

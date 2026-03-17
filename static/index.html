@@ -2555,6 +2555,18 @@ async function sendMessage() {
         addTraceRow(traceCardId, data.label, data.label.startsWith('✅') ? 'done' : 'active');
         break;
 
+      case 'summary':
+        // Show conversation compression notice
+        addTraceRow(traceCardId, `📝 ${data.label}`, 'done');
+        {
+          const sumDiv = document.createElement('div');
+          sumDiv.style.cssText = 'padding:8px 12px;margin:6px 0;background:var(--surface);border-radius:8px;border-left:3px solid var(--accent);font-size:12px;color:var(--muted);max-height:80px;overflow-y:auto';
+          sumDiv.innerHTML = `<strong>${data.label}</strong><br><span style="opacity:0.8">${escHtml(data.text).slice(0,300)}${data.text.length>300?'…':''}</span>`;
+          const msgArea = document.getElementById('messages');
+          if (msgArea) msgArea.appendChild(sumDiv);
+        }
+        break;
+
       case 'routed':
         currentAgentId = data.agent_id;
         setAgentBusy(data.agent_id, true);
