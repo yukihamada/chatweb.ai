@@ -1090,57 +1090,33 @@ body {
     <div style="position:relative;">
       <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
       <div id="more-dropdown" class="dropdown">
-        <!-- ── アカウント ── -->
-        <div class="dropdown-label">アカウント</div>
-        <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 <span data-i18n="menu_login">ログイン</span></button>
-        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="user-email-display"></span><span data-i18n="menu_logout" style="font-size:13px">ログアウト</span></button>
-        <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 <span data-i18n="menu_billing">プラン・課金</span></button>
-        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 <span data-i18n="menu_api_keys">APIキー管理</span></button>
-        <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">🔗 <span data-i18n="menu_link_code">LINE/Telegram連携コード</span></button>
-        <!-- ── データ ── -->
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-label">データ・記憶</div>
-        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 <span data-i18n="menu_memory">長期記憶</span> (<span id="memCount">0</span><span data-i18n="unit_items">件</span>)</button>
-        <button class="dropdown-item" onclick="openFilesModal();toggleMoreMenu()">📁 <span data-i18n="menu_files">ファイル管理</span></button>
-        <button class="dropdown-item" onclick="openRAGPanel();toggleMoreMenu()">📚 <span data-i18n="menu_knowledge">ナレッジベース</span></button>
-        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 <span data-i18n="menu_search">会話を検索</span></button>
-        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 エクスポート (MD)</button>
-        <!-- ── ツール ── -->
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-label">ツール・自動化</div>
-        <button class="dropdown-item" onclick="openSitesModal();toggleMoreMenu()">🌐 <span data-i18n="menu_my_sites">マイサイト</span></button>
-        <button class="dropdown-item" onclick="openSchedulePanel();toggleMoreMenu()">⏰ <span data-i18n="menu_schedule">スケジュール自動化</span></button>
-        <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 <span data-i18n="menu_workflow">ワークフロー</span></button>
-        <button class="dropdown-item" onclick="openWebhookModal();toggleMoreMenu()">🔗 Webhook URL</button>
-        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ <span data-i18n="menu_create_agent">エージェント作成</span></button>
-        <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 エージェント管理</button>
-        <!-- ── 分析 ── -->
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-label">分析・統計</div>
-        <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 <span data-i18n="menu_usage">使用状況</span></button>
-        <button class="dropdown-item" onclick="openRankingPanel();toggleMoreMenu()">🏆 <span data-i18n="menu_ranking">エージェントランキング</span></button>
-        <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 <span data-i18n="menu_dashboard">ダッシュボード</span></button>
-        <!-- ── 設定 ── -->
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-label">設定・その他</div>
-        <button class="dropdown-item mobile-only" onclick="toggleLangMenu();toggleMoreMenu()">🌐 <span data-i18n="menu_language">言語切り替え</span></button>
-        <button class="dropdown-item mobile-only" onclick="toggleTier();toggleMoreMenu()">⚡ <span id="tier-menu-label" data-i18n="menu_model_switch">モデル切り替え</span></button>
-        <button class="dropdown-item mobile-only" onclick="toggleTheme();toggleMoreMenu()">🌙 <span data-i18n="menu_theme">ダーク/ライト</span></button>
-        <button class="dropdown-item" onclick="openNotificationSettings();toggleMoreMenu()">🔔 <span data-i18n="menu_notifications">通知設定</span></button>
-        <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 <span data-i18n="menu_team">チームワークスペース</span></button>
-        <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API設定</button>
-        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機タスク削除 (<span id="hitlPendingCount">0</span>件)</button>
-        <button class="dropdown-item" onclick="installApp();toggleMoreMenu()">📲 <span data-i18n="menu_install">アプリをインストール</span></button>
-        <button class="dropdown-item" onclick="sendFeedback();toggleMoreMenu()">💬 <span data-i18n="menu_feedback">フィードバックを送る</span></button>
-        <button class="dropdown-item" onclick="window.open('/static/about.html')">💡 chatweb.ai について</button>
-        <button class="dropdown-item" onclick="window.open('https://elio.love')" style="opacity:0.7">📱 Elio — オフラインAIチャット</button>
-        <button class="dropdown-item" onclick="window.open('/static/features.html')">✨ 機能一覧</button>
-        <button class="dropdown-item" onclick="window.open('/static/terms.html')">📜 <span data-i18n="menu_terms">利用規約</span></button>
-        <button class="dropdown-item" onclick="window.open('/static/privacy.html')">🔒 <span data-i18n="menu_privacy">プライバシーポリシー</span></button>
-        <div class="dropdown-sep"></div>
-        <div class="dropdown-label">表示</div>
-        <button class="dropdown-item" onclick="toggleTheme();toggleMoreMenu()">🌙 <span data-i18n="menu_theme">ダーク/ライト切り替え</span></button>
-        <button class="dropdown-item" onclick="toggleLangMenu();toggleMoreMenu()">🌐 <span>言語: <span id="lang-label-menu">JA</span></span></button>
+        <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 ログイン</button>
+        <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="user-email-display"></span><span style="font-size:13px">ログアウト</span></button>
+        <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 プラン</button>
+        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 APIキー</button>
+        <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">🔗 LINE/Telegram連携</button>
+        <div class="dropdown-label">エージェント</div>
+        <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 管理・カスタマイズ</button>
+        <button class="dropdown-item" onclick="openAgentModal();toggleMoreMenu()">➕ 新規作成</button>
+        <button class="dropdown-item" onclick="openWorkflowPanel();toggleMoreMenu()">🔀 ワークフロー</button>
+        <button class="dropdown-item" onclick="openSchedulePanel();toggleMoreMenu()">⏰ スケジュール</button>
+        <div class="dropdown-label">データ</div>
+        <button class="dropdown-item" onclick="openMemoryModal();toggleMoreMenu()">🧠 記憶 (<span id="memCount">0</span>)</button>
+        <button class="dropdown-item" onclick="openFilesModal();toggleMoreMenu()">📁 ファイル</button>
+        <button class="dropdown-item" onclick="openSearchModal();toggleMoreMenu()">🔍 会話検索</button>
+        <button class="dropdown-item" onclick="exportConversation('markdown');toggleMoreMenu()">📥 エクスポート</button>
+        <div class="dropdown-label">分析</div>
+        <button class="dropdown-item" onclick="openDashboard();toggleMoreMenu()">📊 ダッシュボード</button>
+        <button class="dropdown-item" onclick="openUsagePanel();toggleMoreMenu()">📈 使用状況</button>
+        <div class="dropdown-label">設定</div>
+        <button class="dropdown-item" onclick="toggleTheme();toggleMoreMenu()">🌙 テーマ切替</button>
+        <button class="dropdown-item" onclick="toggleLangMenu();toggleMoreMenu()">🌐 言語 <span id="lang-label-menu">JA</span></button>
+        <button class="dropdown-item" onclick="openNotificationSettings();toggleMoreMenu()">🔔 通知</button>
+        <button class="dropdown-item" onclick="openWebhookModal();toggleMoreMenu()">🔗 Webhook</button>
+        <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機削除 (<span id="hitlPendingCount">0</span>)</button>
+        <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 チーム</button>
+        <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API</button>
+        <button class="dropdown-item" onclick="window.open('/static/about.html')" style="opacity:0.6;font-size:12px">💡 About · <a href="/static/terms.html" style="color:inherit">利用規約</a> · <a href="/static/privacy.html" style="color:inherit">プライバシー</a></button>
       </div>
     </div>
   </div>

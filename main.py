@@ -8013,10 +8013,29 @@ async def chat_suggest(request: Request):
 async def chat_stream(session_id: str, req: ChatRequest, request: Request):
     user = await _get_user_from_session(_extract_session_token(request))
     if not user:
-        raise HTTPException(status_code=401, detail="この機能を使うにはログインが必要です")
-    # Resolve user_id for per-user memory scoping
-    _uid = user.get("id") or (_user_sessions.get(session_id) or {}).get("user_id")
-    _plan = user.get("plan", "free")
+        # Allow anonymous trial with IP-based limit
+        ip = request.headers.get("fly-client-ip") or (request.client.host if request.client else "unknown")
+        anon_key = f"anon:{ip}"
+        try:
+            trial_limit = int(await _get_sys_cfg("free_trial_msgs"))
+        except (ValueError, TypeError):
+            trial_limit = 10
+        async with db_conn() as db:
+            async with db.execute(
+                "SELECT COUNT(*) FROM runs WHERE session_id LIKE ? AND created_at > datetime('now','-24 hours')",
+                (f"%{ip[-8:]}%",)
+            ) as c:
+                anon_count = (await c.fetchone())[0]
+        if anon_count >= trial_limit:
+            raise HTTPException(status_code=401,
+                detail=f"無料お試し（{trial_limit}回/日）を使い切りました。ログインすると月{_PLAN_LIMITS.get('free',100)}回まで利用できます。")
+        _uid = None
+        _plan = "trial"
+        _user_email_val = ""
+    else:
+        _uid = user.get("id") or (_user_sessions.get(session_id) or {}).get("user_id")
+        _plan = user.get("plan", "free")
+        _user_email_val = user.get("email", "")
     # Quota check
     if _uid and not await _check_quota(_uid, _plan):
         try:
@@ -8255,7 +8274,7 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                                               memory_context=memory_context,
                                               image_data=req.image_data,
                                               lang=_req_lang,
-                                              user_email=user.get("email", "") if user else "")
+                                              user_email=_user_email_val)
                 draft    = result["response"]
 
                 final = draft
