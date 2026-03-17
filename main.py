@@ -9504,6 +9504,7 @@ async def patch_agent_visibility(agent_id: str, request: Request):
 @app.post("/chat/suggest")
 async def chat_suggest(request: Request):
     """Generate follow-up question suggestions based on conversation context."""
+    await _require_auth(request)
     body = await request.json()
     user_msg = body.get("user_message", "")[:300]
     ai_resp = body.get("ai_response", "")[:500]
@@ -10040,8 +10041,15 @@ async def send_to_messenger(request: Request):
 
 
 @app.post("/share/{session_id}")
-async def create_share(session_id: str):
+async def create_share(session_id: str, request: Request):
     """会話をパブリックシェアURLとして公開"""
+    user = await _require_auth(request)
+    uid = user.get("id", "")
+    # Verify session belongs to user
+    async with db_conn() as db:
+        cur = await db.execute("SELECT 1 FROM runs WHERE session_id=? AND user_id=? LIMIT 1", (session_id, uid))
+        if not await cur.fetchone():
+            raise HTTPException(403, "このセッションへのアクセス権がありません")
     share_id = str(uuid.uuid4())[:12]
     async with db_conn() as db:
         await db.execute(
@@ -10840,8 +10848,11 @@ async def a2a_task_send_legacy(req: A2ATaskRequest):
 
 
 @app.get("/metrics")
-async def get_metrics():
-    """Observability — System metrics and run history."""
+async def get_metrics(request: Request):
+    """Observability — System metrics and run history (admin only)."""
+    user = await _require_auth(request)
+    if not _is_admin(user.get("email", "")):
+        raise HTTPException(403, "Admin only")
     async with db_conn() as db:
         db.row_factory = aiosqlite.Row
 
@@ -12108,8 +12119,11 @@ async def slack_events(request: Request):
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/dashboard")
-async def get_dashboard():
-    """Dashboard API with cost/usage/top messages stats."""
+async def get_dashboard(request: Request):
+    """Dashboard API with cost/usage/top messages stats (admin only)."""
+    user = await _require_auth(request)
+    if not _is_admin(user.get("email", "")):
+        raise HTTPException(403, "Admin only")
     import time as _time
     _start = _time.monotonic()
 
@@ -12771,6 +12785,7 @@ async def browser_navigate(req: BrowserNavigateRequest, request: Request):
 @app.get("/browser/stream/{session_id}")
 async def browser_stream(session_id: str, request: Request):
     """SSE endpoint that streams browser screenshots as base64 JSON events."""
+    await _require_auth(request)
     async def generate():
         try:
             _, _, page = await _get_or_create_browser(session_id)
