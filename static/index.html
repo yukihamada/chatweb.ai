@@ -67,7 +67,9 @@
 /* ── Reset & Base ─────────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-button { font-family: inherit; }
+button { font-family: inherit; min-height: 32px; }
+@media (pointer: coarse) { button, [role="button"], .btn { min-height: 44px; min-width: 44px; } }
+.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 :root {
   --bg:      #09090b;
   --surface: #111113;
@@ -1004,10 +1006,10 @@ body {
 <div id="agent-modal" class="modal" hidden onclick="if(event.target===this)closeAgentModal()">
   <div class="modal-box">
     <h3>✨ エージェントを作成</h3>
-    <input id="ag-name" placeholder="エージェント名" />
-    <input id="ag-emoji" placeholder="絵文字 🤖" value="🤖" />
-    <input id="ag-desc" placeholder="説明（1行）" />
-    <textarea id="ag-prompt" rows="6" placeholder="システムプロンプト（AIへの指示）"></textarea>
+    <input id="ag-name" placeholder="エージェント名" aria-label="エージェント名" />
+    <input id="ag-emoji" placeholder="絵文字 🤖" value="🤖" aria-label="絵文字" />
+    <input id="ag-desc" placeholder="説明（1行）" aria-label="説明" />
+    <textarea id="ag-prompt" rows="6" placeholder="システムプロンプト（AIへの指示）" aria-label="システムプロンプト"></textarea>
     <div class="modal-btns">
       <button onclick="saveAgent()">保存</button>
       <button onclick="closeAgentModal()">キャンセル</button>
@@ -1084,7 +1086,7 @@ body {
           </optgroup>
         </select>
         <div id="agent-key-link" style="display:none;margin-top:4px;font-size:11px"></div>
-        <input id="agent-key-value" placeholder="値を入力" type="password" style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
+        <input id="agent-key-value" placeholder="値を入力" type="password" aria-label="APIキー" style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
         <button onclick="saveAgentKey()" style="padding:6px 12px;border-radius:6px;background:var(--accent);color:#fff;border:none;font-size:12px;cursor:pointer;white-space:nowrap">保存</button>
       </div>
     </div>
@@ -1131,7 +1133,7 @@ body {
 <div id="drawer" style="display:none">
   <div id="agentList"></div>
   <div id="memoryList"></div>
-  <input class="mem-search" id="memSearch" type="text" oninput="searchMemories(this.value)">
+  <input class="mem-search" id="memSearch" type="text" oninput="searchMemories(this.value)" aria-label="メモリ検索">
 </div>
 
 <!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
@@ -7819,6 +7821,7 @@ updateAuthUI = function(user) {
 <!-- ── Command Palette (Cmd+K) ──────────────────────────────────────────── -->
 <div id="cmd-palette" onclick="if(event.target===this)closeCmdPalette()">
   <div id="cmd-box">
+    <label for="cmd-input" class="sr-only">コマンド入力</label>
     <input id="cmd-input" placeholder="コマンドを入力… (例: 新しい会話, エージェント変更)" oninput="filterCmdItems(this.value)" onkeydown="cmdKeyNav(event)">
     <div id="cmd-results"></div>
   </div>
