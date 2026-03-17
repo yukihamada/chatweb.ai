@@ -1287,8 +1287,14 @@ body {
           </button>
           <div id="input-tier-menu" style="display:none;position:absolute;bottom:100%;right:0;background:#16161a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 -8px 24px rgba(0,0,0,0.5);z-index:600;margin-bottom:4px">
             <button class="dropdown-item" onclick="selectInputTier('cheap')" style="font-size:12px">⚡ 高速 <span style="opacity:0.4;font-size:10px">Qwen3-32B</span></button>
-            <button class="dropdown-item" onclick="selectInputTier('gemini')" style="font-size:12px">💎 Gemini <span style="opacity:0.4;font-size:10px">2.0 Flash</span></button>
             <button class="dropdown-item" onclick="selectInputTier('pro')" style="font-size:12px">🚀 プロ <span style="opacity:0.4;font-size:10px">Claude Sonnet</span></button>
+            <div id="more-models-toggle" onclick="document.getElementById('more-models').style.display=document.getElementById('more-models').style.display==='none'?'block':'none'" style="padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;text-align:center;border-top:1px solid var(--border)">もっと見る ▾</div>
+            <div id="more-models" style="display:none">
+              <button class="dropdown-item" onclick="selectInputTier('gemini')" style="font-size:12px">💎 Gemini <span style="opacity:0.4;font-size:10px">2.0 Flash</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('gpt')" style="font-size:12px">🧠 GPT <span style="opacity:0.4;font-size:10px">4o</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('deepseek')" style="font-size:12px">🔬 DeepSeek <span style="opacity:0.4;font-size:10px">V3</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('llama')" style="font-size:12px">🦙 Llama <span style="opacity:0.4;font-size:10px">4 Scout</span></button>
+            </div>
           </div>
         </div>
         <button id="mic-btn" title="音声入力" aria-label="音声入力" data-i18n-title="voice_input" onclick="toggleVoice()">🎤</button>
@@ -2297,9 +2303,12 @@ async function sendMessage() {
 // ── Model Tier ────────────────────────────────────────────────────────────────
 let _currentTier = 'cheap';
 const _TIER_CONFIG = {
-  cheap:  { icon: '⚡', label: '高速',   color: '#10b981', desc: 'Qwen3-32B' },
-  pro:    { icon: '🚀', label: 'プロ',   color: '#8b5cf6', desc: 'Claude Sonnet' },
-  gemini: { icon: '💎', label: 'Gemini', color: '#4285f4', desc: 'Gemini 2.0 Flash' },
+  cheap:    { icon: '⚡', label: '高速',     color: '#10b981', desc: 'Qwen3-32B' },
+  pro:      { icon: '🚀', label: 'プロ',     color: '#8b5cf6', desc: 'Claude Sonnet' },
+  gemini:   { icon: '💎', label: 'Gemini',   color: '#4285f4', desc: 'Gemini 2.0 Flash' },
+  gpt:      { icon: '🧠', label: 'GPT',      color: '#10a37f', desc: 'GPT-4o' },
+  deepseek: { icon: '🔬', label: 'DeepSeek', color: '#0066ff', desc: 'DeepSeek V3' },
+  llama:    { icon: '🦙', label: 'Llama',    color: '#6366f1', desc: 'Llama 4 Scout' },
 };
 
 function renderTierBtn() {

@@ -104,6 +104,7 @@ MODEL_COSTS = {
     "gpt-4o-mini":               {"input": 0.15,  "output": 0.60},
     "qwen/qwen3-32b":            {"input": 0.20,  "output": 0.20},  # Groq
     "gemini-2.0-flash":          {"input": 0.10,  "output": 0.40},  # Google
+    "deepseek-r1-distill-llama-70b": {"input": 0.20, "output": 0.20},  # Groq
 }
 
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -150,6 +151,33 @@ TIER_CONFIG = {
         "fallback_model":    "claude-haiku-4-5-20251001",
         "code_provider": "gemini",
         "code_model":    "gemini-2.0-flash",
+    },
+    "gpt": {
+        "label":    "🧠 GPT",
+        "provider": "openai",
+        "model":    "gpt-4o",
+        "fallback_provider": "claude",
+        "fallback_model":    "claude-haiku-4-5-20251001",
+        "code_provider": "openai",
+        "code_model":    "gpt-4o",
+    },
+    "deepseek": {
+        "label":    "🔬 DeepSeek",
+        "provider": "groq",
+        "model":    "deepseek-r1-distill-llama-70b",
+        "fallback_provider": "claude",
+        "fallback_model":    "claude-haiku-4-5-20251001",
+        "code_provider": "groq",
+        "code_model":    "deepseek-r1-distill-llama-70b",
+    },
+    "llama": {
+        "label":    "🦙 Llama",
+        "provider": "groq",
+        "model":    "llama-3.3-70b-versatile",
+        "fallback_provider": "claude",
+        "fallback_model":    "claude-haiku-4-5-20251001",
+        "code_provider": "groq",
+        "code_model":    "llama-3.3-70b-versatile",
     },
 }
 
