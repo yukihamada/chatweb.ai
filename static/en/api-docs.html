@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>API Reference — chatweb.ai</title>
+<meta name="description" content="Complete API reference for chatweb.ai. Chat, agents, memory, scheduling, site deployment, A2A protocol, and 100+ endpoints documented.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://chatweb.ai/en/api-docs">
+<link rel="alternate" hreflang="ja" href="https://chatweb.ai/api-docs">
+<link rel="alternate" hreflang="en" href="https://chatweb.ai/en/api-docs">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://chatweb.ai/en/api-docs">
+<meta property="og:site_name" content="chatweb.ai">
+<meta property="og:title" content="chatweb.ai API Reference">
+<meta property="og:description" content="Complete reference for 100+ API endpoints: chat, agents, memory, scheduling, deployment, and more.">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@chatweb_ai">
+<meta name="twitter:title" content="chatweb.ai API Reference">
+<meta name="twitter:description" content="Complete reference for 100+ API endpoints.">
+<meta name="twitter:image" content="https://chatweb.ai/static/og-image.png">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="theme-color" content="#7c6aff">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "chatweb.ai API Reference",
+  "description": "Complete API reference for chatweb.ai with 100+ endpoints covering chat, agents, memory, scheduling, deployment, and A2A protocol.",
+  "author": {"@type": "Organization", "name": "chatweb.ai", "url": "https://chatweb.ai"},
+  "publisher": {"@type": "Organization", "name": "chatweb.ai", "logo": {"@type": "ImageObject", "url": "https://chatweb.ai/static/icon-192.png"}},
+  "datePublished": "2026-03-15",
+  "dateModified": "2026-03-17",
+  "mainEntityOfPage": "https://chatweb.ai/static/en/api-docs.html",
+  "image": "https://chatweb.ai/static/og-image.png",
+  "inLanguage": "en"
+}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#09090b;--s2:#18181b;--card:#16161e;--border:rgba(255,255,255,0.07);--text:#fafafa;--muted:#71717a;--accent:#8b5cf6;--cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--blue:#3b82f6}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;background:var(--bg);color:var(--text);line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:960px;margin:0 auto;padding:40px 24px 80px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-bottom:28px;padding:6px 12px;border:1px solid var(--border);border-radius:8px}.back:hover{color:var(--text);text-decoration:none}
+h1{font-size:28px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:32px}
+h2{font-size:18px;font-weight:700;color:var(--text);margin:36px 0 12px;padding-top:16px;border-top:1px solid var(--border)}
+h3{font-size:14px;font-weight:600;color:#d4d4d8;margin:16px 0 6px}
+p{color:#a1a1aa;font-size:13px;margin-bottom:10px}
+.method{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:monospace;margin-right:6px}
+.get{background:rgba(16,185,129,.15);color:var(--green)}
+.post{background:rgba(59,130,246,.15);color:var(--blue)}
+.put{background:rgba(245,158,11,.15);color:var(--amber)}
+.delete{background:rgba(239,68,68,.15);color:var(--red)}
+.patch{background:rgba(139,92,246,.15);color:var(--accent)}
+.endpoint{font-family:monospace;font-size:13px;color:var(--text);font-weight:600}
+.ep-row{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin:6px 0;flex-wrap:wrap}
+.ep-desc{font-size:12px;color:var(--muted);margin-left:auto}
+.auth-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(239,68,68,.1);color:var(--red);font-weight:600}
+.open-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(16,185,129,.1);color:var(--green);font-weight:600}
+pre{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;overflow-x:auto;margin:10px 0;color:#d4d4d8}
+code{font-family:'SF Mono',Menlo,monospace;font-size:12px}
+.toc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:28px}
+.toc a{display:block;font-size:13px;color:var(--muted);padding:3px 0}.toc a:hover{color:var(--accent)}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);font-size:12px;color:#52525b;text-align:center}
+@media(max-width:640px){.ep-row{flex-direction:column;align-items:flex-start;gap:4px}.ep-desc{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">&larr; chatweb.ai</a>
+
+  <h1>API Reference</h1>
+  <p class="subtitle">Base URL: <code>https://chatweb.ai</code> — Auth: Bearer token or session cookie</p>
+
+  <div class="toc">
+    <strong style="font-size:13px">Contents</strong>
+    <a href="#chat">Chat (Streaming)</a>
+    <a href="#agents">Agents (Management)</a>
+    <a href="#auth">Auth (Authentication)</a>
+    <a href="#memory">Memory (Long-term)</a>
+    <a href="#schedule">Schedule (Cron Tasks)</a>
+    <a href="#deploy">Deploy (Site Publishing)</a>
+    <a href="#a2a">A2A (Agent-to-Agent)</a>
+    <a href="#google">Google Workspace</a>
+    <a href="#billing">Billing (Credits &amp; Plans)</a>
+    <a href="#files">Files &amp; RAG</a>
+    <a href="#teams">Teams</a>
+    <a href="#external">External API (v1)</a>
+    <a href="#webhooks">Webhooks</a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="chat">Chat</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/chat/stream/{session_id}</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">SSE streaming chat (primary endpoint)</span>
+  </div>
+  <pre>{
+  "message": "Analyze competitors and email me a report",
+  "session_id": "cw_xxx",
+  "image_data": "",           // base64 image (optional)
+  "preferred_agents": [],     // preset filter
+  "preset_instruction": ""    // preset-specific prompt
+}</pre>
+  <p>SSE events: <code>routed</code> <code>token</code> <code>tool</code> <code>plan_created</code> <code>plan_step</code> <code>plan_done</code> <code>cost</code> <code>memories_loaded</code> <code>hitl_required</code> <code>error</code></p>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/chat/loop/{session_id}</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Agent loop execution ([[CONTINUE]]/[[DONE]])</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/chat/suggest</span>
+    <span class="ep-desc">Generate follow-up question suggestions</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/history/{session_id}</span>
+    <span class="ep-desc">Get conversation history for a session</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/sessions</span>
+    <span class="ep-desc">List all sessions</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/search/messages</span>
+    <span class="ep-desc">Cross-session message search</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="agents">Agents</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/agents</span>
+    <span class="ep-desc">List all agents (with LLM mappings)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/agents/{agent_id}/fork</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Fork a built-in agent (create custom version)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/agents/custom</span>
+    <span class="ep-desc">Create a new custom agent</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/agents/custom</span>
+    <span class="ep-desc">List custom agents</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method patch">PATCH</span>
+    <span class="endpoint">/agents/{agent_id}</span>
+    <span class="ep-desc">Update agent prompt and settings</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/agents/{agent_id}/model</span>
+    <span class="ep-desc">Change the LLM model for an agent</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method delete">DELETE</span>
+    <span class="endpoint">/agents/custom/{id}</span>
+    <span class="ep-desc">Delete a custom agent</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="auth">Auth</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/auth/me</span>
+    <span class="ep-desc">Login status, credit balance, LINE/Telegram links, AI name</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/auth/google</span>
+    <span class="ep-desc">Start Google OAuth (redirect)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/auth/register</span>
+    <span class="ep-desc">Send Magic Link via email</span>
+  </div>
+  <pre>{ "email": "user@example.com" }</pre>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/auth/verify?token=xxx</span>
+    <span class="ep-desc">Verify Magic Link</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/auth/logout</span>
+    <span class="ep-desc">Logout</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/link/code</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Generate LINE/Telegram linking code (valid 10 min)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/link/verify</span>
+    <span class="ep-desc">Verify linking code and bind account</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="memory">Memory</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/memory/list</span>
+    <span class="ep-desc">List memories (sorted by importance)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/memory/search?q=xxx</span>
+    <span class="ep-desc">Keyword search across memories</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/memory/add</span>
+    <span class="ep-desc">Add a memory</span>
+  </div>
+  <pre>{ "content": "User prefers Python" }</pre>
+
+  <div class="ep-row">
+    <span class="method delete">DELETE</span>
+    <span class="endpoint">/memory/{memory_id}</span>
+    <span class="ep-desc">Delete a memory</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="schedule">Schedule</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/schedule/tasks</span>
+    <span class="ep-desc">Create a scheduled task</span>
+  </div>
+  <pre>{
+  "cron": "0 9 * * *",
+  "agent_id": "research",
+  "message": "Summarize AI news and send it to LINE",
+  "enabled": true
+}</pre>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/schedule/tasks</span>
+    <span class="ep-desc">List scheduled tasks</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method delete">DELETE</span>
+    <span class="endpoint">/schedule/tasks/{task_id}</span>
+    <span class="ep-desc">Delete a scheduled task</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="deploy">Deploy (Site Publishing)</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/deploy/site</span>
+    <span class="ep-desc">Publish HTML to xxx.chatweb.ai</span>
+  </div>
+  <pre>{
+  "html": "&lt;!DOCTYPE html&gt;...full HTML...",
+  "subdomain": "my-app",
+  "title": "My App"
+}</pre>
+  <p>Response: <code>{"url": "https://my-app.chatweb.ai", "ok": true}</code></p>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/deploy/sites</span>
+    <span class="ep-desc">List published sites</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method put">PUT</span>
+    <span class="endpoint">/deploy/site/{subdomain}</span>
+    <span class="ep-desc">Update a published site</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method delete">DELETE</span>
+    <span class="endpoint">/deploy/site/{subdomain}</span>
+    <span class="ep-desc">Delete a published site</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="a2a">A2A Protocol</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/.well-known/agent-card.json</span>
+    <span class="open-tag">Public</span>
+    <span class="ep-desc">A2A agent card (capabilities declaration)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/a2a/tasks/send</span>
+    <span class="ep-desc">Send an A2A task (delegation from external agent)</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="google">Google Workspace</h2>
+
+  <p>All Google endpoints require completed Google OAuth. If not authenticated, the user is redirected to <code>/auth/google</code>.</p>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/auth/google/status</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Check Google integration status</span>
+  </div>
+
+  <p>Google operations are executed via agents (gmail, calendar, drive, sheets, docs, contacts, tasks). Instead of calling direct API endpoints, you instruct agents in chat: "Send an email," "Check my schedule," etc.</p>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="billing">Billing</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/billing/plans</span>
+    <span class="ep-desc">List available plans</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/billing/create-checkout</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Create a Stripe checkout session</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/billing/webhook</span>
+    <span class="ep-desc">Receive Stripe webhook events</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/usage/{session_id}</span>
+    <span class="ep-desc">Session usage and cost</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="files">Files &amp; RAG</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/upload</span>
+    <span class="ep-desc">Upload a file (PDF/Excel/CSV/image)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/upload/{file_id}</span>
+    <span class="ep-desc">Retrieve an uploaded file</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/rag/index</span>
+    <span class="ep-desc">Index a document for RAG</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/rag/search?q=xxx</span>
+    <span class="ep-desc">RAG vector search</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/sql/query</span>
+    <span class="ep-desc">Execute SQL query (SELECT only)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/sql/csv_to_db</span>
+    <span class="ep-desc">Import CSV into a SQLite table</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="teams">Teams</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/teams</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Create a team</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/teams</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">List teams you belong to</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/teams/{team_id}/invite</span>
+    <span class="ep-desc">Invite a team member</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/teams/{team_id}/broadcast</span>
+    <span class="ep-desc">Broadcast a message to all team members</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="external">External API (v1)</h2>
+  <p>Call chatweb.ai agents from external applications. Requires API key authentication.</p>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/api/v1/chat</span>
+    <span class="auth-tag">API Key</span>
+    <span class="ep-desc">Chat via external API (SSE streaming)</span>
+  </div>
+  <pre>Headers: X-API-Key: your_api_key
+Body: { "message": "...", "session_id": "...", "agent_id": "research" }</pre>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/api/v1/agents</span>
+    <span class="auth-tag">API Key</span>
+    <span class="ep-desc">List agents (external API)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/api/keys</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Generate an API key</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/api/keys</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">List API keys</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2 id="webhooks">Webhooks</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/webhook/{agent_id}</span>
+    <span class="ep-desc">Trigger an agent via webhook</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/webhook/github</span>
+    <span class="ep-desc">GitHub webhook receiver</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/telegram/webhook</span>
+    <span class="ep-desc">Telegram Bot webhook</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/line/webhook</span>
+    <span class="ep-desc">LINE Messaging API webhook</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/slack/events</span>
+    <span class="ep-desc">Slack Events API</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/zapier/trigger</span>
+    <span class="ep-desc">Zapier webhook integration</span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <h2>Other</h2>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/health</span>
+    <span class="open-tag">Public</span>
+    <span class="ep-desc">Health check</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/metrics</span>
+    <span class="ep-desc">Prometheus metrics</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/dashboard</span>
+    <span class="ep-desc">Dashboard statistics (JSON)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/tts</span>
+    <span class="ep-desc">Text-to-speech</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/transcribe</span>
+    <span class="ep-desc">Speech-to-text</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/vision/analyze</span>
+    <span class="ep-desc">Image analysis (Claude Vision)</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/image/generate</span>
+    <span class="ep-desc">AI image generation</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/send-to-messenger</span>
+    <span class="auth-tag">Auth</span>
+    <span class="ep-desc">Forward message to LINE/Telegram</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/share/{session_id}</span>
+    <span class="ep-desc">Share a conversation via public link</span>
+  </div>
+
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/export/{session_id}</span>
+    <span class="ep-desc">Export conversation as Markdown/JSON</span>
+  </div>
+
+  <h2>Authentication</h2>
+  <h3>Web Session</h3>
+  <p>After logging in via Google OAuth or Magic Link, a <code>session</code> cookie is issued. All subsequent requests are authenticated automatically via this cookie.</p>
+
+  <h3>API Key</h3>
+  <p><code>/api/v1/*</code> endpoints are authenticated with the <code>X-API-Key</code> header. You can generate API keys from the settings page.</p>
+  <pre>curl -X POST https://chatweb.ai/api/v1/chat \
+  -H "X-API-Key: your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is the weather in Tokyo?", "agent_id": "research"}'</pre>
+
+  <h2>Rate Limits</h2>
+  <p><code>/chat</code> <code>/api</code> <code>/a2a</code> — <strong>30 requests / 60 seconds</strong> (per IP). Exceeding the limit returns <code>429 Too Many Requests</code>.</p>
+
+  <h2>SSE Streaming Format</h2>
+  <pre>data: {"type": "routed", "agent_id": "research", "confidence": 0.95}
+data: {"type": "token", "text": "The weather"}
+data: {"type": "token", "text": " in Tokyo"}
+data: {"type": "tool", "tool": "web_search", "status": "calling"}
+data: {"type": "tool", "tool": "web_search", "status": "done"}
+data: {"type": "cost", "cost_usd": 0.001, "input_tokens": 500, "output_tokens": 200}
+data: [DONE]</pre>
+
+  <div class="footer">
+    &copy; 2024-2026 chatweb.ai &middot;
+    <a href="/">Home</a> &middot;
+    <a href="/en/ai-agents">AI Agents Guide</a> &middot;
+    <a href="/en/ai-automation">AI Automation Guide</a> &middot;
+    <a href="/features">Features</a>
+  </div>
+</div>
+</body>
+</html>

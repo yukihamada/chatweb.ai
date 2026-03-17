@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What Are AI Agents? The Complete 2026 Guide — chatweb.ai</title>
+<meta name="description" content="What are AI agents? Learn how they differ from chatbots, how multi-agent architecture works, real use cases, and a comparison of chatweb.ai vs ChatGPT vs Claude vs Gemini.">
+<meta name="keywords" content="AI agents,what are AI agents,multi-agent AI,autonomous AI,AI automation,chatweb.ai">
+<meta name="author" content="chatweb.ai">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://chatweb.ai/en/ai-agents">
+<link rel="alternate" hreflang="ja" href="https://chatweb.ai/guides/ai-agents">
+<link rel="alternate" hreflang="en" href="https://chatweb.ai/en/ai-agents">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://chatweb.ai/en/ai-agents">
+<meta property="og:site_name" content="chatweb.ai">
+<meta property="og:title" content="What Are AI Agents? The Complete 2026 Guide">
+<meta property="og:description" content="What are AI agents? How they differ from chatbots, multi-agent architecture explained, use cases, and a head-to-head comparison.">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@chatweb_ai">
+<meta name="twitter:title" content="What Are AI Agents? The Complete 2026 Guide">
+<meta name="twitter:description" content="AI agents vs chatbots, multi-agent architecture, and real use cases explained.">
+<meta name="twitter:image" content="https://chatweb.ai/static/og-image.png">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<meta name="theme-color" content="#7c6aff">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "What Are AI Agents? The Complete 2026 Guide",
+  "description": "What are AI agents? Learn how they differ from chatbots, how multi-agent architecture works, real use cases, and a comparison of leading AI agent platforms.",
+  "author": {"@type": "Organization", "name": "chatweb.ai", "url": "https://chatweb.ai"},
+  "publisher": {"@type": "Organization", "name": "chatweb.ai", "logo": {"@type": "ImageObject", "url": "https://chatweb.ai/static/icon-192.png"}},
+  "datePublished": "2026-03-15",
+  "dateModified": "2026-03-17",
+  "mainEntityOfPage": "https://chatweb.ai/static/en/ai-agents.html",
+  "image": "https://chatweb.ai/static/og-image.png",
+  "inLanguage": "en"
+}
+</script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#09090b;color:#e4e4e7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.8}
+a{color:#8b5cf6;text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:780px;margin:0 auto;padding:40px 24px 80px}
+.breadcrumb{font-size:13px;color:#71717a;margin-bottom:24px}
+.breadcrumb a{color:#71717a}.breadcrumb a:hover{color:#a78bfa}
+h1{font-size:32px;font-weight:800;line-height:1.3;margin-bottom:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.meta{font-size:13px;color:#71717a;margin-bottom:32px}
+h2{font-size:22px;font-weight:700;color:#fafafa;margin:40px 0 16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06)}
+h3{font-size:17px;font-weight:600;color:#d4d4d8;margin:24px 0 10px}
+p{color:#a1a1aa;font-size:15px;margin-bottom:16px}
+ul,ol{padding-left:24px;margin-bottom:16px}
+li{color:#a1a1aa;font-size:15px;margin-bottom:8px}
+strong{color:#d4d4d8}
+.highlight{border:1px solid rgba(139,92,246,0.2);border-radius:14px;padding:20px 24px;margin:24px 0;background:rgba(139,92,246,0.04)}
+.highlight p{color:#d4d4d8;margin-bottom:0}
+.comparison{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+.comparison th{text-align:left;padding:10px 14px;background:#18181b;color:#fafafa;border-bottom:1px solid rgba(255,255,255,0.08)}
+.comparison td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:#a1a1aa}
+.comparison tr:hover td{background:rgba(255,255,255,0.02)}
+.cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#8b5cf6,#6366f1);color:#fff;padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;margin:24px 0;text-decoration:none}
+.cta:hover{opacity:0.9;text-decoration:none}
+.toc{background:#18181b;border-radius:12px;padding:20px 24px;margin:24px 0}
+.toc-title{font-weight:700;font-size:14px;color:#fafafa;margin-bottom:12px}
+.toc a{display:block;font-size:14px;color:#71717a;padding:4px 0}.toc a:hover{color:#8b5cf6}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:#52525b;text-align:center}
+code{background:#18181b;padding:2px 6px;border-radius:4px;font-size:13px;color:#a78bfa}
+.faq{margin:24px 0}
+.faq details{border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.faq summary{padding:14px 18px;cursor:pointer;font-weight:600;font-size:15px;color:#d4d4d8;background:#18181b}
+.faq summary:hover{background:#1f1f23}
+.faq details[open] summary{border-bottom:1px solid rgba(255,255,255,0.06)}
+.faq .answer{padding:14px 18px}
+@media(max-width:640px){h1{font-size:24px}.comparison{font-size:12px}.comparison th,.comparison td{padding:8px 10px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb"><a href="/">chatweb.ai</a> / <a href="/en/ai-agents">Guides</a> / AI Agents</div>
+
+  <h1>What Are AI Agents? How They Work, Use Cases &amp; Getting Started [2026]</h1>
+  <div class="meta">Updated: March 2026 / Reading time: ~8 min</div>
+
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <a href="#what">1. What Are AI Agents?</a>
+    <a href="#diff">2. AI Agents vs Traditional Chatbots</a>
+    <a href="#multi">3. What Is Multi-Agent AI?</a>
+    <a href="#how">4. How AI Agents Work</a>
+    <a href="#use-cases">5. 10 Real-World Use Cases</a>
+    <a href="#compare">6. AI Agent Platform Comparison</a>
+    <a href="#start">7. How to Get Started Today</a>
+    <a href="#faq">8. Frequently Asked Questions</a>
+  </div>
+
+  <h2 id="what">1. What Are AI Agents?</h2>
+  <p>An AI agent is an <strong>AI system that understands your instructions, autonomously plans, and takes real actions to complete tasks</strong>. Unlike traditional chatbots that only generate text responses, AI agents can browse the web, manipulate files, call APIs, send emails, execute code, and much more.</p>
+
+  <div class="highlight">
+    <p><strong>Example:</strong> "Research hotels for my Tokyo trip next week, compare prices, book the best option, create an expense report with travel costs, and email it to my manager."<br>An AI agent autonomously executes: web search, comparison, booking, document creation, and email delivery -- all from a single instruction.</p>
+  </div>
+
+  <h2 id="diff">2. AI Agents vs Traditional Chatbots</h2>
+  <table class="comparison">
+    <tr><th></th><th>Traditional Chatbot</th><th>AI Agent</th></tr>
+    <tr><td><strong>Capability</strong></td><td>Text generation &amp; Q&amp;A</td><td>Research, analysis, execution &amp; reporting end-to-end</td></tr>
+    <tr><td><strong>External tools</strong></td><td>None (text only)</td><td>Web search, browser automation, APIs, email</td></tr>
+    <tr><td><strong>Autonomy</strong></td><td>Single response per turn</td><td>Plans and executes multi-step workflows</td></tr>
+    <tr><td><strong>Memory</strong></td><td>Session-only context</td><td>Long-term memory for learning and personalization</td></tr>
+    <tr><td><strong>Collaboration</strong></td><td>Single model</td><td>Multiple specialized agents cooperate (A2A protocol)</td></tr>
+  </table>
+
+  <h2 id="multi">3. What Is Multi-Agent AI?</h2>
+  <p>Multi-agent AI is an <strong>architecture where multiple specialized AI agents collaborate to handle complex tasks</strong>. Just like a human organization, there are agents for research, analysis, coding, and execution -- each focusing on what they do best.</p>
+
+  <h3>How Multi-Agent Orchestration Works</h3>
+  <ol>
+    <li><strong>Task analysis</strong> -- Parse the user's instruction and identify required steps</li>
+    <li><strong>Agent routing</strong> -- Automatically assign the best specialist agent for each step</li>
+    <li><strong>Sequential execution</strong> -- Each step passes its output to the next agent</li>
+    <li><strong>Aggregation &amp; reporting</strong> -- Combine results and deliver the final output to the user</li>
+  </ol>
+
+  <div class="highlight">
+    <p><strong>chatweb.ai has 39+ specialized agents</strong> that autonomously collaborate. Research, analysis, coding, report generation, and delivery -- all from a single prompt.</p>
+  </div>
+
+  <h2 id="how">4. How AI Agents Work</h2>
+  <h3>Core Components</h3>
+  <ul>
+    <li><strong>LLM (Large Language Model)</strong> -- Understands instructions and performs reasoning. Claude, GPT-4o, Gemini, and more</li>
+    <li><strong>Tool Calling (Function Calling)</strong> -- Web search, browser automation, code execution, and other external tools</li>
+    <li><strong>Memory System</strong> -- Long-term memory that retains conversation history and learned preferences</li>
+    <li><strong>Planning Engine</strong> -- Decomposes complex tasks into manageable steps</li>
+    <li><strong>A2A Protocol</strong> -- Standardized agent-to-agent communication protocol</li>
+  </ul>
+
+  <h3>AI Models Used</h3>
+  <table class="comparison">
+    <tr><th>Model</th><th>Strengths</th><th>Best For</th></tr>
+    <tr><td>Claude Sonnet 4.6</td><td>High accuracy, long-context</td><td>Legal, finance, complex analysis</td></tr>
+    <tr><td>GPT-4o</td><td>Multimodal</td><td>Image recognition, creative tasks</td></tr>
+    <tr><td>Gemini 2.0 Flash</td><td>Fast, high throughput</td><td>Data analysis, summarization</td></tr>
+    <tr><td>Qwen3-32B</td><td>Best cost-performance</td><td>Everyday tasks</td></tr>
+    <tr><td>DeepSeek R1</td><td>Advanced reasoning</td><td>Math, logic problems</td></tr>
+    <tr><td>Llama 3.3</td><td>Open source</td><td>General purpose</td></tr>
+  </table>
+
+  <h2 id="use-cases">5. 10 Real-World Use Cases</h2>
+
+  <h3>Business</h3>
+  <ol>
+    <li><strong>Competitive research</strong> -- Automatically crawl competitor websites, social media, and news; generate a SWOT analysis report</li>
+    <li><strong>Sales email automation</strong> -- Analyze CRM data, identify prospects, and send personalized follow-up emails via Gmail</li>
+    <li><strong>Meeting minutes to tasks</strong> -- Transcribe meeting recordings, extract action items, and post per-person task lists to Slack</li>
+    <li><strong>Expense reporting</strong> -- Read receipt images, extract amounts, and generate expense reports in Excel</li>
+  </ol>
+
+  <h3>Engineering</h3>
+  <ol start="5">
+    <li><strong>Code review</strong> -- Analyze pull request diffs, detect security risks and performance issues automatically</li>
+    <li><strong>Bug investigation</strong> -- Parse error logs and stack traces, identify root causes, and suggest patches</li>
+    <li><strong>API integration</strong> -- Read external API documentation and auto-generate integration code</li>
+  </ol>
+
+  <h3>Creative</h3>
+  <ol start="8">
+    <li><strong>Social media content</strong> -- Trend analysis, article writing, image generation, and posting schedule -- all in one flow</li>
+    <li><strong>Website creation</strong> -- "Build me a portfolio site" generates HTML and publishes it to a custom subdomain instantly</li>
+    <li><strong>Video scripts</strong> -- Topic research, outline, full script, and thumbnail image -- created in a single batch</li>
+  </ol>
+
+  <h2 id="compare">6. AI Agent Platform Comparison</h2>
+  <table class="comparison">
+    <tr><th></th><th>chatweb.ai</th><th>ChatGPT</th><th>Claude</th><th>Gemini</th></tr>
+    <tr><td><strong>Agent count</strong></td><td>39+ specialized</td><td>GPTs</td><td>Projects</td><td>Gems</td></tr>
+    <tr><td><strong>Multi-agent</strong></td><td>Autonomous orchestration</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td><strong>Browser automation</strong></td><td>Playwright</td><td>Limited</td><td>No</td><td>Limited</td></tr>
+    <tr><td><strong>Code execution</strong></td><td>E2B sandbox</td><td>Code Interpreter</td><td>Artifacts</td><td>Limited</td></tr>
+    <tr><td><strong>Send email</strong></td><td>Direct Gmail</td><td>No</td><td>No</td><td>Gmail integration</td></tr>
+    <tr><td><strong>LINE / Telegram</strong></td><td>Supported</td><td>No</td><td>No</td><td>No</td></tr>
+    <tr><td><strong>A2A protocol</strong></td><td>Supported</td><td>No</td><td>No</td><td>Planned</td></tr>
+    <tr><td><strong>Free tier</strong></td><td>$2/mo credits</td><td>Limited</td><td>Limited</td><td>Limited</td></tr>
+    <tr><td><strong>Site publishing</strong></td><td>xxx.chatweb.ai</td><td>No</td><td>No</td><td>No</td></tr>
+  </table>
+
+  <h2 id="start">7. How to Get Started Today</h2>
+  <ol>
+    <li>Go to <a href="https://chatweb.ai">chatweb.ai</a></li>
+    <li>Sign in with your Google account (30 seconds)</li>
+    <li>You receive $2 in free credits every month</li>
+    <li>Type your instructions in the chat -- the right agent is selected automatically</li>
+  </ol>
+
+  <a href="https://chatweb.ai" class="cta">Get started for free &rarr;</a>
+
+  <h2 id="faq">8. Frequently Asked Questions</h2>
+  <div class="faq">
+    <details>
+      <summary>Are AI agents safe to use?</summary>
+      <div class="answer"><p>chatweb.ai runs all code execution in isolated E2B sandbox environments. Critical actions like sending emails or modifying files require explicit user approval through the HITL (Human-in-the-Loop) feature before execution.</p></div>
+    </details>
+    <details>
+      <summary>How much does it cost?</summary>
+      <div class="answer"><p>The free plan gives you $2 in credits every month. A typical task using the Qwen3 model costs ~$0.001-0.01, so the free tier covers hundreds of requests. The Pro plan is $19/month for heavier usage.</p></div>
+    </details>
+    <details>
+      <summary>Do I need programming skills?</summary>
+      <div class="answer"><p>No. You simply give instructions in plain English (or any of 16 supported languages). The AI agents handle everything automatically. With the coding agent, you can even build websites and tools with zero programming experience.</p></div>
+    </details>
+    <details>
+      <summary>How is this different from ChatGPT?</summary>
+      <div class="answer"><p>ChatGPT is primarily a text generation tool. chatweb.ai has 39+ specialized agents that <strong>actually execute tasks</strong> -- web search, browser automation, email delivery, code execution, and site publishing -- all end-to-end.</p></div>
+    </details>
+    <details>
+      <summary>What languages are supported?</summary>
+      <div class="answer"><p>The UI supports 16 languages, and the AI agents can understand and respond in virtually any language. English, Japanese, Spanish, French, German, Chinese, Korean, and many more are fully supported.</p></div>
+    </details>
+  </div>
+
+  <div class="footer">
+    &copy; 2024-2026 chatweb.ai &middot;
+    <a href="/">Home</a> &middot;
+    <a href="/en/ai-automation">AI Automation Guide</a> &middot;
+    <a href="/en/api-docs">API Reference</a> &middot;
+    <a href="/about">About</a>
+  </div>
+</div>
+</body>
+</html>

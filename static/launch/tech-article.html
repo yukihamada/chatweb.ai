@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>技術記事 — A2A v1.0 を Python/FastAPI で実装した話 — chatweb.ai ローンチキット</title>
+  <meta name="description" content="Zenn/Qiita向け技術記事テンプレート。A2A v1.0プロトコル、JSON-RPC 2.0、Agent Card設計を解説。">
+  <meta property="og:title" content="技術記事 — chatweb.ai ローンチキット">
+  <meta property="og:type" content="article">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.8; min-height: 100vh;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .article-meta {
+      display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem;
+      font-size: 0.85rem; color: #71717a;
+    }
+    .meta-tag {
+      background: #27272a; padding: 0.2rem 0.5rem; border-radius: 4px; color: #a1a1aa;
+    }
+    .copy-all-btn {
+      display: inline-block; background: #8b5cf6; color: #fff; border: none;
+      padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer;
+      font-size: 0.9rem; font-weight: 600; margin-bottom: 2rem;
+      transition: background 0.2s;
+    }
+    .copy-all-btn:hover { background: #7c3aed; }
+    .copy-all-btn.copied { background: #22c55e; }
+
+    /* Article content styling */
+    .article {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 2rem; position: relative;
+    }
+    .article h2 { font-size: 1.4rem; font-weight: 700; margin: 2rem 0 1rem; color: #fafafa; border-bottom: 1px solid #27272a; padding-bottom: 0.5rem; }
+    .article h2:first-child { margin-top: 0; }
+    .article h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: #d4d4d8; }
+    .article p { margin-bottom: 1rem; color: #d4d4d8; font-size: 0.95rem; }
+    .article ul, .article ol { margin: 0.75rem 0 1rem 1.5rem; color: #d4d4d8; font-size: 0.95rem; }
+    .article li { margin-bottom: 0.4rem; }
+    .article strong { color: #fafafa; }
+    .article em { color: #8b5cf6; font-style: normal; }
+    .article a { color: #8b5cf6; }
+    .code-block {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 8px;
+      padding: 1.25rem; margin: 1rem 0; overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem; line-height: 1.5; color: #e4e4e7;
+    }
+    .code-label {
+      font-size: 0.75rem; color: #71717a; margin-bottom: 0.3rem;
+      font-family: sans-serif;
+    }
+    .inline-code {
+      font-family: 'SF Mono', monospace; font-size: 0.88rem;
+      background: #27272a; padding: 0.1rem 0.4rem; border-radius: 3px;
+    }
+    .diagram {
+      background: #0a0a0a; border: 1px solid #27272a; border-radius: 8px;
+      padding: 1.5rem; margin: 1rem 0; text-align: center;
+      font-family: 'SF Mono', monospace; font-size: 0.85rem; line-height: 1.4;
+      color: #a1a1aa; white-space: pre; overflow-x: auto;
+    }
+    .callout {
+      background: #8b5cf610; border-left: 3px solid #8b5cf6;
+      padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0;
+      font-size: 0.9rem; color: #a1a1aa;
+    }
+
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: 0.9rem; color: #a1a1aa; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="twitter-threads.html">Twitter</a>
+      <span class="sep">|</span>
+      <a href="linkedin-post.html">LinkedIn</a>
+      <span class="sep">|</span>
+      <a href="media-pitch.html">メディアピッチ</a>
+      <span class="sep">|</span>
+      <a href="product-hunt.html">Product Hunt</a>
+      <span class="sep">|</span>
+      <a href="hackernews.html">Hacker News</a>
+    </nav>
+
+    <h1><span class="accent">技術記事</span>（Zenn / Qiita 向け）</h1>
+    <p class="subtitle">A2A v1.0 を Python/FastAPI で実装した話。Markdown形式でコピー可能。</p>
+
+    <div class="article-meta">
+      <span class="meta-tag">Python</span>
+      <span class="meta-tag">FastAPI</span>
+      <span class="meta-tag">A2A</span>
+      <span class="meta-tag">JSON-RPC 2.0</span>
+      <span class="meta-tag">AIエージェント</span>
+      <span class="meta-tag">SSE</span>
+    </div>
+
+    <button class="copy-all-btn" onclick="copyArticle(this)">記事全文をMarkdownでコピー</button>
+
+    <!-- Article Content -->
+    <div class="article" id="article-content">
+
+      <h2>A2A v1.0 を Python/FastAPI で実装した話</h2>
+
+      <p>chatweb.ai では39の専門AIエージェントが協調してタスクを実行しています。この記事では、Google が提唱する <strong>A2A (Agent-to-Agent) v1.0 プロトコル</strong>をどのように実装したかを解説します。</p>
+
+      <h2>TL;DR</h2>
+      <ul>
+        <li>A2Aは<strong>JSON-RPC 2.0</strong>ベースのエージェント間通信プロトコル</li>
+        <li>各エージェントは<strong>Agent Card</strong>で能力を宣言</li>
+        <li><strong>SSE (Server-Sent Events)</strong> でリアルタイムストリーミング</li>
+        <li>Python/FastAPI での実装コードを公開</li>
+        <li>6時間ごとの<strong>フィードバックループ</strong>で自動改善</li>
+      </ul>
+
+      <h2>アーキテクチャ概要</h2>
+
+      <p>chatweb.ai のアーキテクチャは3層構成です。</p>
+
+      <div class="diagram">
+┌─────────────────────────────────────────────────┐
+│                   Client Layer                   │
+│         Web UI / LINE / Telegram / API           │
+└──────────────────────┬──────────────────────────┘
+                       │ HTTP/SSE
+┌──────────────────────▼──────────────────────────┐
+│              Orchestrator (Router)                │
+│   - タスク解析・分類                              │
+│   - Agent Card ベースのエージェント選択            │
+│   - JSON-RPC 2.0 ディスパッチ                     │
+│   - フィードバック集約                             │
+└───┬──────┬──────┬──────┬──────┬─────────────────┘
+    │      │      │      │      │
+┌───▼─┐┌───▼─┐┌───▼─┐┌───▼─┐┌───▼─┐
+│Gmail││Web  ││Code ││Brow-││ ... │  x39 Agents
+│Agent││Pub. ││Dep. ││ser  ││     │
+└─────┘└─────┘└─────┘└─────┘└─────┘
+    │      │      │      │      │
+┌───▼──────▼──────▼──────▼──────▼─────────────────┐
+│            12 AI Models (LLM Layer)              │
+│  Llama 4 | Claude | GPT-4o | Gemini | Qwen ...  │
+└─────────────────────────────────────────────────┘</div>
+
+      <h2>Agent Card の設計</h2>
+
+      <p>A2Aプロトコルでは、各エージェントが <strong>Agent Card</strong> を公開し、自身の能力を宣言します。これにより、Orchestratorはタスクに最適なエージェントを動的に選択できます。</p>
+
+      <div class="code-label">agent_card.py</div>
+      <div class="code-block">from pydantic import BaseModel
+from typing import Optional
+
+class AgentCard(BaseModel):
+    """A2A Agent Card - エージェントの能力宣言"""
+    name: str
+    description: str
+    version: str = "1.0.0"
+    protocol: str = "a2a/1.0"
+    capabilities: list[str]
+    input_schema: dict
+    output_schema: dict
+    constraints: Optional[dict] = None
+    quality_target: float = 0.7  # 0.0 - 1.0
+    max_latency_ms: int = 30000
+
+# GmailAgent の Agent Card 例
+gmail_agent_card = AgentCard(
+    name="gmail-agent",
+    description="Gmail操作エージェント。メールの送信、返信、検索、整理を実行。",
+    capabilities=[
+        "email.send",
+        "email.reply",
+        "email.search",
+        "email.organize",
+        "email.draft"
+    ],
+    input_schema={
+        "type": "object",
+        "properties": {
+            "action": {"type": "string", "enum": ["send", "reply", "search", "organize"]},
+            "to": {"type": "array", "items": {"type": "string", "format": "email"}},
+            "subject": {"type": "string"},
+            "body": {"type": "string"},
+            "thread_id": {"type": "string"}
+        },
+        "required": ["action"]
+    },
+    output_schema={
+        "type": "object",
+        "properties": {
+            "status": {"type": "string", "enum": ["success", "failure", "partial"]},
+            "message_id": {"type": "string"},
+            "details": {"type": "string"}
+        }
+    },
+    constraints={
+        "rate_limit": "100/hour",
+        "max_recipients": 50,
+        "requires_oauth": True
+    },
+    quality_target=0.9,
+    max_latency_ms=10000
+)</div>
+
+      <h2>JSON-RPC 2.0 の実装</h2>
+
+      <p>A2Aプロトコルの通信層は <strong>JSON-RPC 2.0</strong> で統一しています。FastAPI でのエンドポイント実装は以下の通りです。</p>
+
+      <div class="code-label">a2a_server.py</div>
+      <div class="code-block">from fastapi import FastAPI, Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Any, Optional
+import json
+import asyncio
+import uuid
+
+app = FastAPI()
+
+class JsonRpcRequest(BaseModel):
+    jsonrpc: str = "2.0"
+    method: str
+    params: Optional[dict[str, Any]] = None
+    id: Optional[str | int] = None
+
+class JsonRpcResponse(BaseModel):
+    jsonrpc: str = "2.0"
+    result: Optional[Any] = None
+    error: Optional[dict] = None
+    id: Optional[str | int] = None
+
+# エージェントレジストリ
+agent_registry: dict[str, AgentCard] = {}
+
+@app.post("/a2a/rpc")
+async def handle_rpc(request: JsonRpcRequest):
+    """JSON-RPC 2.0 エンドポイント"""
+    handlers = {
+        "agent.discover": handle_discover,
+        "agent.execute": handle_execute,
+        "agent.status": handle_status,
+        "agent.cancel": handle_cancel,
+    }
+
+    handler = handlers.get(request.method)
+    if not handler:
+        return JsonRpcResponse(
+            error={"code": -32601, "message": f"Method not found: {request.method}"},
+            id=request.id
+        )
+
+    try:
+        result = await handler(request.params or {})
+        return JsonRpcResponse(result=result, id=request.id)
+    except Exception as e:
+        return JsonRpcResponse(
+            error={"code": -32603, "message": str(e)},
+            id=request.id
+        )
+
+async def handle_discover(params: dict) -> list[dict]:
+    """登録済みエージェントのAgent Cardを返す"""
+    capability = params.get("capability")
+    if capability:
+        return [
+            card.model_dump()
+            for card in agent_registry.values()
+            if capability in card.capabilities
+        ]
+    return [card.model_dump() for card in agent_registry.values()]
+
+async def handle_execute(params: dict) -> dict:
+    """エージェントにタスクを実行させる"""
+    agent_name = params.get("agent")
+    task = params.get("task")
+    task_id = str(uuid.uuid4())
+
+    agent = agent_registry.get(agent_name)
+    if not agent:
+        raise ValueError(f"Agent not found: {agent_name}")
+
+    # 非同期でタスクを開始
+    asyncio.create_task(run_agent_task(task_id, agent_name, task))
+
+    return {"task_id": task_id, "status": "accepted"}</div>
+
+      <h2>SSE ストリーミング</h2>
+
+      <p>エージェントの実行状況をリアルタイムでクライアントに伝えるため、<strong>Server-Sent Events (SSE)</strong> を使用しています。</p>
+
+      <div class="code-label">sse_streaming.py</div>
+      <div class="code-block">from fastapi.responses import StreamingResponse
+import asyncio
+import json
+
+# タスクの進捗を保持するストア
+task_events: dict[str, asyncio.Queue] = {}
+
+@app.get("/a2a/stream/{task_id}")
+async def stream_task(task_id: str):
+    """SSE でタスクの進捗をストリーミング"""
+    if task_id not in task_events:
+        task_events[task_id] = asyncio.Queue()
+
+    async def event_generator():
+        queue = task_events[task_id]
+        while True:
+            event = await queue.get()
+            yield f"event: {event['type']}\n"
+            yield f"data: {json.dumps(event['data'], ensure_ascii=False)}\n\n"
+
+            if event["type"] in ("complete", "error"):
+                break
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+async def run_agent_task(task_id: str, agent_name: str, task: dict):
+    """エージェントタスクを実行し、進捗をSSEで通知"""
+    queue = task_events.setdefault(task_id, asyncio.Queue())
+
+    # 開始通知
+    await queue.put({
+        "type": "started",
+        "data": {"task_id": task_id, "agent": agent_name}
+    })
+
+    try:
+        # エージェント固有の処理を実行
+        agent_impl = get_agent_implementation(agent_name)
+
+        # 進捗コールバック付きで実行
+        async for progress in agent_impl.execute(task):
+            await queue.put({
+                "type": "progress",
+                "data": {
+                    "task_id": task_id,
+                    "step": progress.step,
+                    "message": progress.message,
+                    "percent": progress.percent
+                }
+            })
+
+        # 完了通知
+        await queue.put({
+            "type": "complete",
+            "data": {"task_id": task_id, "result": progress.result}
+        })
+
+    except Exception as e:
+        await queue.put({
+            "type": "error",
+            "data": {"task_id": task_id, "error": str(e)}
+        })</div>
+
+      <h2>フィードバックループの仕組み</h2>
+
+      <p>chatweb.ai の最も特徴的な仕組みが、<strong>6時間ごとの自己改善フィードバックループ</strong>です。</p>
+
+      <div class="diagram">
+┌─────────────────────────────────────────┐
+│          6-Hour Feedback Cycle           │
+│                                         │
+│  1. Collect  ──▶  2. Evaluate           │
+│     実行結果を収集     品質スコアリング    │
+│                                         │
+│  4. Deploy   ◀──  3. Optimize           │
+│     改善版をデプロイ   プロンプト最適化    │
+│                                         │
+│         ↻ 最大5回/サイクル (Pro)          │
+└─────────────────────────────────────────┘</div>
+
+      <div class="code-label">feedback_loop.py</div>
+      <div class="code-block">from dataclasses import dataclass
+from datetime import datetime, timedelta
+import statistics
+
+@dataclass
+class ExecutionRecord:
+    task_id: str
+    agent_name: str
+    success: bool
+    quality_score: float  # 0.0 - 1.0
+    latency_ms: int
+    user_feedback: float | None  # ユーザーからのフィードバック
+    timestamp: datetime
+
+class FeedbackLoop:
+    def __init__(self, cycle_hours: int = 6, max_iterations: int = 5):
+        self.cycle_hours = cycle_hours
+        self.max_iterations = max_iterations
+
+    async def run_cycle(self):
+        """6時間サイクルのメインループ"""
+        # 1. 直近サイクルの実行結果を収集
+        since = datetime.utcnow() - timedelta(hours=self.cycle_hours)
+        records = await self.collect_records(since)
+
+        # 2. エージェントごとに品質を評価
+        agent_scores = self.evaluate(records)
+
+        for agent_name, score_data in agent_scores.items():
+            target = self.get_quality_target(agent_name)
+
+            if score_data["avg_score"] >= target:
+                continue  # 品質目標達成済み
+
+            # 3. プロンプト最適化（最大5回反復）
+            for iteration in range(self.max_iterations):
+                improved_prompt = await self.optimize_prompt(
+                    agent_name,
+                    score_data,
+                    iteration
+                )
+
+                # テストセットで検証
+                test_score = await self.test_prompt(
+                    agent_name, improved_prompt
+                )
+
+                if test_score >= target:
+                    # 4. 改善版をデプロイ
+                    await self.deploy_prompt(agent_name, improved_prompt)
+                    break
+
+    def evaluate(self, records: list[ExecutionRecord]) -> dict:
+        """エージェントごとの品質評価"""
+        agent_groups: dict[str, list] = {}
+        for r in records:
+            agent_groups.setdefault(r.agent_name, []).append(r)
+
+        results = {}
+        for agent_name, agent_records in agent_groups.items():
+            scores = [r.quality_score for r in agent_records]
+            results[agent_name] = {
+                "avg_score": statistics.mean(scores),
+                "min_score": min(scores),
+                "success_rate": sum(1 for r in agent_records if r.success) / len(agent_records),
+                "avg_latency_ms": statistics.mean(r.latency_ms for r in agent_records),
+                "sample_size": len(agent_records),
+                "failure_patterns": self.extract_failure_patterns(agent_records)
+            }
+        return results
+
+    async def optimize_prompt(self, agent_name: str, score_data: dict, iteration: int) -> str:
+        """メタエージェントによるプロンプト最適化"""
+        current_prompt = await self.get_current_prompt(agent_name)
+        failure_patterns = score_data["failure_patterns"]
+
+        optimization_prompt = f"""
+以下のエージェントのプロンプトを改善してください。
+
+エージェント: {agent_name}
+現在の品質スコア: {score_data['avg_score']:.2f}
+成功率: {score_data['success_rate']:.1%}
+イテレーション: {iteration + 1}
+
+失敗パターン:
+{json.dumps(failure_patterns, ensure_ascii=False, indent=2)}
+
+現在のプロンプト:
+{current_prompt}
+
+改善方針:
+- 失敗パターンを具体的に対処する指示を追加
+- 既存の成功パターンを壊さない
+- 簡潔さを保つ
+"""
+        # メタエージェント（Claude Opus推奨）で最適化
+        improved = await call_llm("claude-opus", optimization_prompt)
+        return improved</div>
+
+      <h2>マルチモデルオーケストレーション</h2>
+
+      <p>12のAIモデルをタスク特性に応じて動的に割り当てています。</p>
+
+      <div class="code-label">model_router.py</div>
+      <div class="code-block">MODEL_CONFIG = {
+    "llama-4-scout": {"cost": 0.1, "quality": 0.7, "latency": "fast", "best_for": ["classification", "simple_qa"]},
+    "claude-opus":   {"cost": 1.0, "quality": 0.95, "latency": "slow", "best_for": ["code_gen", "complex_reasoning"]},
+    "gpt-4o":        {"cost": 0.8, "quality": 0.9, "latency": "medium", "best_for": ["general", "multimodal"]},
+    "gemini-pro":    {"cost": 0.5, "quality": 0.85, "latency": "medium", "best_for": ["long_context", "analysis"]},
+    # ... 8 more models
+}
+
+class ModelRouter:
+    def select_model(self, task_type: str, quality_target: float, budget: str) -> str:
+        """タスクとプランに応じて最適モデルを選択"""
+        candidates = []
+        for model, config in MODEL_CONFIG.items():
+            if config["quality"] >= quality_target:
+                if task_type in config["best_for"] or "general" in config["best_for"]:
+                    candidates.append((model, config))
+
+        if budget == "free":
+            # コスト最小化
+            candidates.sort(key=lambda x: x[1]["cost"])
+        else:
+            # 品質最大化（コストは二次要因）
+            candidates.sort(key=lambda x: (-x[1]["quality"], x[1]["cost"]))
+
+        return candidates[0][0] if candidates else "gpt-4o"</div>
+
+      <h2>まとめ</h2>
+
+      <p>A2A v1.0 プロトコルを実装して感じたことをまとめます。</p>
+
+      <ol>
+        <li><strong>Agent Card による宣言的設計</strong>が、エージェント間の結合度を下げる。新しいエージェントの追加が容易になった。</li>
+        <li><strong>JSON-RPC 2.0</strong> は十分にシンプルで、エージェント間通信の標準として適している。</li>
+        <li><strong>SSE ストリーミング</strong>は、ユーザー体験の観点で必須。エージェントが何をしているか見えないと不安になる。</li>
+        <li><strong>フィードバックループ</strong>は最も効果があった。Proプランの品質9/10は、これなしでは達成できなかった。</li>
+        <li><strong>マルチモデル</strong>は運用が複雑になるが、コストと品質の最適化には不可欠。</li>
+      </ol>
+
+      <p>chatweb.ai のコア実装はオープンソース化を予定しています。興味がある方は <a href="https://chatweb.ai">https://chatweb.ai</a> からサインアップして試してみてください。</p>
+
+      <div class="callout">この記事は chatweb.ai の実装を元に、Python/FastAPI で再実装した例です。本番環境では Rust (axum) + AWS Lambda で動作しています。</div>
+
+    </div>
+
+    <div class="tip">Zennの場合: 「技術記事」カテゴリ、トピック「Python」「FastAPI」「AI」で投稿。Qiitaの場合: タグ「Python」「FastAPI」「AIエージェント」「A2A」「LLM」。いずれも記事の最後に chatweb.ai へのリンクを含める。</div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyArticle(btn) {
+      // Convert article to Markdown
+      const md = `# A2A v1.0 を Python/FastAPI で実装した話
+
+chatweb.ai では39の専門AIエージェントが協調してタスクを実行しています。この記事では、Google が提唱する **A2A (Agent-to-Agent) v1.0 プロトコル**をどのように実装したかを解説します。
+
+## TL;DR
+
+- A2Aは**JSON-RPC 2.0**ベースのエージェント間通信プロトコル
+- 各エージェントは**Agent Card**で能力を宣言
+- **SSE (Server-Sent Events)** でリアルタイムストリーミング
+- Python/FastAPI での実装コードを公開
+- 6時間ごとの**フィードバックループ**で自動改善
+
+## アーキテクチャ概要
+
+chatweb.ai のアーキテクチャは3層構成です。
+
+\`\`\`
+Client Layer (Web UI / LINE / Telegram / API)
+        ↓ HTTP/SSE
+Orchestrator (Router)
+  - タスク解析・分類
+  - Agent Card ベースのエージェント選択
+  - JSON-RPC 2.0 ディスパッチ
+        ↓
+39 Specialized Agents (Gmail, WebPub, CodeDep, Browser, ...)
+        ↓
+12 AI Models (Llama 4, Claude, GPT-4o, Gemini, Qwen, ...)
+\`\`\`
+
+## Agent Card の設計
+
+A2Aプロトコルでは、各エージェントが **Agent Card** を公開し、自身の能力を宣言します。
+
+\`\`\`python
+from pydantic import BaseModel
+from typing import Optional
+
+class AgentCard(BaseModel):
+    """A2A Agent Card - エージェントの能力宣言"""
+    name: str
+    description: str
+    version: str = "1.0.0"
+    protocol: str = "a2a/1.0"
+    capabilities: list[str]
+    input_schema: dict
+    output_schema: dict
+    constraints: Optional[dict] = None
+    quality_target: float = 0.7
+    max_latency_ms: int = 30000
+
+gmail_agent_card = AgentCard(
+    name="gmail-agent",
+    description="Gmail操作エージェント。メールの送信、返信、検索、整理を実行。",
+    capabilities=["email.send", "email.reply", "email.search", "email.organize", "email.draft"],
+    input_schema={...},
+    output_schema={...},
+    constraints={"rate_limit": "100/hour", "max_recipients": 50, "requires_oauth": True},
+    quality_target=0.9,
+    max_latency_ms=10000
+)
+\`\`\`
+
+## JSON-RPC 2.0 の実装
+
+A2Aプロトコルの通信層は **JSON-RPC 2.0** で統一しています。
+
+\`\`\`python
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Any, Optional
+
+app = FastAPI()
+
+class JsonRpcRequest(BaseModel):
+    jsonrpc: str = "2.0"
+    method: str
+    params: Optional[dict[str, Any]] = None
+    id: Optional[str | int] = None
+
+@app.post("/a2a/rpc")
+async def handle_rpc(request: JsonRpcRequest):
+    handlers = {
+        "agent.discover": handle_discover,
+        "agent.execute": handle_execute,
+        "agent.status": handle_status,
+        "agent.cancel": handle_cancel,
+    }
+    handler = handlers.get(request.method)
+    if not handler:
+        return {"jsonrpc": "2.0", "error": {"code": -32601, "message": f"Method not found: {request.method}"}, "id": request.id}
+    result = await handler(request.params or {})
+    return {"jsonrpc": "2.0", "result": result, "id": request.id}
+\`\`\`
+
+## SSE ストリーミング
+
+エージェントの実行状況をリアルタイムでクライアントに伝えるため、**Server-Sent Events (SSE)** を使用しています。
+
+\`\`\`python
+from fastapi.responses import StreamingResponse
+import asyncio, json
+
+@app.get("/a2a/stream/{task_id}")
+async def stream_task(task_id: str):
+    async def event_generator():
+        queue = task_events[task_id]
+        while True:
+            event = await queue.get()
+            yield f"event: {event['type']}\\ndata: {json.dumps(event['data'], ensure_ascii=False)}\\n\\n"
+            if event["type"] in ("complete", "error"):
+                break
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+\`\`\`
+
+## フィードバックループの仕組み
+
+chatweb.ai の最も特徴的な仕組みが、**6時間ごとの自己改善フィードバックループ**です。
+
+1. **Collect**: 直近6時間の実行結果を収集
+2. **Evaluate**: エージェントごとの品質スコアリング
+3. **Optimize**: メタエージェントによるプロンプト最適化（最大5回）
+4. **Deploy**: 改善版をデプロイ
+
+## まとめ
+
+1. **Agent Card による宣言的設計**が、エージェント間の結合度を下げる
+2. **JSON-RPC 2.0** はエージェント間通信の標準として適している
+3. **SSE ストリーミング**はUX観点で必須
+4. **フィードバックループ**は最も効果があった
+5. **マルチモデル**は運用が複雑だが、コスト最適化に不可欠
+
+chatweb.ai: https://chatweb.ai
+
+> この記事は chatweb.ai の実装を元に、Python/FastAPI で再実装した例です。本番環境では Rust (axum) + AWS Lambda で動作しています。`;
+
+      navigator.clipboard.writeText(md).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '記事全文をMarkdownでコピー';
+          btn.classList.remove('copied');
+        }, 3000);
+      });
+    }
+  </script>
+</body>
+</html>

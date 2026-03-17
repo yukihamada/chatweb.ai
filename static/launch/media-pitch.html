@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>メディアピッチメール — chatweb.ai ローンチキット</title>
+  <meta name="description" content="TechCrunch Japan、日経クロステック、The BRIDGE向けメディアピッチテンプレート。">
+  <meta property="og:title" content="メディアピッチメール — chatweb.ai ローンチキット">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.7; min-height: 100vh;
+    }
+    .container { max-width: 750px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.3rem; font-weight: 600; margin: 2.5rem 0 0.5rem; color: #fafafa; }
+    h3 { font-size: 1rem; font-weight: 600; color: #a1a1aa; margin: 1rem 0 0.5rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .media-badge {
+      display: inline-block; background: #8b5cf620; color: #8b5cf6;
+      padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .subject-line {
+      background: #27272a; padding: 0.75rem 1rem; border-radius: 8px;
+      margin-bottom: 0.75rem; font-size: 0.95rem;
+    }
+    .subject-label { color: #8b5cf6; font-weight: 600; font-size: 0.8rem; }
+    .email-block {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 1.5rem; margin-bottom: 1.5rem; position: relative;
+    }
+    .email-block pre {
+      white-space: pre-wrap; word-wrap: break-word; font-family: inherit;
+      font-size: 0.93rem; line-height: 1.7; color: #e4e4e7;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+    .checklist { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0; }
+    .checklist-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 1rem; }
+    .checklist ul { list-style: none; padding: 0; }
+    .checklist li { padding: 0.3rem 0; padding-left: 1.5rem; position: relative; color: #d4d4d8; font-size: 0.93rem; }
+    .checklist li::before { content: '\2610'; position: absolute; left: 0; color: #8b5cf6; }
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: 0.9rem; color: #a1a1aa; }
+    .divider { border: none; border-top: 1px solid #27272a; margin: 2rem 0; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="twitter-threads.html">Twitter</a>
+      <span class="sep">|</span>
+      <a href="linkedin-post.html">LinkedIn</a>
+      <span class="sep">|</span>
+      <a href="product-hunt.html">Product Hunt</a>
+      <span class="sep">|</span>
+      <a href="hackernews.html">Hacker News</a>
+      <span class="sep">|</span>
+      <a href="tech-article.html">技術記事</a>
+    </nav>
+
+    <h1><span class="accent">メディアピッチ</span>メール</h1>
+    <p class="subtitle">TechCrunch Japan、日経クロステック、The BRIDGE向けの3パターン。</p>
+
+    <!-- TechCrunch Japan -->
+    <h2>1. TechCrunch Japan</h2>
+    <div class="media-badge">スタートアップ / プロダクトローンチ</div>
+
+    <div class="subject-line">
+      <div class="subject-label">件名:</div>
+      【新サービス】メルカリ元CPO濱田優貴が「実行するAI」chatweb.aiをローンチ — 39エージェントがタスクを代行
+    </div>
+
+    <div class="email-block">
+      <button class="copy-btn" onclick="copyText(this)">コピー</button>
+      <pre>TechCrunch Japan 編集部 御中
+
+突然のご連絡失礼いたします。
+株式会社イネブラ代表の濱田優貴と申します。
+
+本日、AIエージェントプラットフォーム「chatweb.ai」を正式ローンチいたしましたので、ご取材のご検討をお願いできればと思いご連絡いたしました。
+
+■ サービス概要
+chatweb.ai は、39の専門AIエージェントがユーザーの代わりにタスクを「実際に実行」するプラットフォームです。従来のチャットAIが「テキストで回答する」のに対し、Gmail送信、Webサイト公開、コードデプロイ、ブラウザ操作など、具体的なアクションを代行します。
+
+■ ニュースバリュー
+1. 創業者の経歴: メルカリCPO/取締役 → NOT A HOTEL共同創業 → chatweb.ai
+2. 技術的先進性: GoogleのA2A (Agent-to-Agent) v1.0プロトコルに国内初準拠
+3. 自己改善AI: 6時間ごとのフィードバックループでエージェント品質を自動改善
+4. 12モデル統合: Llama 4 Scout、Claude Opus、GPT-4o、Gemini Proなど12のAIモデルを最適配分
+5. オープンソース化予定: コアプロトコルのOSS化を計画中
+
+■ 創業者プロフィール
+濱田優貴（はまだ ゆうき）
+- 株式会社メルカリ CPO（最高プロダクト責任者）/ 取締役
+- NOT A HOTEL 共同創業者
+- 株式会社イネブラ 代表取締役
+
+■ プラン
+- Free: 毎月$2分のクレジット付き
+- Pro: ¥2,900/月
+- Team: ¥9,800/月
+- Enterprise: ¥1,000,000/月（限定10社）
+
+■ URL
+https://chatweb.ai
+
+取材、デモのご案内等、ご希望に応じて対応いたします。
+ご検討のほど、よろしくお願いいたします。
+
+株式会社イネブラ
+濱田優貴
+Email: info@enablerdao.com
+Web: https://chatweb.ai</pre>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 日経クロステック -->
+    <h2>2. 日経クロステック</h2>
+    <div class="media-badge">技術トレンド / エンタープライズ</div>
+
+    <div class="subject-line">
+      <div class="subject-label">件名:</div>
+      【取材依頼】A2Aプロトコル準拠のマルチエージェントAI「chatweb.ai」— LLM時代の「実行するAI」
+    </div>
+
+    <div class="email-block">
+      <button class="copy-btn" onclick="copyText(this)">コピー</button>
+      <pre>日経クロステック 編集部 御中
+
+株式会社イネブラの濱田と申します。
+
+LLM活用の新たなアプローチとして、マルチエージェントAIプラットフォーム「chatweb.ai」を本日ローンチいたしました。技術面で特徴的な取り組みをしておりますので、ご取材のご検討をお願いできればと存じます。
+
+■ 技術的な特徴
+
+1. A2A (Agent-to-Agent) v1.0プロトコル準拠
+GoogleがAgent間通信の標準として提唱するA2Aプロトコルに準拠。JSON-RPC 2.0ベースの通信とSSEストリーミングにより、39の専門エージェントがリアルタイムに連携します。
+
+2. マルチモデルオーケストレーション
+単一のLLMに依存せず、12のAIモデル（Llama 4 Scout、Claude Opus、GPT-4o、Gemini Pro等）をタスク特性に応じて動的に割り当てます。
+
+3. 自己改善フィードバックループ
+6時間サイクルでエージェントの実行結果を評価し、プロンプトとパラメータを自動最適化。Proプランでは品質スコア9/10を目標に最大5回のループを実行します。
+
+4. Agent Card設計
+各エージェントの能力・制約・入出力スキーマをAgent Cardとして宣言的に定義。外部エージェントとの相互運用性を確保しています。
+
+■ エンタープライズ展開
+限定10社向けのEnterprise プラン（月額100万円）を用意し、オンプレミス環境やカスタムエージェント開発にも対応します。
+
+■ 記事の切り口としてのご提案
+- 「ChatGPTの次」— 対話型AIから実行型AIへのパラダイムシフト
+- A2Aプロトコルの国内実装事例
+- マルチモデルオーケストレーションの実践
+
+デモ環境のご案内、技術詳細の解説等、ご要望に応じて対応いたします。
+
+株式会社イネブラ
+濱田優貴
+Email: info@enablerdao.com
+Web: https://chatweb.ai</pre>
+    </div>
+
+    <hr class="divider">
+
+    <!-- The BRIDGE -->
+    <h2>3. The BRIDGE</h2>
+    <div class="media-badge">スタートアップ / 創業者ストーリー</div>
+
+    <div class="subject-line">
+      <div class="subject-label">件名:</div>
+      メルカリ元CPOが「実行するAI」で再起業 — 39エージェントプラットフォームchatweb.aiローンチ
+    </div>
+
+    <div class="email-block">
+      <button class="copy-btn" onclick="copyText(this)">コピー</button>
+      <pre>The BRIDGE 編集部 御中
+
+株式会社イネブラの濱田優貴と申します。
+
+本日、AIエージェントプラットフォーム「chatweb.ai」をローンチいたしましたのでご連絡いたしました。
+
+■ ストーリー
+メルカリでCPO/取締役としてプロダクト開発を統括した後、NOT A HOTELを共同創業。その後、LLMの急速な進化を目の当たりにし、「AIは賢くなったが、まだ実行できない」という課題に着目しました。
+
+ChatGPTを始めとするLLMは素晴らしい回答を生成しますが、メール送信やWebサイト公開といった「実行」は人間が行う必要があります。chatweb.aiは39の専門AIエージェントがこの「最後の一歩」を代行するプラットフォームです。
+
+■ 差別化ポイント
+- 39の専門エージェントによるタスク実行（会話ではなく実行）
+- A2A v1.0プロトコル（Google提唱）に国内初対応
+- 12のAIモデルをタスクごとに最適配分
+- 6時間サイクルの自己改善ループ
+- LINE / Telegram連携
+- オープンソース化予定
+
+■ ビジネスモデル
+- Free: $2/月クレジット
+- Pro: ¥2,900/月
+- Team: ¥9,800/月
+- Enterprise: ¥1,000,000/月（限定10社）
+
+■ 創業者
+濱田優貴 — メルカリ CPO/取締役 → NOT A HOTEL 共同創業 → 株式会社イネブラ代表
+
+インタビュー、デモ取材等お受けいたします。
+ご検討よろしくお願いいたします。
+
+株式会社イネブラ
+濱田優貴
+Email: info@enablerdao.com
+Web: https://chatweb.ai</pre>
+    </div>
+
+    <hr class="divider">
+
+    <!-- 添付資料チェックリスト -->
+    <h2>添付すべき資料リスト</h2>
+    <div class="checklist">
+      <div class="checklist-title">メディアキットに含めるもの:</div>
+      <ul>
+        <li>プレスリリース（PDF、1-2ページ）</li>
+        <li>プロダクトスクリーンショット（高解像度、3-5枚）</li>
+        <li>創業者プロフィール写真（高解像度）</li>
+        <li>ロゴデータ（SVG + PNG、白背景・透過の2パターン）</li>
+        <li>アーキテクチャ図（A2A構成図）</li>
+        <li>デモ動画URL（2分以内）</li>
+        <li>ファクトシート（エージェント数、モデル数、プラン等の数字まとめ）</li>
+        <li>競合比較表（ChatGPT、Zapier AI、AutoGPTとの違い）</li>
+      </ul>
+    </div>
+
+    <div class="tip">送信タイミング: 火〜木の午前中（10:00-11:00）が開封率最高。月曜・金曜は避ける。ローンチの3-5営業日前に送付し、ローンチ日に「本日ローンチしました」のフォローアップを送ると効果的。</div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyText(btn) {
+      const pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

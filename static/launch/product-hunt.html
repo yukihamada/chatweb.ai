@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Hunt 投稿テンプレート — chatweb.ai ローンチキット</title>
+  <meta name="description" content="chatweb.ai Product Hunt launch template. Tagline, description, first comment, and image specs.">
+  <meta property="og:title" content="Product Hunt Template — chatweb.ai Launch Kit">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.7; min-height: 100vh;
+    }
+    .container { max-width: 750px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 0.75rem; color: #8b5cf6; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .field { margin-bottom: 1.5rem; }
+    .field-label {
+      font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #a1a1aa; margin-bottom: 0.4rem;
+    }
+    .field-meta { font-size: 0.8rem; color: #71717a; margin-bottom: 0.4rem; }
+    .content-block {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 1.25rem; position: relative;
+    }
+    .content-block pre {
+      white-space: pre-wrap; word-wrap: break-word; font-family: inherit;
+      font-size: 0.95rem; line-height: 1.6; color: #e4e4e7;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+    .char-count { text-align: right; font-size: 0.8rem; color: #71717a; margin-top: 0.3rem; }
+    .spec-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem; margin: 1rem 0;
+    }
+    .spec-card {
+      background: #18181b; border: 1px solid #27272a; border-radius: 10px; padding: 1rem;
+    }
+    .spec-card-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .spec-card-value { color: #8b5cf6; font-size: 0.85rem; }
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: 0.9rem; color: #a1a1aa; }
+    .divider { border: none; border-top: 1px solid #27272a; margin: 2rem 0; }
+    .topics { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0; }
+    .topic-tag {
+      background: #27272a; color: #d4d4d8; padding: 0.25rem 0.6rem;
+      border-radius: 6px; font-size: 0.8rem;
+    }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="twitter-threads.html">Twitter</a>
+      <span class="sep">|</span>
+      <a href="linkedin-post.html">LinkedIn</a>
+      <span class="sep">|</span>
+      <a href="media-pitch.html">メディアピッチ</a>
+      <span class="sep">|</span>
+      <a href="hackernews.html">Hacker News</a>
+      <span class="sep">|</span>
+      <a href="tech-article.html">技術記事</a>
+    </nav>
+
+    <h1><span class="accent">Product Hunt</span> 投稿テンプレート</h1>
+    <p class="subtitle">Product Hunt launch に必要な全テンプレート。</p>
+
+    <!-- Tagline -->
+    <div class="field">
+      <div class="field-label">Tagline</div>
+      <div class="field-meta">60文字以内。プロダクトの一行説明。</div>
+      <div class="content-block">
+        <button class="copy-btn" onclick="copyText(this)">コピー</button>
+        <pre>39 AI agents that actually execute your tasks, not just chat</pre>
+      </div>
+      <div class="char-count">58 / 60 characters</div>
+    </div>
+
+    <!-- Description -->
+    <div class="field">
+      <div class="field-label">Description</div>
+      <div class="field-meta">260文字以内。より詳しい説明。</div>
+      <div class="content-block">
+        <button class="copy-btn" onclick="copyText(this)">コピー</button>
+        <pre>chatweb.ai is a multi-agent AI platform where 39 specialized agents execute real tasks: send Gmail, publish websites, deploy code, and browse the web. Powered by 12 AI models (Llama 4, Claude, GPT-4o, Gemini) with A2A v1.0 protocol and a self-improving feedback loop.</pre>
+      </div>
+      <div class="char-count">256 / 260 characters</div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Topics -->
+    <div class="field">
+      <div class="field-label">Recommended Topics</div>
+      <div class="topics">
+        <span class="topic-tag">Artificial Intelligence</span>
+        <span class="topic-tag">Productivity</span>
+        <span class="topic-tag">SaaS</span>
+        <span class="topic-tag">Developer Tools</span>
+        <span class="topic-tag">Automation</span>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- First Comment -->
+    <h2>First Comment (Maker's Comment)</h2>
+    <div class="tip">First Commentは投稿直後に自分で投稿するコメント。ストーリーと技術的な背景を語るのが効果的。</div>
+
+    <div class="content-block">
+      <button class="copy-btn" onclick="copyText(this)">コピー</button>
+      <pre>Hey Product Hunt! I'm Yuki, founder of chatweb.ai.
+
+Quick background: I was CPO/Director at Mercari (Japan's largest marketplace, IPO'd at $7B) and co-founded NOT A HOTEL. After years of building products that empower individuals, I noticed a fundamental gap in today's AI:
+
+LLMs are incredibly smart, but they can't *do* anything.
+
+Ask ChatGPT to send an email — it'll write a perfect draft. But YOU still need to open Gmail, paste it, and hit send.
+
+chatweb.ai closes this gap with 39 specialized agents that actually execute tasks:
+
+- **GmailAgent**: Sends, replies, organizes emails
+- **WebPublisher**: Generates and publishes websites
+- **CodeDeployer**: Builds and deploys your code
+- **BrowserAgent**: Browses the web and extracts info
+- ...and 35 more specialized agents
+
+**What makes us different:**
+
+1. **A2A v1.0 Protocol** — We're built on Google's Agent-to-Agent standard (JSON-RPC 2.0 + SSE streaming), so our agents truly collaborate.
+
+2. **12 AI Models** — Not locked to one LLM. We orchestrate Llama 4 Scout, Claude Opus, GPT-4o, Gemini Pro, and more based on task type.
+
+3. **Self-Improving Loop** — Every 6 hours, agent quality is evaluated and prompts are auto-optimized. Pro plan targets 9/10 quality.
+
+4. **Going Open Source** — We plan to open-source the core protocol.
+
+Free tier includes $2/month in credits. Would love your feedback!
+
+https://chatweb.ai</pre>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Images -->
+    <h2>推奨画像・メディア</h2>
+
+    <div class="spec-grid">
+      <div class="spec-card">
+        <div class="spec-card-title">Thumbnail</div>
+        <div class="spec-card-value">240 x 240px<br>PNG, 丸くクロップされる</div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-card-title">Gallery Images</div>
+        <div class="spec-card-value">1270 x 760px<br>最大8枚、PNG/JPG</div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-card-title">OG Image</div>
+        <div class="spec-card-value">1200 x 630px<br>SNSシェア用</div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-card-title">Video (任意)</div>
+        <div class="spec-card-value">YouTube/Loom URL<br>2分以内推奨</div>
+      </div>
+    </div>
+
+    <h2>Gallery 画像の構成案（8枚）</h2>
+    <div class="content-block">
+      <pre>1. ヒーローショット: メインUI全体 + キャッチコピー
+2. エージェント一覧: 39エージェントのグリッド表示
+3. Gmail実行デモ: 「メールを送って」→ 実際に送信完了の画面
+4. Web公開デモ: サイト生成 → 公開URLの画面
+5. A2Aアーキテクチャ図: エージェント間通信のフロー
+6. マルチモデル: 12モデルのアイコンとタスク割り当て
+7. 品質改善ループ: 6時間サイクルの図解
+8. プラン比較表: Free / Pro / Team / Enterprise</pre>
+    </div>
+
+    <hr class="divider">
+
+    <h2>ローンチ日のチェックリスト</h2>
+    <div class="content-block">
+      <pre>Product Huntローンチ当日（太平洋時間 00:01）:
+
+[ ] 太平洋時間 00:01 に投稿（日本時間 17:01）
+[ ] First Comment を投稿直後に投稿
+[ ] X/Twitter でローンチ告知（Product Hunt リンク付き）
+[ ] LinkedIn で告知投稿
+[ ] チーム全員にUpvote依頼（ただしPH規約に注意）
+[ ] コメントへの返信を最初の12時間は15分以内に
+[ ] 日本のテックコミュニティにシェア
+[ ] Product Huntのメトリクスを1時間ごとにチェック
+[ ] ランキング入りしたらSNSでお礼投稿</pre>
+    </div>
+
+    <div class="tip">Product Hunt は太平洋時間 00:01 にリセット。日本時間だと17:01なので、夕方からの12時間が勝負。最初の4時間のUpvote速度がランキングを決めます。</div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyText(btn) {
+      const pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

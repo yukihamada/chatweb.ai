@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X/Twitter 投稿文 — chatweb.ai ローンチキット</title>
+  <meta name="description" content="chatweb.aiローンチ用X/Twitter投稿テンプレート。5パターン、コピペ可能。">
+  <meta property="og:title" content="X/Twitter 投稿文 — chatweb.ai ローンチキット">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.7; min-height: 100vh;
+    }
+    .container { max-width: 750px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .pattern { margin-bottom: 2.5rem; }
+    .pattern-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #27272a;
+    }
+    .pattern-num {
+      background: #8b5cf6; color: #fff; width: 28px; height: 28px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+    }
+    .pattern-title { font-size: 1.1rem; font-weight: 600; }
+    .tweet-block {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 1.25rem; margin-bottom: 0.75rem; position: relative;
+    }
+    .tweet-block pre {
+      white-space: pre-wrap; word-wrap: break-word; font-family: inherit;
+      font-size: 0.95rem; line-height: 1.6; color: #e4e4e7;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+    .thread-label { color: #71717a; font-size: 0.8rem; margin-bottom: 0.3rem; }
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin-top: 0.75rem; font-size: 0.9rem; color: #a1a1aa; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="linkedin-post.html">LinkedIn</a>
+      <span class="sep">|</span>
+      <a href="media-pitch.html">メディアピッチ</a>
+      <span class="sep">|</span>
+      <a href="product-hunt.html">Product Hunt</a>
+      <span class="sep">|</span>
+      <a href="hackernews.html">Hacker News</a>
+      <span class="sep">|</span>
+      <a href="tech-article.html">技術記事</a>
+    </nav>
+
+    <h1><span class="accent">X / Twitter</span> 投稿文</h1>
+    <p class="subtitle">5パターンのツイート/スレッド案。コピーボタンでそのまま使えます。</p>
+
+    <!-- Pattern 1 -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">1</div>
+        <div class="pattern-title">ローンチ告知</div>
+      </div>
+      <div class="thread-label">1/3</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>chatweb.ai をローンチしました。
+
+39の専門AIエージェントが、あなたの代わりにタスクを「実際に」実行します。
+
+- Gmailの送信・返信
+- Webサイトの公開
+- コードのデプロイ
+- ブラウザ操作での情報収集
+
+「AIに聞く」から「AIにやってもらう」へ。
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="thread-label">2/3</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>技術的にこだわったポイント:
+
+- A2A v1.0プロトコル対応（JSON-RPC 2.0 + SSE）
+- 12のAIモデルを最適配分（Llama 4 Scout, Claude, GPT-4o, Gemini等）
+- 6時間ごとの自己改善ループ
+- LINE / Telegram連携
+
+将来的にオープンソース化します。</pre>
+      </div>
+      <div class="thread-label">3/3</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>プランは4つ:
+
+- Free: 毎月$2分のクレジット付き
+- Pro: ¥2,900/月（品質9/10、改善ループ5回）
+- Team: ¥9,800/月
+- Enterprise: ¥1M/月（限定10社）
+
+まずは無料で試してみてください。
+https://chatweb.ai
+
+#AI #AIAgent #chatweb</pre>
+      </div>
+      <div class="tip">画像: プロダクトのスクリーンショットかデモGIFを1枚目に添付すると効果的です。</div>
+    </div>
+
+    <!-- Pattern 2 -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">2</div>
+        <div class="pattern-title">ChatGPTとの比較</div>
+      </div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>ChatGPTとchatweb.aiの違い:
+
+ChatGPT → テキストで「答え」を返す
+chatweb.ai → 39のエージェントが「実行」する
+
+例えば「来週の会議をリスケして」と言うと:
+- カレンダーを確認
+- 空き時間を探す
+- メールで参加者に連絡
+- 完了報告
+
+「考えるAI」と「動くAI」の差。
+
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">比較系ツイートはエンゲージメントが高い傾向。ただし競合批判は避け、ポジション違いを示す表現に。</div>
+    </div>
+
+    <!-- Pattern 3 -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">3</div>
+        <div class="pattern-title">メルカリ元CPOストーリー</div>
+      </div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>メルカリでCPO/取締役をやっていた時、「テクノロジーで個人をエンパワメントする」をずっと考えていました。
+
+NOT A HOTELで不動産×テックをやった後、次に選んだのがAIエージェント。
+
+なぜか？
+
+LLMは賢くなったけど、まだ「実行」できない。
+ユーザーが結果を得るまでに何ステップもある。
+
+39のエージェントが連携して、ユーザーの代わりに動く。
+
+これがchatweb.aiです。
+https://chatweb.ai</pre>
+      </div>
+      <div class="tip">創業者のバックグラウンドが強い場合、ストーリーテリング型が最もシェアされやすいです。</div>
+    </div>
+
+    <!-- Pattern 4 -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">4</div>
+        <div class="pattern-title">技術解説</div>
+      </div>
+      <div class="thread-label">1/2</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>chatweb.aiのアーキテクチャを公開します。
+
+GoogleのA2A (Agent-to-Agent) v1.0プロトコルに準拠:
+
+- JSON-RPC 2.0でエージェント間通信
+- SSEストリーミングでリアルタイム応答
+- Agent Cardで各エージェントの能力を宣言
+- フィードバックループで6時間ごとに自己改善
+
+12のAIモデルをタスクごとに最適配分しています。</pre>
+      </div>
+      <div class="thread-label">2/2</div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>品質管理のアプローチ:
+
+- Freeプラン: 品質7/10 目標
+- Proプラン: 品質9/10 目標、改善ループ最大5回
+
+「動くけど品質が低い」AIエージェントが多い中、実用レベルの品質を保証する仕組みを入れました。
+
+将来的にオープンソース化予定。
+
+技術的な質問があればリプライください。
+https://chatweb.ai
+
+#A2A #AIAgent #LLM</pre>
+      </div>
+    </div>
+
+    <!-- Pattern 5 -->
+    <div class="pattern">
+      <div class="pattern-header">
+        <div class="pattern-num">5</div>
+        <div class="pattern-title">デモ紹介</div>
+      </div>
+      <div class="tweet-block">
+        <button class="copy-btn" onclick="copyTweet(this)">コピー</button>
+        <pre>chatweb.ai のデモ動画です。
+
+「来週のミートアップの告知ページを作って、参加者にメールして」
+
+と入力すると:
+
+1. WebPublisherエージェントが告知ページを生成
+2. GmailAgentが参加者リストにメール送信
+3. 完了報告と公開URLを返す
+
+全部で約2分。人間がやると30分以上。
+
+https://chatweb.ai
+
+#AI #自動化 #AIAgent</pre>
+      </div>
+      <div class="tip">動画を添付する場合は2:20以内に収めるとX上で自動再生されます。デモは「入力 -> 実行中 -> 結果」の3シーンに絞ると効果的。</div>
+    </div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyTweet(btn) {
+      const pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'コピー';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

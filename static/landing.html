@@ -9,14 +9,14 @@
 <meta name="keywords" content="AIエージェント,マルチエージェントAI,業務自動化,chatweb.ai,Claude AI,RPA,生産性向上">
 <meta name="author" content="chatweb.ai">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://chatweb.ai/static/landing.html">
+<link rel="canonical" href="https://chatweb.ai/landing">
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://chatweb.ai/static/landing.html">
+<meta property="og:url" content="https://chatweb.ai/landing">
 <meta property="og:site_name" content="chatweb.ai">
 <meta property="og:title" content="chatweb.ai — AIエージェントが、あなたの仕事を自律実行">
 <meta property="og:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで。無料プランあり。">
-<meta property="og:image" content="https://chatweb.ai/static/og-image.svg">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="ja_JP">
@@ -24,7 +24,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="chatweb.ai — AIエージェントが、あなたの仕事を自律実行">
 <meta name="twitter:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。無料プランあり。">
-<meta name="twitter:image" content="https://chatweb.ai/static/og-image.svg">
+<meta name="twitter:image" content="https://chatweb.ai/static/og-image.png">
 <!-- Favicon -->
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/static/icon-192.png" type="image/png">
@@ -845,7 +845,7 @@ footer {
           無料で始める
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a href="/static/onboarding.html" class="btn-secondary">使い方を見る</a>
+        <a href="/onboarding" class="btn-secondary">使い方を見る</a>
       </div>
     </div>
   </div>
@@ -867,29 +867,29 @@ footer {
         <li><a href="#features">機能</a></li>
         <li><a href="#usecases">活用例</a></li>
         <li><a href="#pricing">料金プラン</a></li>
-        <li><a href="/static/onboarding.html">使い方ガイド</a></li>
+        <li><a href="/onboarding">使い方ガイド</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>サポート</h4>
       <ul>
         <li><a href="mailto:support@enablerdao.com">お問い合わせ</a></li>
-        <li><a href="/static/onboarding.html">オンボーディング</a></li>
+        <li><a href="/onboarding">オンボーディング</a></li>
         <li><a href="https://github.com/enablerdao" target="_blank" rel="noopener">GitHub</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>法的情報</h4>
       <ul>
-        <li><a href="/static/terms.html">利用規約</a></li>
-        <li><a href="/static/privacy.html">プライバシーポリシー</a></li>
-        <li><a href="/static/tokushoho.html">特定商取引法に基づく表記</a></li>
+        <li><a href="/terms">利用規約</a></li>
+        <li><a href="/privacy">プライバシーポリシー</a></li>
+        <li><a href="/tokushoho">特定商取引法に基づく表記</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
     <span>&copy; 2025 EnablerDAO. All rights reserved.</span>
-    <span><a href="/static/terms.html">利用規約</a> · <a href="/static/privacy.html">プライバシー</a> · <a href="/static/tokushoho.html">特商法</a></span>
+    <span><a href="/terms">利用規約</a> · <a href="/privacy">プライバシー</a> · <a href="/tokushoho">特商法</a></span>
   </div>
 </footer>
 
@@ -909,7 +909,7 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 <!-- Cookie Banner -->
 <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(18,18,22,0.97);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.08);padding:16px 20px;align-items:center;gap:16px;flex-wrap:wrap;">
-  <div style="flex:1;min-width:200px;font-size:13px;color:#a1a1aa;line-height:1.5">🍪 このサービスはCookieを使用します。<a href="/static/privacy.html" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a></div>
+  <div style="flex:1;min-width:200px;font-size:13px;color:#a1a1aa;line-height:1.5">🍪 このサービスはCookieを使用します。<a href="/privacy" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a></div>
   <div style="display:flex;gap:8px;flex-shrink:0">
     <button onclick="localStorage.setItem('chatweb_cookie_consent','declined');document.getElementById('cookie-banner').style.display='none'" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#71717a;cursor:pointer;font-size:13px">拒否</button>
     <button onclick="localStorage.setItem('chatweb_cookie_consent','accepted');document.getElementById('cookie-banner').style.display='none'" style="padding:8px 18px;border-radius:8px;border:none;background:#7c6aff;color:#fff;cursor:pointer;font-size:13px;font-weight:600">同意する</button>

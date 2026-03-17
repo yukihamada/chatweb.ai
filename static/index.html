@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>chatweb.ai — Multi-Agent AI Platform</title>
 <!-- SEO -->
 <meta name="description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで対応するマルチエージェントAIプラットフォーム。">
@@ -16,26 +16,29 @@
 <meta property="og:site_name" content="chatweb.ai">
 <meta property="og:title" content="chatweb.ai — Multi-Agent AI Platform">
 <meta property="og:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。ブラウザ操作・調査・コーディング・法務レビューまで。">
-<meta property="og:image" content="https://chatweb.ai/static/og-image.svg">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="ja_JP">
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@chatweb_ai">
 <meta name="twitter:title" content="chatweb.ai — Multi-Agent AI Platform">
 <meta name="twitter:description" content="30種類以上の専門AIエージェントが連携して複雑なタスクを自律実行。">
-<meta name="twitter:image" content="https://chatweb.ai/static/og-image.svg">
+<meta name="twitter:image" content="https://chatweb.ai/static/og-image.png">
 <!-- Preconnect for faster API calls -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="dns-prefetch" href="https://api.qrserver.com">
 <!-- Favicon -->
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/static/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="icon" href="/static/favicon.ico" sizes="32x32">
+<link rel="icon" href="/static/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#7c6aff">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="chatweb.ai">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <!-- JSON-LD Structured Data -->
@@ -304,6 +307,15 @@ body {
 }
 .agent-grid-pill:hover { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.07); }
 .agent-grid-pill.selected { border-color: rgba(139,92,246,0.6); background: rgba(139,92,246,0.12); color: #c4b5fd; }
+/* Presets */
+.preset-bar { display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border) }
+.preset-bar::-webkit-scrollbar { display:none }
+.preset-chip { display:flex;align-items:center;gap:5px;padding:7px 13px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:all .15s;white-space:nowrap }
+.preset-chip:hover { border-color:rgba(139,92,246,.4);color:var(--text);background:rgba(139,92,246,.05) }
+.preset-chip.active { border-color:rgba(139,92,246,.6);background:rgba(139,92,246,.12);color:#c4b5fd }
+.preset-chip .preset-icon { font-size:14px }
+.preset-manage { font-size:11px;color:var(--muted);cursor:pointer;padding:4px 0;text-align:right;margin-top:4px }
+.preset-manage:hover { color:var(--accent) }
 .agent-selector-footer {
   margin-top: 16px;
   padding-top: 12px;
@@ -390,7 +402,8 @@ body {
   word-break: break-word;
 }
 .msg-ai-bubble.streaming { border: 1px solid rgba(139,92,246,0.3); }
-.msg-ai-footer { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.msg-ai-footer { display: flex; align-items: center; gap: 6px; margin-top: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.msg-ai-footer::-webkit-scrollbar { display: none; }
 
 /* Chips */
 .tool-chip { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
@@ -681,8 +694,9 @@ body {
 .status-pill .sp-dot { width:6px; height:6px; border-radius:50%; background: var(--accent); animation: pulseDot 1s ease infinite; }
 
 /* ── Rating buttons ───────────────────────────────────────────────────── */
-.rating-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.rating-btns button { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--text); transition: all 0.15s; display: flex; align-items: center; gap: 4px; }
+.rating-btns { display: flex; gap: 5px; margin-top: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.rating-btns::-webkit-scrollbar { display: none; }
+.rating-btns button { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--text); transition: all 0.15s; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
 .rating-btns button:hover { border-color: var(--border2); background: rgba(255,255,255,0.06); }
 .rating-btns button.rated-up   { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.12); color: var(--green); }
 .rating-btns button.rated-down { border-color: rgba(239,68,68,0.5);  background: rgba(239,68,68,0.12);  color: var(--red); }
@@ -874,18 +888,18 @@ body {
   .msg-ai-bubble code { font-size: 11.5px; word-break: break-all; }
 
   /* ── Footer action buttons ── */
-  .msg-ai-footer { gap: 4px; flex-wrap: wrap; }
+  .msg-ai-footer { gap: 4px; }
   .msg-ai-footer button, .tts-btn { font-size: 14px; padding: 3px 5px !important; min-width: 28px; min-height: 28px; }
 
   /* ── Input area ── */
   .quick-chips { padding: 6px 10px 0; gap: 5px; -webkit-overflow-scrolling: touch; }
   .chip { font-size: 11.5px; padding: 5px 11px; }
-  .input-row { padding: 10px 10px 12px; gap: 6px; }
-  /* font-size 16px prevents iOS auto-zoom on focus */
-  #chatInput { font-size: 16px; padding: 12px 16px; min-height: 44px; max-height: 120px; border-radius: 12px; }
-  #plus-btn  { width: 42px; height: 42px; font-size: 22px; flex-shrink: 0; }
-  #send-btn  { width: 42px; height: 42px; font-size: 17px; border-radius: 12px; flex-shrink: 0; }
-  #mic-btn   { width: 42px; height: 42px; flex-shrink: 0; }
+  .input-row { padding: 8px 10px 10px; gap: 4px; }
+  #chatInput { font-size: 16px; padding: 10px 14px; min-height: 44px; max-height: 120px; border-radius: 12px; }
+  #plus-btn  { width: 38px; height: 44px; font-size: 20px; flex-shrink: 0; }
+  #send-btn  { width: 38px; height: 44px; font-size: 17px; border-radius: 12px; flex-shrink: 0; }
+  #mic-btn   { width: 36px; height: 44px; flex-shrink: 0; font-size: 16px; }
+  #input-tier-btn { padding: 4px 8px !important; font-size: 10px !important; height: 38px !important; }
   #plus-popup { left: 8px; min-width: 160px; bottom: calc(100% + 4px); }
 
   /* Safe area (notch / home indicator) */
@@ -1123,7 +1137,7 @@ body {
 <!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
 <div id="topbar">
   <div class="logo" style="display:flex;align-items:center;gap:8px">
-    <button onclick="showChatHistory()" title="会話履歴" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:4px">☰</button>
+    <button onclick="showChatHistory()" title="会話履歴" aria-label="会話履歴" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:8px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">☰</button>
     <div class="logo-icon">◈</div>
     <span>chatweb.ai</span>
     <button onclick="newChat()" title="新しい会話" style="background:none;border:1px solid var(--border);border-radius:6px;font-size:14px;cursor:pointer;color:var(--muted);padding:2px 8px;margin-left:4px">＋</button>
@@ -1165,12 +1179,12 @@ body {
     <!-- Model tier (moved to input area) -->
     <span id="tier-btn" style="display:none"><span id="tier-icon">💰</span><span id="tier-label">エコノミー</span></span>
     <div style="position:relative;">
-      <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー">⋯</button>
+      <button id="more-btn" onclick="toggleMoreMenu()" title="Cmd+K でコマンドパレット / メニュー" aria-label="メニュー" style="min-width:44px;min-height:44px">⋯</button>
       <div id="more-dropdown" class="dropdown">
         <button class="dropdown-item" id="login-btn" onclick="openLoginModal();toggleMoreMenu()">🔑 ログイン</button>
         <button class="dropdown-item" id="logout-btn" onclick="doLogout();toggleMoreMenu()" style="display:none;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="user-email-display"></span><span style="font-size:13px">ログアウト</span></button>
         <button class="dropdown-item" onclick="openBillingModal();toggleMoreMenu()">💰 プラン</button>
-        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 APIキー</button>
+        <button class="dropdown-item" id="secrets-btn" onclick="openSecretsModal();toggleMoreMenu()" style="display:none">🔐 <span data-i18n="menu_api_keys">鍵管理</span></button>
         <button class="dropdown-item" id="link-code-btn" onclick="showLinkCode();toggleMoreMenu()" style="display:none">📱 LINE / Telegram</button>
         <div class="dropdown-label">エージェント</div>
         <button class="dropdown-item" onclick="openAgentManager();toggleMoreMenu()">🧩 管理</button>
@@ -1186,7 +1200,7 @@ body {
         <button class="dropdown-item" onclick="toggleLangMenu();toggleMoreMenu()">🌐 言語 <span id="lang-label-menu">JA</span></button>
         <button class="dropdown-item" id="hitl-clear-btn" onclick="clearAllHitl();toggleMoreMenu()" style="display:none;color:var(--red)">⏳ 待機削除 <span id="hitlPendingCount">0</span></button>
         <button class="dropdown-item" id="team-btn" onclick="openTeamPanel();toggleMoreMenu()" style="display:none">👥 チーム</button>
-        <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 API</button>
+        <button class="dropdown-item" id="api-settings-btn" onclick="openApiSettings();toggleMoreMenu()" style="display:none">🔧 <span data-i18n="menu_api_settings">API設定</span></button>
         <button class="dropdown-item" onclick="localStorage.removeItem('onboarding_done');location.reload()" style="opacity:0.5;font-size:11px">🔄 チュートリアルをやり直す</button>
         <button class="dropdown-item" onclick="window.open('/static/about.html')" style="opacity:0.5;font-size:11px">About · 利用規約 · プライバシー</button>
         <button class="dropdown-item" onclick="window.open('https://elio.love')" style="opacity:0.4;font-size:11px">📱 Elio · 🎙️ Koe</button>
@@ -1199,6 +1213,7 @@ body {
 <div id="modal-backdrop" onclick="closeAgentSelector()"></div>
 <div id="agent-selector-modal">
   <h3 data-i18n="ai_agents">AIエージェント</h3>
+  <div class="preset-bar" id="preset-bar"></div>
   <input id="agent-search" type="text" placeholder="🔍 エージェントを検索…" oninput="filterAgents()" autocomplete="off">
   <div class="agent-cat-tabs" id="agent-cat-tabs">
     <button class="agent-cat-tab active" data-cat="all" onclick="selectAgentCat('all')">全て</button>
@@ -1244,12 +1259,7 @@ body {
           <div class="msg-ai-body">
             <div class="msg-ai-name">chatweb.ai</div>
             <div class="msg-ai-bubble" id="welcome-bubble">
-              <strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>
-              複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br>
-              <span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;
-              <span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;
-              <span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;
-              <span style="color:#f9a8d4">🧠 長期記憶</span>
+              <span id="welcome-typed"></span>
             </div>
           </div>
         </div>
@@ -1296,14 +1306,37 @@ body {
             <span id="input-tier-label">高速</span><span style="font-size:8px">▾</span>
           </button>
           <div id="input-tier-menu" style="display:none;position:absolute;bottom:100%;right:0;background:#16161a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:4px;min-width:180px;box-shadow:0 -8px 24px rgba(0,0,0,0.5);z-index:600;margin-bottom:4px">
-            <button class="dropdown-item" onclick="selectInputTier('cheap')" style="font-size:12px">⚡ 高速 <span style="opacity:0.4;font-size:10px">Qwen3-32B</span></button>
-            <button class="dropdown-item" onclick="selectInputTier('pro')" style="font-size:12px">🚀 プロ <span style="opacity:0.4;font-size:10px">Claude Sonnet</span></button>
+            <button class="dropdown-item" onclick="selectInputTier('cheap')" style="font-size:12px">⚡ 高速 <span style="opacity:0.4;font-size:10px">Llama 4 Scout</span> <span style="opacity:0.3;font-size:9px">~$0.0002/msg</span></button>
+            <button class="dropdown-item" onclick="selectInputTier('pro')" style="font-size:12px">🚀 プロ <span style="opacity:0.4;font-size:10px">Claude Sonnet</span> <span style="opacity:0.3;font-size:9px">~$0.02/msg</span></button>
+            <button class="dropdown-item" onclick="selectInputTier('opus')" style="font-size:12px">👑 Opus <span style="opacity:0.4;font-size:10px">Claude Opus 4.6</span> <span style="opacity:0.3;font-size:9px">~$0.10/msg</span> <span style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;padding:1px 5px;border-radius:4px">有料</span></button>
+            <button class="dropdown-item" onclick="selectInputTier('gemini-pro')" style="font-size:12px">💎 Gemini Pro <span style="opacity:0.4;font-size:10px">2.5 Pro</span> <span style="opacity:0.3;font-size:9px">~$0.01/msg</span> <span style="font-size:9px;background:rgba(245,158,11,.2);color:#f59e0b;padding:1px 5px;border-radius:4px">有料</span></button>
             <div id="more-models-toggle" onclick="document.getElementById('more-models').style.display=document.getElementById('more-models').style.display==='none'?'block':'none'" style="padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;text-align:center;border-top:1px solid var(--border)">もっと見る ▾</div>
             <div id="more-models" style="display:none">
-              <button class="dropdown-item" onclick="selectInputTier('gemini')" style="font-size:12px">💎 Gemini <span style="opacity:0.4;font-size:10px">2.0 Flash</span></button>
-              <button class="dropdown-item" onclick="selectInputTier('gpt')" style="font-size:12px">🧠 GPT <span style="opacity:0.4;font-size:10px">4o</span></button>
-              <button class="dropdown-item" onclick="selectInputTier('deepseek')" style="font-size:12px">🔬 DeepSeek <span style="opacity:0.4;font-size:10px">V3</span></button>
-              <button class="dropdown-item" onclick="selectInputTier('llama')" style="font-size:12px">🦙 Llama <span style="opacity:0.4;font-size:10px">4 Scout</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('gemini')" style="font-size:12px">💎 Gemini <span style="opacity:0.4;font-size:10px">2.0 Flash</span> <span style="opacity:0.3;font-size:9px">~$0.0003/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('gpt')" style="font-size:12px">🧠 GPT <span style="opacity:0.4;font-size:10px">4o</span> <span style="opacity:0.3;font-size:9px">~$0.01/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('deepseek')" style="font-size:12px">🔬 DeepSeek <span style="opacity:0.4;font-size:10px">R1</span> <span style="opacity:0.3;font-size:9px">~$0.0003/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('llama')" style="font-size:12px">🦙 Llama 3.3 <span style="opacity:0.4;font-size:10px">70B</span> <span style="opacity:0.3;font-size:9px">~$0.0007/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('llama4')" style="font-size:12px">🦙 Llama 4 <span style="opacity:0.4;font-size:10px">Scout MoE</span> <span style="opacity:0.3;font-size:9px">~$0.0002/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('gpt-oss')" style="font-size:12px">🔓 GPT-OSS <span style="opacity:0.4;font-size:10px">120B</span> <span style="opacity:0.3;font-size:9px">~$0.0004/msg</span></button>
+              <button class="dropdown-item" onclick="selectInputTier('kimi')" style="font-size:12px">🌙 Kimi K2 <span style="opacity:0.4;font-size:10px">Moonshot</span> <span style="opacity:0.3;font-size:9px">~$0.002/msg</span></button>
+              <div style="border-top:1px solid var(--border);margin:4px 0;padding-top:4px">
+                <div style="padding:4px 12px;font-size:10px;color:var(--muted);font-weight:700">詳細設定</div>
+                <div style="padding:4px 12px;display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:var(--muted);min-width:50px">温度</span>
+                  <input id="cfg-temperature" type="range" min="0" max="20" value="7" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('cfg-temp-val').textContent=this.value/10">
+                  <span id="cfg-temp-val" style="font-size:11px;color:var(--text);min-width:20px">0.7</span>
+                </div>
+                <div style="padding:4px 12px;display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:var(--muted);min-width:50px">品質目標</span>
+                  <input id="cfg-quality" type="range" min="1" max="10" value="0" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('cfg-qual-val').textContent=this.value==0?'自動':this.value+'/10'">
+                  <span id="cfg-qual-val" style="font-size:11px;color:var(--text);min-width:30px">自動</span>
+                </div>
+                <div style="padding:4px 12px;display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:var(--muted);min-width:50px">ループ上限</span>
+                  <input id="cfg-maxloop" type="range" min="1" max="50" value="30" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('cfg-loop-val').textContent=this.value+'回'">
+                  <span id="cfg-loop-val" style="font-size:11px;color:var(--text);min-width:30px">30回</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1477,7 +1510,9 @@ function switchTab(tab) {
 async function loadAgents() {
   const r = await fetch('/agents');
   agents = await r.json();
+  _activePreset = localStorage.getItem('active_preset') || 'auto';
   renderAgents();
+  renderPresetBar();
 }
 
 // Currently selected agent id for routing
@@ -1525,11 +1560,12 @@ function renderAgents() {
 // Category mapping (agent id → category)
 const AGENT_CATEGORIES = {
   analyst:'business', legal:'business', finance:'business', schedule:'business',
-  sql:'business', crm:'business', meeting:'business', sns:'business',
-  image:'creative', site_publisher:'creative', presentation:'creative',
+  sql:'business', crm:'business', meeting:'business', sns:'business', math:'business',
+  image:'creative', site_publisher:'creative', presentation:'creative', video:'creative',
   code:'tech', coder:'tech', deployer:'tech', devops:'tech', mobile:'tech', qa:'tech',
   gmail:'google', calendar:'google', drive:'google', sheets:'google',
   docs:'google', contacts:'google', tasks:'google',
+  translate:'creative', chat:'other', platform_ops:'other',
 };
 
 let _activeCat = 'all';
@@ -1551,7 +1587,20 @@ function renderAgentPills() {
   if (!grid) return;
   const query = (document.getElementById('agent-search')?.value || '').toLowerCase();
   grid.innerHTML = '';
+  // Get active preset agent list
+  const allPresets = [...BUILTIN_PRESETS, ..._customPresets];
+  const activePresetObj = allPresets.find(p => p.id === _activePreset);
+  const presetAgents = activePresetObj?.agents || [];
+  // Collect forked_from IDs to hide originals when custom version exists
+  const forkedFromIds = new Set();
+  Object.values(agents).forEach(ag => { if (ag.is_forked && ag.forked_from) forkedFromIds.add(ag.forked_from); });
   Object.entries(agents).forEach(([id, ag]) => {
+    // Hide hidden agents (critic, synthesizer, user_prefs, etc.)
+    if (ag.hidden) return;
+    // Hide builtin if user has a custom fork of it
+    if (ag.is_builtin && forkedFromIds.has(id)) return;
+    // Preset filter (skip if preset has agents and this one isn't in it)
+    if (presetAgents.length > 0 && !presetAgents.includes(id)) return;
     // Category filter
     if (_activeCat !== 'all') {
       const cat = AGENT_CATEGORIES[id] || 'other';
@@ -1574,6 +1623,197 @@ function renderAgentPills() {
   if (!grid.hasChildNodes()) {
     grid.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;width:100%;text-align:center;">見つかりませんでした</div>';
   }
+}
+
+// ── Agent Presets (purpose-based agent groupings) ─────────────────────────────
+const BUILTIN_PRESETS = [
+  {
+    id: 'auto', name: '自動選択', icon: '◈', desc: 'AIが最適なエージェントを自動選択',
+    agents: [],
+  },
+  {
+    id: 'research', name: 'リサーチ', icon: '🔍', desc: '情報収集・分析・レポート',
+    agents: ['research', 'analyst', 'qa', 'finance'],
+    instruction: '[プリセット: リサーチモード] 必ず出典を明記。データ・数字を重視。推測と事実を明確に分離。構造化された報告書形式で回答。',
+  },
+  {
+    id: 'dev', name: '開発', icon: '💻', desc: 'コーディング・デバッグ・デプロイ',
+    agents: ['code', 'coder', 'deployer', 'devops', 'mobile', 'qa'],
+    instruction: '[プリセット: 開発モード] コード中心で回答。説明は最小限。動作するコードを最優先。ベストプラクティスに従い、エラーハンドリングを含める。',
+  },
+  {
+    id: 'business', name: 'ビジネス', icon: '💼', desc: '営業・法務・会議・CRM',
+    agents: ['crm', 'legal', 'meeting', 'finance', 'analyst', 'schedule'],
+    instruction: '[プリセット: ビジネスモード] 敬語・丁寧語で回答。エグゼクティブサマリーから始め、アクションアイテムで締める。数値と期限を具体的に。',
+  },
+  {
+    id: 'creative', name: 'クリエイティブ', icon: '🎨', desc: '画像・サイト・プレゼン・SNS',
+    agents: ['image', 'site_publisher', 'presentation', 'sns', 'code', 'video'],
+    instruction: '[プリセット: クリエイティブモード] ビジュアル重視。すぐに成果物を生成。確認の質問より実行を優先。トレンドを意識したデザイン。',
+  },
+  {
+    id: 'google', name: 'Google連携', icon: '🔵', desc: 'Gmail・Calendar・Drive・Sheets',
+    agents: ['gmail', 'calendar', 'drive', 'sheets', 'docs', 'contacts', 'tasks'],
+    instruction: '[プリセット: Google連携モード] Google Workspace操作に集中。未連携の場合はGoogle認証リンクを案内。操作結果を簡潔に報告。',
+  },
+  {
+    id: 'ops', name: '運用・通知', icon: '📡', desc: 'スケジュール実行・通知・監視',
+    agents: ['schedule', 'notify', 'sns', 'analyst'],
+    instruction: '[プリセット: 運用モード] cron式・スケジュール設定を正確に。通知の送信先と頻度を明確に確認。自動化の設定完了を報告。',
+  },
+  {
+    id: 'writing', name: 'ライティング', icon: '✍️', desc: '文章作成・翻訳・要約・校正',
+    agents: ['translate', 'research', 'sns', 'chat'],
+    instruction: '[プリセット: ライティングモード] 文章の品質を最優先。語彙と文体を用途に合わせて調整。翻訳は自然さ重視。校正時は修正理由を添える。',
+  },
+  {
+    id: 'casual', name: 'カジュアル', icon: '☕', desc: '雑談・相談・計算・翻訳 — 気軽に何でも',
+    agents: ['chat', 'translate', 'math', 'research', 'image'],
+    instruction: '[プリセット: カジュアルモード] フランクに、短く、テンポよく回答。敬語不要。専門用語は避けて噛み砕いて説明。絵文字OK。',
+  },
+];
+
+let _activePreset = 'auto';
+let _customPresets = JSON.parse(localStorage.getItem('custom_presets') || '[]');
+
+function renderPresetBar() {
+  const bar = document.getElementById('preset-bar');
+  if (!bar) return;
+  const _esc = typeof escHtml === 'function' ? escHtml : (s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'));
+  const all = [...BUILTIN_PRESETS, ..._customPresets];
+  bar.innerHTML = all.map(p =>
+    `<button class="preset-chip ${p.id === _activePreset ? 'active' : ''}" onclick="activatePreset('${_esc(p.id)}')" title="${_esc(p.desc)}">
+      <span class="preset-icon">${p.icon}</span>${_esc(p.name)}
+    </button>`
+  ).join('') + `<button class="preset-chip" onclick="openPresetEditor()" title="プリセットを作成・管理" style="border-style:dashed">＋</button>`;
+}
+
+const PRESET_WELCOMES = {
+  auto: { title: 'chatweb.ai — Multi-Agent AI', desc: '39種類の専門AIエージェントが、あなたの指示を実行します。', tags: [
+    {text:'Web検索・調査', color:'#a78bfa'}, {text:'コード実行', color:'#22d3ee'}, {text:'ブラウザ操作', color:'#34d399'}, {text:'メール・LINE送信', color:'#f9a8d4'}
+  ]},
+  research: { title: '🔍 リサーチモード', desc: '最新情報をWeb検索・Wikipedia・論文から収集し、構造化レポートを作成します。', tags: [
+    {text:'Web検索', color:'#a78bfa'}, {text:'Wikipedia', color:'#22d3ee'}, {text:'データ分析', color:'#34d399'}, {text:'レポート生成', color:'#f9a8d4'}
+  ]},
+  dev: { title: '💻 開発モード', desc: 'コード生成・実行・デバッグ・デプロイまで。E2Bサンドボックスで安全に実行します。', tags: [
+    {text:'コード生成', color:'#06b6d4'}, {text:'E2B実行', color:'#22d3ee'}, {text:'GitHub連携', color:'#34d399'}, {text:'サイト公開', color:'#f9a8d4'}
+  ]},
+  business: { title: '💼 ビジネスモード', desc: '営業・法務・経理・会議管理。プロフェッショナルな業務をAIが支援します。', tags: [
+    {text:'契約書レビュー', color:'#8b5cf6'}, {text:'営業CRM', color:'#f59e0b'}, {text:'財務分析', color:'#34d399'}, {text:'議事録作成', color:'#22d3ee'}
+  ]},
+  creative: { title: '🎨 クリエイティブモード', desc: '画像生成・Webサイト作成・プレゼン・SNSコンテンツを一括制作します。', tags: [
+    {text:'画像生成', color:'#ec4899'}, {text:'サイト公開', color:'#06b6d4'}, {text:'プレゼン作成', color:'#f59e0b'}, {text:'SNS投稿', color:'#34d399'}
+  ]},
+  google: { title: '🔵 Google連携モード', desc: 'Gmail・カレンダー・Drive・Sheetsを自然言語で操作します。', tags: [
+    {text:'Gmail送受信', color:'#ef4444'}, {text:'カレンダー', color:'#3b82f6'}, {text:'Drive検索', color:'#facc15'}, {text:'Sheets編集', color:'#22c55e'}
+  ]},
+  ops: { title: '📡 運用・通知モード', desc: '定期実行・通知配信・モニタリング。業務の自動化を設定します。', tags: [
+    {text:'cron定期実行', color:'#10b981'}, {text:'LINE通知', color:'#06c755'}, {text:'Slack連携', color:'#e01e5a'}, {text:'メール配信', color:'#ef4444'}
+  ]},
+  casual: { title: '☕ カジュアルモード', desc: '気軽に何でも聞いてください。雑談OK、相談OK、計算も翻訳もおまかせ。', tags: [
+    {text:'雑談・相談', color:'#8b5cf6'}, {text:'翻訳', color:'#3b82f6'}, {text:'計算', color:'#f59e0b'}, {text:'画像生成', color:'#ec4899'}
+  ]},
+  writing: { title: '✍️ ライティングモード', desc: '文章作成・翻訳・要約・校正。プロ品質のテキストを生成します。', tags: [
+    {text:'記事作成', color:'#a78bfa'}, {text:'翻訳', color:'#22d3ee'}, {text:'要約', color:'#34d399'}, {text:'校正・レビュー', color:'#ec4899'}
+  ]},
+};
+
+async function _typewriteWelcome(el, text, speed = 15) {
+  el.textContent = '';
+  for (let i = 0; i < text.length; i++) {
+    el.textContent += text[i];
+    if (i % 3 === 0) await new Promise(r => setTimeout(r, speed));
+  }
+}
+
+function activatePreset(presetId) {
+  _activePreset = presetId;
+  const all = [...BUILTIN_PRESETS, ..._customPresets];
+  const preset = all.find(p => p.id === presetId);
+  _selectedAgentId = null;
+  if (!preset || preset.agents.length === 0) {
+    updateAgentPill(null, 'エージェント自動選択');
+  } else {
+    updateAgentPill(null, `${preset.icon} ${preset.name}（自動選択）`);
+  }
+  localStorage.setItem('active_preset', presetId);
+  renderPresetBar();
+  renderAgentPills();
+  // Update welcome bubble with typewriter
+  const wb = document.getElementById('welcome-bubble');
+  const w = PRESET_WELCOMES[presetId] || PRESET_WELCOMES.auto;
+  if (wb) {
+    const tagsHtml = w.tags.map(t => `<span style="color:${t.color}">${t.text}</span>`).join('&ensp;·&ensp;');
+    wb.innerHTML = `<strong>${w.title}</strong><br><br><span id="welcome-desc"></span><br><br>${tagsHtml}`;
+    wb.dataset.personalized = '';
+    _typewriteWelcome(document.getElementById('welcome-desc'), w.desc, 12);
+  }
+  closeAgentSelector();
+}
+
+function openPresetEditor() {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:flex;align-items:center;justify-content:center';
+  const existingHtml = _customPresets.map((p, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border-radius:8px;margin-bottom:6px">
+      <span style="font-size:16px">${p.icon}</span>
+      <span style="flex:1;font-size:13px;font-weight:600">${escHtml(p.name)}</span>
+      <span style="font-size:11px;color:var(--muted)">${p.agents.length}個</span>
+      <button onclick="deleteCustomPreset(${i});this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">削除</button>
+    </div>`
+  ).join('') || '<div style="font-size:13px;color:var(--muted);padding:8px 0">カスタムプリセットはまだありません</div>';
+
+  const agentCheckboxes = Object.entries(agents).map(([id, ag]) => {
+    const emoji = getAgentEmoji(id);
+    const cleanName = ag.name.replace(/^[\p{Emoji}\s]+/u, '').trim();
+    return `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;cursor:pointer">
+      <input type="checkbox" value="${id}" class="preset-agent-cb"> ${emoji} ${cleanName}
+    </label>`;
+  }).join('');
+
+  modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:24px;width:440px;max-width:94vw;max-height:80vh;overflow-y:auto">
+    <h3 style="margin-bottom:12px;font-size:16px">プリセット管理</h3>
+    <div style="margin-bottom:16px">${existingHtml}</div>
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">新規プリセット作成</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="preset-icon" placeholder="絵文字" maxlength="4" style="width:50px;padding:8px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:16px;text-align:center">
+        <input id="preset-name" placeholder="プリセット名" style="flex:1;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px">
+      </div>
+      <input id="preset-desc" placeholder="説明（任意）" style="width:100%;padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:13px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">使用するエージェントを選択:</div>
+      <div style="max-height:200px;overflow-y:auto;padding:4px 0">${agentCheckboxes}</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="saveCustomPreset();this.closest('[style*=fixed]').remove()" style="flex:1;padding:10px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:13px">保存</button>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:10px 16px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:13px">閉じる</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function saveCustomPreset() {
+  const icon = document.getElementById('preset-icon')?.value || '⭐';
+  const name = document.getElementById('preset-name')?.value?.trim();
+  const desc = document.getElementById('preset-desc')?.value?.trim() || '';
+  if (!name) { showToast('プリセット名を入力してください'); return; }
+  const selectedAgents = [...document.querySelectorAll('.preset-agent-cb:checked')].map(cb => cb.value);
+  if (selectedAgents.length === 0) { showToast('エージェントを1つ以上選択してください'); return; }
+  const id = 'custom_' + Date.now();
+  _customPresets.push({ id, name, icon, desc, agents: selectedAgents });
+  localStorage.setItem('custom_presets', JSON.stringify(_customPresets));
+  renderPresetBar();
+  showToast(`プリセット「${name}」を作成しました`);
+}
+
+function deleteCustomPreset(index) {
+  const p = _customPresets[index];
+  _customPresets.splice(index, 1);
+  localStorage.setItem('custom_presets', JSON.stringify(_customPresets));
+  if (_activePreset === p?.id) activatePreset('auto');
+  renderPresetBar();
+  showToast('プリセットを削除しました');
 }
 
 function selectAgent(agentId) {
@@ -1611,6 +1851,7 @@ function toggleAgentSelector() {
     // Reset search & category on open
     const s = document.getElementById('agent-search');
     if (s) s.value = '';
+    renderPresetBar();
     selectAgentCat('all');
     setTimeout(() => s?.focus(), 50);
   }
@@ -1785,10 +2026,11 @@ function appendAiMsg(text, agentId = 'research', agentName = 'AI', realTools = [
 function appendTyping(id) {
   const div = document.createElement('div');
   div.className = 'msg-ai'; div.id = id;
+  const aiName = localStorage.getItem('ai_name') || 'chatweb.ai';
   div.innerHTML = `
     <div class="msg-ai-avatar" style="background:rgba(139,92,246,0.1)">✦</div>
     <div class="msg-ai-body">
-      <div class="msg-ai-name">処理中…</div>
+      <div class="msg-ai-name" style="opacity:0.5">${escHtml(aiName)}</div>
       <div class="msg-ai-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
     </div>`;
   getMessages().appendChild(wrap(div));
@@ -1905,6 +2147,16 @@ function finalizeStreamBubble(response, realTools, qualityScore) {
       shareBtn.className = 'tts-btn'; shareBtn.title = '会話をシェア'; shareBtn.textContent = '🔗';
       shareBtn.addEventListener('click', () => shareConversation(shareBtn));
       footer.appendChild(shareBtn);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'tts-btn'; copyBtn.title = 'Markdownでコピー'; copyBtn.textContent = '📋';
+      copyBtn.addEventListener('click', () => {
+        const md = response || lastBubble.querySelector('.msg-ai-bubble')?.textContent || '';
+        navigator.clipboard.writeText(md).then(() => {
+          copyBtn.textContent = '✅'; setTimeout(() => copyBtn.textContent = '📋', 1500);
+        });
+      });
+      footer.appendChild(copyBtn);
     }
     // Detect inline charts / generated images
     detectAndRenderCharts(lastBubble);
@@ -2201,9 +2453,9 @@ async function sendMessage() {
   }
   appendUserMsg(msg, _attachment);
   _taskStartTime = Date.now();
+  _msgCost = 0; _msgInputTokens = 0; _msgOutputTokens = 0;
   const typingId = 'typing_active';
   appendTyping(typingId);
-  setStatus('処理中…');
 
   currentStreamEl = null; currentStreamText = '';
   currentAgentId = null; planCardId = null; traceCardId = 'tr_' + Date.now();
@@ -2211,6 +2463,20 @@ async function sendMessage() {
   // Build request body
   const _body = { message: msg, session_id: SESSION_ID };
   if (_attachedImageData) _body.image_data = _attachedImageData;
+  // Send preset agent filter + instruction for routing hint
+  if (_activePreset && _activePreset !== 'auto') {
+    const allPresets = [...BUILTIN_PRESETS, ..._customPresets];
+    const ap = allPresets.find(p => p.id === _activePreset);
+    if (ap?.agents?.length) _body.preferred_agents = ap.agents;
+    if (ap?.instruction) _body.preset_instruction = ap.instruction;
+  }
+  // Advanced settings (temperature, quality, loop)
+  const _cfgTemp = document.getElementById('cfg-temperature');
+  const _cfgQual = document.getElementById('cfg-quality');
+  const _cfgLoop = document.getElementById('cfg-maxloop');
+  if (_cfgTemp) _body.temperature = parseFloat(_cfgTemp.value) / 10;
+  if (_cfgQual && parseInt(_cfgQual.value) > 0) _body.quality_target = parseInt(_cfgQual.value);
+  if (_cfgLoop) _body.max_iterations = parseInt(_cfgLoop.value);
 
   try {
     const resp = await fetch(`/chat/stream/${SESSION_ID}`, {
@@ -2243,6 +2509,26 @@ async function sendMessage() {
       appendAiMsg('問題が発生しました: ' + e.message);
     }
   } finally {
+    // Show final cost + environmental impact summary
+    if (_taskStartTime && _msgCost > 0) {
+      const elapsed = ((Date.now() - _taskStartTime) / 1000).toFixed(1);
+      const totalTokens = _msgInputTokens + _msgOutputTokens;
+      // Environmental estimates (based on IEA data: ~0.5 kWh per 1M tokens, ~0.4 kg CO2/kWh)
+      const kwh = totalTokens * 0.5 / 1_000_000;
+      const co2g = (kwh * 0.4 * 1000).toFixed(2);
+      const waterMl = (kwh * 1.8 * 1000).toFixed(1);
+      const costFooter = document.createElement('div');
+      costFooter.className = 'msg-container';
+      costFooter.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 16px;font-size:11px;color:var(--muted);opacity:0.6;flex-wrap:wrap">
+        <span>⏱️ ${elapsed}s</span>
+        <span>💰 $${_msgCost.toFixed(4)}</span>
+        <span>📊 ${totalTokens.toLocaleString()} tokens</span>
+        <span>🌱 CO₂ ${co2g}g</span>
+        <span>💧 ${waterMl}ml</span>
+      </div>`;
+      getMessages().appendChild(costFooter);
+    }
+    _msgCost = 0; _msgInputTokens = 0; _msgOutputTokens = 0;
     setStatus('');
     isStreaming = false;
     _abortController = null;
@@ -2430,6 +2716,9 @@ async function sendMessage() {
         _sessionCost += data.cost_usd || 0;
         _sessionInputTokens  += data.input_tokens  || 0;
         _sessionOutputTokens += data.output_tokens || 0;
+        _msgCost += data.cost_usd || 0;
+        _msgInputTokens  += data.input_tokens  || 0;
+        _msgOutputTokens += data.output_tokens || 0;
         updateCostDisplay(data.model);
         // Refresh credit balance
         fetch('/auth/me').then(r=>r.json()).then(d=>{
@@ -2450,16 +2739,21 @@ async function sendMessage() {
 // ── Model Tier ────────────────────────────────────────────────────────────────
 let _currentTier = 'cheap';
 const _TIER_CONFIG = {
-  cheap:    { icon: '⚡', label: '高速',     color: '#10b981', desc: 'Qwen3-32B' },
-  pro:      { icon: '🚀', label: 'プロ',     color: '#8b5cf6', desc: 'Claude Sonnet' },
-  gemini:   { icon: '💎', label: 'Gemini',   color: '#4285f4', desc: 'Gemini 2.0 Flash' },
-  gpt:      { icon: '🧠', label: 'GPT',      color: '#10a37f', desc: 'GPT-4o' },
-  deepseek: { icon: '🔬', label: 'DeepSeek', color: '#0066ff', desc: 'DeepSeek V3' },
-  llama:    { icon: '🦙', label: 'Llama',    color: '#6366f1', desc: 'Llama 4 Scout' },
+  cheap:      { icon: '⚡', label: '高速',       color: '#10b981', desc: 'Llama 4 Scout' },
+  pro:        { icon: '🚀', label: 'プロ',       color: '#8b5cf6', desc: 'Claude Sonnet' },
+  opus:       { icon: '👑', label: 'Opus',       color: '#f59e0b', desc: 'Claude Opus 4.6' },
+  gemini:     { icon: '💎', label: 'Gemini',     color: '#4285f4', desc: 'Gemini 2.0 Flash' },
+  'gemini-pro': { icon: '💎', label: 'Gemini Pro', color: '#4285f4', desc: 'Gemini 2.5 Pro' },
+  gpt:        { icon: '🧠', label: 'GPT',        color: '#10a37f', desc: 'GPT-4o' },
+  deepseek:   { icon: '🔬', label: 'DeepSeek',   color: '#0066ff', desc: 'DeepSeek R1' },
+  llama:      { icon: '🦙', label: 'Llama 3.3',  color: '#6366f1', desc: 'Llama 3.3 70B' },
+  llama4:     { icon: '🦙', label: 'Llama 4',    color: '#6366f1', desc: 'Llama 4 Scout' },
+  'gpt-oss':  { icon: '🔓', label: 'GPT-OSS',    color: '#10a37f', desc: 'GPT-OSS 120B' },
+  kimi:       { icon: '🌙', label: 'Kimi K2',    color: '#8b5cf6', desc: 'Kimi K2' },
 };
 
 function renderTierBtn() {
-  const cfg = _TIER_CONFIG[_currentTier];
+  const cfg = _TIER_CONFIG[_currentTier] || _TIER_CONFIG.cheap;
   // Header button
   const btn = document.getElementById('tier-btn');
   const icon = document.getElementById('tier-icon');
@@ -2504,8 +2798,13 @@ async function selectInputTier(tier) {
     if (r.ok) {
       _currentTier = tier;
       renderTierBtn();
-      const cfg = _TIER_CONFIG[tier];
+      const cfg = _TIER_CONFIG[tier] || _TIER_CONFIG.cheap;
       showToast(`${cfg.icon} ${cfg.label}に切替 — ${cfg.desc}`);
+    } else if (r.status === 403) {
+      showToast('このモデルは有料プラン専用です。Proプランにアップグレードしてください。');
+      openBillingModal();
+    } else {
+      showToast('モデル切替に失敗しました');
     }
   } catch(e) { console.error(e); }
 }
@@ -2567,6 +2866,7 @@ function showToast(msg, duration = 3000) {
 // ── Memory ────────────────────────────────────────────────────────────────────
 // ── Cost tracking ──────────────────────────────────────────────────────────
 let _sessionCost = 0, _sessionInputTokens = 0, _sessionOutputTokens = 0;
+let _msgCost = 0, _msgInputTokens = 0, _msgOutputTokens = 0;
 
 let _lastModel = '';
 function updateCostDisplay(model) {
@@ -2782,8 +3082,8 @@ function openAgentDetail(id) {
   if (!modal) return;
   document.getElementById('ad-title').textContent = `${emoji} ${ag.name}`;
   document.getElementById('ad-desc').textContent = ag.description || '';
-  document.getElementById('ad-model').textContent = ag.model_name || 'claude-sonnet-4-6';
-  document.getElementById('ad-provider').textContent = ag.model_provider || 'claude';
+  document.getElementById('ad-model').textContent = ag.llm || ag.model_name || 'Qwen3-32B → Haiku';
+  document.getElementById('ad-provider').textContent = ag.llm ? '' : (ag.model_provider || '');
   document.getElementById('ad-tools').textContent = (ag.mcp_tools || []).join(', ') || '—';
   document.getElementById('ad-system').textContent = ag.system || '';
   document.getElementById('ad-id').value = id;
@@ -3444,11 +3744,18 @@ function promptOnboardName() {
 
 async function onboardName(name) {
   appendUserMsg(name);
+  localStorage.setItem('ai_name', name);
   try {
     await fetch('/user/settings', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({settings_json: JSON.stringify({ai_name: name})})
+    });
+    // Save to memory so agents remember the name
+    await fetch('/memory/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({content: `ユーザーは私（AIアシスタント）のことを「${name}」と呼んでいます。回答の際は自分のことを「${name}」と名乗ってください。`})
     });
   } catch {}
 
@@ -3497,13 +3804,44 @@ async function onboardRole(role) {
   await new Promise(r => setTimeout(r, 300));
   const demoQ = document.createElement('div');
   demoQ.className = 'msg-container';
+  const _demosByRole = {
+    'エンジニア': [
+      {icon:'⚙️', label:'Pythonで素数判定を書いて実行', msg:'Pythonで素数判定プログラムを書いて実行して結果を見せて'},
+      {icon:'📧', label:'Gmailの未読を確認', msg:'Gmailの未読メールを確認して一覧で見せて'},
+      {icon:'🌐', label:'chatweb.aiのスクショを撮る', msg:'https://chatweb.ai のスクリーンショットを撮って見せて'},
+    ],
+    '経営者・マネージャー': [
+      {icon:'📧', label:'Gmailを確認して要約', msg:'Gmailの未読メールを確認して、重要なものを要約して教えて'},
+      {icon:'📅', label:'今日のカレンダーを確認', msg:'今日のGoogleカレンダーの予定を確認して一覧で見せて'},
+      {icon:'📊', label:'競合を調査してレポート', msg:'SaaS業界の最新トレンドを調査して3分で読めるレポートにまとめて'},
+    ],
+    'マーケター': [
+      {icon:'📣', label:'SNS投稿文を作成', msg:'AIツールの魅力を伝えるTwitter投稿文を5パターン作って'},
+      {icon:'📧', label:'Gmailを確認', msg:'Gmailの未読メールを確認して一覧で見せて'},
+      {icon:'🎨', label:'バナー画像を生成', msg:'chatweb.aiのSNSバナー画像を生成して（モダン、ダーク、テック感）'},
+    ],
+    '営業': [
+      {icon:'📧', label:'Gmailを確認して返信案', msg:'Gmailの未読メールを確認して、返信が必要なものに返信案を作って'},
+      {icon:'📅', label:'今週の予定を確認', msg:'今週のGoogleカレンダーの予定を確認して空き時間を教えて'},
+      {icon:'📝', label:'商談の議事録を作成', msg:'「田中様と商談、予算500万、来月決裁、競合はA社」→ 議事録にまとめて'},
+    ],
+    'デザイナー': [
+      {icon:'🎨', label:'ロゴを生成', msg:'テック系スタートアップのロゴを生成して（ミニマル、紫グラデーション）'},
+      {icon:'🌐', label:'ポートフォリオサイトを作成', msg:'デザイナーのポートフォリオサイトを作ってchatweb.aiで公開して'},
+      {icon:'📧', label:'Gmailを確認', msg:'Gmailの未読メールを確認して一覧で見せて'},
+    ],
+  };
+  const _defaultDemos = [
+    {icon:'📧', label:'Gmailを確認', msg:'Gmailの未読メールを確認して一覧で見せて'},
+    {icon:'📅', label:'カレンダーを確認', msg:'今日のGoogleカレンダーの予定を確認して教えて'},
+    {icon:'🔍', label:'最新AIニュースを調べて', msg:'今日のAI関連の最新ニュースを3つ調べて要約して'},
+  ];
+  const demos = _demosByRole[role] || _defaultDemos;
   demoQ.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
     <strong>${role}ですね！</strong>ぴったりのエージェントがたくさんあります。<br><br>
     さっそく試してみましょう！タップするとAIが実際に動きます。<br><br>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="chip" onclick="onboardDemo('chatweb.ai導入提案スライドを作ってURLで公開して。機能一覧・料金・導入メリットを含めて')" type="button" style="min-height:36px">🎤 提案スライドを作って公開</button>
-      <button class="chip" onclick="onboardDemo('QRコード生成ツールを作ってchatweb.aiで公開して')" type="button" style="min-height:36px">🌐 ツールを作って即公開</button>
-      <button class="chip" onclick="onboardDemo('https://chatweb.ai のスクリーンショットを撮って見せて')" type="button" style="min-height:36px">📸 Webサイトのスクショを撮る</button>
+      ${demos.map(d => `<button class="chip" onclick="onboardDemo('${d.msg.replace(/'/g,"\\'")}')" type="button" style="min-height:36px">${d.icon} ${d.label}</button>`).join('')}
     </div>
   </div></div>`;
   getMessages().appendChild(demoQ);
@@ -3537,31 +3875,63 @@ async function onboardConnect() {
 
   const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(lineUrl)}`;
   const tgQr = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(tgUrl)}`;
+  const isMobile = window.innerWidth < 768;
 
   const q = document.createElement('div');
   q.className = 'msg-container';
-  q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
-    <strong>いい感じですね！🎉</strong><br><br>
-    次は<strong>LINE / Telegram</strong>を連携しましょう。<br>
-    QRを読み取るだけで連携完了します。（${code}）<br><br>
-    <div style="display:flex;gap:20px;justify-content:center;margin:12px 0">
-      <div style="text-align:center">
-        <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="LINE QR"></a>
-        <div style="font-size:13px;color:#06c755;font-weight:600;margin-top:6px">📱 LINE</div>
-        <div style="font-size:10px;color:var(--muted)">読み取り→自動送信</div>
+
+  if (isMobile) {
+    // Mobile: show open buttons + collapsible QR
+    q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+      <strong>いい感じですね！🎉</strong><br><br>
+      スマホからもAIエージェントに指示できます。<br><br>
+      <div style="display:flex;flex-direction:column;gap:10px;margin:8px 0 14px">
+        <a href="${lineUrl}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:10px;background:#06c755;color:#fff;font-size:14px;font-weight:600;text-decoration:none">📱 LINEを開いて連携</a>
+        <a href="${tgUrl}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:10px;background:#229ed9;color:#fff;font-size:14px;font-weight:600;text-decoration:none">✈️ Telegramを開いて連携</a>
       </div>
-      <div style="text-align:center">
-        <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px" alt="Telegram QR"></a>
-        <div style="font-size:13px;color:#229ed9;font-weight:600;margin-top:6px">✈️ Telegram</div>
-        <div style="font-size:10px;color:var(--muted)">読み取り→自動連携</div>
+      <details style="margin:8px 0">
+        <summary style="font-size:12px;color:var(--muted);cursor:pointer;text-align:center">QRコードを表示</summary>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:10px">
+          <div style="text-align:center">
+            <img src="${lineQr}" width="120" height="120" style="border-radius:8px;background:#fff;padding:3px" alt="LINE QR" loading="lazy">
+            <div style="font-size:11px;color:#06c755;margin-top:4px">LINE</div>
+          </div>
+          <div style="text-align:center">
+            <img src="${tgQr}" width="120" height="120" style="border-radius:8px;background:#fff;padding:3px" alt="Telegram QR" loading="lazy">
+            <div style="font-size:11px;color:#229ed9;margin-top:4px">Telegram</div>
+          </div>
+        </div>
+      </details>
+      <div style="font-size:11px;color:var(--muted);margin:8px 0;text-align:center">連携コード: <code style="background:rgba(139,92,246,.1);padding:2px 8px;border-radius:4px;font-size:13px;font-weight:700;letter-spacing:2px">${code}</code>（10分間有効）</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 連携した！次へ</button>
+        <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
       </div>
-    </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">連携コード: <code style="background:rgba(139,92,246,.1);padding:2px 8px;border-radius:4px;font-size:14px;font-weight:700;letter-spacing:2px">${code}</code>（10分間有効）</div>
-    <div style="display:flex;gap:8px;justify-content:center">
-      <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 連携した！次へ</button>
-      <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
-    </div>
-  </div></div>`;
+    </div></div>`;
+  } else {
+    // PC: show QR codes directly
+    q.innerHTML = `<div class="msg-ai"><div class="msg-ai-bubble">
+      <strong>いい感じですね！🎉</strong><br><br>
+      スマホからもAIエージェントに指示できます。QRを読み取って連携しましょう。<br><br>
+      <div style="display:flex;gap:24px;justify-content:center;margin:12px 0">
+        <div style="text-align:center">
+          <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="LINE QR" loading="lazy"></a>
+          <div style="font-size:13px;color:#06c755;font-weight:600;margin-top:6px">📱 LINE</div>
+          <div style="font-size:10px;color:var(--muted)">読み取り→自動連携</div>
+        </div>
+        <div style="text-align:center">
+          <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="Telegram QR" loading="lazy"></a>
+          <div style="font-size:13px;color:#229ed9;font-weight:600;margin-top:6px">✈️ Telegram</div>
+          <div style="font-size:10px;color:var(--muted)">読み取り→自動連携</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center">連携コード: <code style="background:rgba(139,92,246,.1);padding:2px 8px;border-radius:4px;font-size:14px;font-weight:700;letter-spacing:2px">${code}</code>（10分間有効）</div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px">✅ 連携した！次へ</button>
+        <button class="chip" onclick="onboardNotify()" type="button" style="min-height:36px;opacity:0.5">⏩ あとで</button>
+      </div>
+    </div></div>`;
+  }
   getMessages().appendChild(q);
   scrollToBottom();
 }
@@ -4266,33 +4636,41 @@ async function showLinkCode() {
     const lineBotId = d.line_bot_basic_id || '';
     const tgBotUser = d.telegram_bot_username || 'chatweb_aichat_bot';
     const linkCmd = `/link ${code}`;
-    // LINE: if we have the bot basic ID, generate deep link that opens chat with pre-filled message
     const lineUrl = lineBotId
       ? `https://line.me/R/oaMessage/${lineBotId}/?${encodeURIComponent(linkCmd)}`
       : `https://line.me/`;
-    // Telegram: t.me/botname?start=linkCODE (start param passed as /start linkCODE)
     const tgUrl = `https://t.me/${tgBotUser}?start=link${code}`;
     const lineQr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(lineUrl)}`;
     const tgQr   = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(tgUrl)}`;
+    const lineLinked = currentUser?.line_linked;
+    const tgLinked = currentUser?.telegram_linked;
+    const lineStatus = lineLinked
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(6,199,85,.1);border:1px solid rgba(6,199,85,.25);border-radius:10px;margin-bottom:4px"><span style="font-size:18px">✅</span><span style="font-size:13px;color:#06c755;font-weight:600">LINE 連携済み</span></div>`
+      : `<a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="LINE QR" loading="lazy"></a>
+         <div style="font-size:12px;color:#06c755;margin-top:6px;font-weight:600">📱 LINE で友達追加</div>
+         <div style="font-size:11px;color:var(--muted);margin-top:2px">追加後にこのメッセージを送信↓</div>
+         <code style="font-size:12px;background:rgba(0,0,0,.3);padding:3px 10px;border-radius:4px;display:inline-block;margin-top:2px">/link ${code}</code>`;
+    const tgStatus = tgLinked
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:rgba(34,158,217,.1);border:1px solid rgba(34,158,217,.25);border-radius:10px;margin-bottom:4px"><span style="font-size:18px">✅</span><span style="font-size:13px;color:#229ed9;font-weight:600">Telegram 連携済み</span></div>`
+      : `<a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="Telegram QR" loading="lazy"></a>
+         <div style="font-size:12px;color:#229ed9;margin-top:6px;font-weight:600">✈️ Telegram で開く</div>
+         <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>`;
+    const allLinked = lineLinked && tgLinked;
+    const subtitle = allLinked
+      ? '<p style="font-size:13px;color:var(--green);margin-bottom:16px;font-weight:600">両方とも連携済みです！スマホからAIエージェントに指示できます。</p>'
+      : '<p style="font-size:12px;color:var(--muted);margin-bottom:16px">QRを読み取って友達追加 → メッセージを送るだけで連携完了（10分間有効）</p>';
+    const codeBlock = allLinked ? '' : `<div style="font-size:32px;font-weight:800;letter-spacing:8px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:8px 0;border-radius:10px">${code}</div>`;
+    const copyBtn = allLinked ? '' : `<button onclick="navigator.clipboard.writeText('/link ${code}');this.textContent='✅ コピー済み'" style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">📋 コードをコピー</button>`;
     modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:420px;max-width:94vw;text-align:center">
       <h3 style="margin-bottom:6px">🔗 LINE / Telegram 連携</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">QRを読み取って友達追加 → メッセージを送るだけで連携完了（10分間有効）</p>
-      <div style="font-size:32px;font-weight:800;letter-spacing:8px;color:var(--accent);margin-bottom:4px;font-family:monospace;background:rgba(139,92,246,.1);padding:8px 0;border-radius:10px">${code}</div>
-      <div style="display:flex;gap:16px;justify-content:center;margin:16px 0">
-        <div>
-          <a href="${lineUrl}" target="_blank"><img src="${lineQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="LINE QR"></a>
-          <div style="font-size:12px;color:#06c755;margin-top:6px;font-weight:600">📱 LINE で友達追加</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">追加後にこのメッセージを送信↓</div>
-          <code style="font-size:12px;background:rgba(0,0,0,.3);padding:3px 10px;border-radius:4px;display:inline-block;margin-top:2px">/link ${code}</code>
-        </div>
-        <div>
-          <a href="${tgUrl}" target="_blank"><img src="${tgQr}" width="140" height="140" style="border-radius:10px;background:#fff;padding:4px;cursor:pointer" alt="Telegram QR"></a>
-          <div style="font-size:12px;color:#229ed9;margin-top:6px;font-weight:600">✈️ Telegram で開く</div>
-          <code style="font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:4px">/link ${code}</code>
-        </div>
+      ${subtitle}
+      ${codeBlock}
+      <div style="display:flex;gap:16px;justify-content:center;margin:16px 0;align-items:flex-start">
+        <div style="flex:1;min-width:0">${lineStatus}</div>
+        <div style="flex:1;min-width:0">${tgStatus}</div>
       </div>
       <div style="display:flex;gap:8px;justify-content:center">
-        <button onclick="navigator.clipboard.writeText('/link ${code}');this.textContent='✅ コピー済み'" style="padding:8px 18px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:600">📋 コードをコピー</button>
+        ${copyBtn}
         <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 14px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:13px">閉じる</button>
       </div>
     </div>`;
@@ -4325,6 +4703,25 @@ function updateAuthUI(user) {
     hideLoginGate();
     closeLoginModal();
     syncConsentFromServer();
+    // Personalize welcome with AI name
+    const aiName = user.ai_name;
+    if (aiName) {
+      localStorage.setItem('ai_name', aiName);
+      const wb = document.getElementById('welcome-bubble');
+      if (wb && !wb.dataset.personalized) {
+        const userName = user.email?.split('@')[0] || '';
+        wb.innerHTML = `<strong>${userName}さん、おかえりなさい！</strong> — <strong>${aiName}</strong>がお手伝いします。<br><br>
+          複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br>
+          <span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;
+          <span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;
+          <span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;
+          <span style="color:#f9a8d4">🧠 長期記憶</span>`;
+        wb.dataset.personalized = '1';
+      }
+      // Update AI name display in header
+      const nameEl = document.querySelector('.msg-ai-name');
+      if (nameEl && nameEl.textContent === 'chatweb.ai') nameEl.textContent = aiName;
+    }
     // Show credit balance
     const creditEl = document.getElementById('credit-balance');
     if (creditEl && user.credit_balance !== undefined) {
@@ -4336,8 +4733,20 @@ function updateAuthUI(user) {
     if (!localStorage.getItem('onboarding_done')) {
       setTimeout(() => startOnboarding(user), 800);
     } else if (!user.line_linked && !user.telegram_linked) {
-      // Onboarding done but no messenger linked — show connect prompt
       setTimeout(() => onboardConnect(), 1500);
+    }
+    // Apply referral code from URL if present
+    const refCode = new URLSearchParams(location.search).get('ref');
+    if (refCode && !localStorage.getItem('ref_applied')) {
+      fetch('/referral/apply', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({code: refCode})
+      }).then(r=>r.json()).then(d=>{
+        if(d.ok) { showToast('🎉 招待ボーナス $3 が付与されました！'); localStorage.setItem('ref_applied','1'); }
+      }).catch(()=>{});
+    }
+    // Show referral banner for free plan users
+    if (user.plan === 'free' && localStorage.getItem('onboarding_done')) {
+      showReferralBanner();
     }
   } else {
     lb.style.display = '';
@@ -4347,6 +4756,53 @@ function updateAuthUI(user) {
     if (lcb) lcb.style.display = 'none';
     showLoginGate();
   }
+}
+
+function showReferralBanner() {
+  if (document.getElementById('referral-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'referral-banner';
+  banner.style.cssText = 'padding:8px 16px;max-width:780px;margin:4px auto 0;text-align:center;';
+  banner.innerHTML = `
+    <div onclick="openReferralModal()" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.1));border:1px solid rgba(139,92,246,.2);cursor:pointer;transition:all .15s">
+      <span style="font-size:16px">🎁</span>
+      <span style="font-size:12px;color:var(--text)"><strong>友達を招待して$3ゲット</strong> — 招待された友達にも$3プレゼント</span>
+      <span style="font-size:10px;color:var(--accent)">→</span>
+    </div>`;
+  const inputOuter = document.getElementById('inputAreaOuter');
+  if (inputOuter) inputOuter.prepend(banner);
+}
+
+async function openReferralModal() {
+  let code = '', url = '';
+  try {
+    const r = await fetch('/referral/code');
+    const d = await r.json();
+    code = d.code; url = d.url;
+  } catch { showToast('ログインが必要です'); return; }
+  const stats = await fetch('/referral/stats').then(r=>r.json()).catch(()=>({total_referrals:0,completed:0,total_earned:0}));
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:28px 24px;width:400px;max-width:94vw;text-align:center">
+    <div style="font-size:36px;margin-bottom:8px">🎁</div>
+    <h3 style="font-size:18px;margin-bottom:4px">友達を招待して$3ゲット</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">あなたも友達も$3のクレジットがもらえます</p>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px">あなたの招待リンク</div>
+      <div style="font-size:14px;font-weight:700;color:var(--accent);word-break:break-all">${url}</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
+      <button onclick="navigator.clipboard.writeText('${url}');this.textContent='✅ コピー済み'" style="flex:1;padding:10px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:600;font-size:13px">📋 リンクをコピー</button>
+      <button onclick="if(navigator.share)navigator.share({title:'chatweb.ai',text:'AIエージェントが実際に動く！$3クレジット付き',url:'${url}'})" style="padding:10px 16px;border-radius:8px;background:var(--surface);color:var(--text);border:1px solid var(--border);cursor:pointer;font-size:13px">📤</button>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;font-size:12px;color:var(--muted)">
+      <span>招待: <strong style="color:var(--text)">${stats.total_referrals}人</strong></span>
+      <span>獲得: <strong style="color:var(--green)">$${stats.total_earned}</strong></span>
+    </div>
+    <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top:14px;padding:8px 20px;border-radius:8px;background:var(--surface);color:var(--muted);border:1px solid var(--border);cursor:pointer;font-size:12px">閉じる</button>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 async function checkAuth() {
@@ -4360,33 +4816,24 @@ async function checkAuth() {
 }
 
 function showLoginGate() {
-  // Disable input and show login button inline
   const inp = document.getElementById('msgInput');
   const btn = document.getElementById('sendBtn');
-  if (inp) { inp.disabled = true; inp.placeholder = 'ログインしてから使えます'; }
+  if (inp) { inp.disabled = true; inp.placeholder = 'ログインして始めましょう'; }
   if (btn) btn.disabled = true;
-  // Inject Google login button above input
   let gateEl = document.getElementById('login-gate-bar');
   if (!gateEl) {
     gateEl = document.createElement('div');
     gateEl.id = 'login-gate-bar';
-    gateEl.style.cssText = 'padding:10px 28px;max-width:780px;margin:0 auto;display:flex;align-items:center;gap:10px;justify-content:center;';
+    gateEl.style.cssText = 'padding:12px 20px;max-width:780px;margin:0 auto;text-align:center;';
     gateEl.innerHTML = `
-      <span style="font-size:13px;color:var(--muted)">ログインが必要です</span>
-      <a href="/auth/google" style="display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:8px;background:#fff;color:#3c4043;border:1px solid #dadce0;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;">
-        <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.51 10.52A4.8 4.8 0 0 1 4.26 9c0-.53.09-1.04.25-1.52V5.41H1.83A8 8 0 0 0 .98 9c0 1.3.31 2.52.85 3.59l2.68-2.07z"/><path fill="#EA4335" d="M8.98 3.58c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 .98 9l2.68 2.07c.63-1.89 2.39-3.29 4.47-3.29z"/></svg>
-        Googleでログイン
-      </a>
-      <button onclick="openLoginModal()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text);font-size:13px;cursor:pointer;">メールで登録</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <a href="/auth/google" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap;width:100%;max-width:300px;justify-content:center">
+          <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.01c-.72.48-1.63.76-2.7.76-2.08 0-3.84-1.4-4.47-3.29H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.51 10.52A4.8 4.8 0 0 1 4.26 9c0-.53.09-1.04.25-1.52V5.41H1.83A8 8 0 0 0 .98 9c0 1.3.31 2.52.85 3.59l2.68-2.07z"/><path fill="#EA4335" d="M8.98 3.58c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 .98 9l2.68 2.07c.63-1.89 2.39-3.29 4.47-3.29z"/></svg>
+          Googleでログイン
+        </a>
+        <button onclick="openLoginModal()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;">メールアドレスで登録</button>
+      </div>
     `;
-    // On mobile, also show LINE/Telegram quick links
-    if (window.innerWidth < 768) {
-      gateEl.innerHTML += `
-        <div style="width:100%;display:flex;gap:8px;justify-content:center;margin-top:4px">
-          <a href="https://line.me/R/ti/p/@619jcqqh" target="_blank" style="padding:6px 14px;border-radius:8px;background:#06c755;color:#fff;font-size:12px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px">📱 LINEで使う</a>
-          <a href="https://t.me/chatweb_aichat_bot" target="_blank" style="padding:6px 14px;border-radius:8px;background:#229ed9;color:#fff;font-size:12px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:4px">✈️ Telegramで使う</a>
-        </div>`;
-    }
     const inputOuter = document.getElementById('inputAreaOuter');
     if (inputOuter) inputOuter.prepend(gateEl);
   }
@@ -5170,7 +5617,8 @@ const LANG_STRINGS = {
     menu_privacy: 'プライバシーポリシー',
     menu_login: 'ログイン',
     menu_logout: 'ログアウト',
-    menu_api_keys: 'APIキー管理',
+    menu_api_keys: '鍵管理',
+    menu_api_settings: 'API設定',
     menu_team: 'チームワークスペース',
     welcome_html: '<strong>chatweb.ai — Multi-Agent AI</strong> へようこそ。<br><br>複数の専門AIエージェントが協調して、あなたのリクエストを処理します。<br><br><span style="color:#a78bfa">⚡ トークンストリーミング</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwrightブラウザ</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委譲</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 長期記憶</span>',
   },
@@ -5226,7 +5674,8 @@ const LANG_STRINGS = {
     menu_privacy: 'Privacy Policy',
     menu_login: 'Login',
     menu_logout: 'Logout',
-    menu_api_keys: 'API Key Management',
+    menu_api_keys: 'Key Management',
+    menu_api_settings: 'API Settings',
     menu_team: 'Team Workspace',
     welcome_html: 'Welcome to <strong>chatweb.ai — Multi-Agent AI</strong>.<br><br>Multiple specialized AI agents work together to handle your requests.<br><br><span style="color:#a78bfa">⚡ Token Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Playwright Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A Delegation</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Long-term Memory</span>',
   },
@@ -5282,7 +5731,8 @@ const LANG_STRINGS = {
     menu_privacy: '隐私政策',
     menu_login: '登录',
     menu_logout: '退出登录',
-    menu_api_keys: 'API密钥管理',
+    menu_api_keys: '密钥管理',
+    menu_api_settings: 'API设置',
     menu_team: '团队工作区',
     welcome_html: '欢迎使用 <strong>chatweb.ai — 多代理 AI</strong>。<br><br>多个专业AI代理协同工作，处理您的请求。<br><br><span style="color:#a78bfa">⚡ 流式输出</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 浏览器控制</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A委托</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 长期记忆</span>',
   },
@@ -5338,7 +5788,8 @@ const LANG_STRINGS = {
     menu_privacy: '개인정보처리방침',
     menu_login: '로그인',
     menu_logout: '로그아웃',
-    menu_api_keys: 'API 키 관리',
+    menu_api_keys: '키 관리',
+    menu_api_settings: 'API 설정',
     menu_team: '팀 워크스페이스',
     welcome_html: '<strong>chatweb.ai — 멀티 에이전트 AI</strong>에 오신 것을 환영합니다.<br><br>여러 전문 AI 에이전트가 협력하여 요청을 처리합니다.<br><br><span style="color:#a78bfa">⚡ 스트리밍</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 브라우저</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 장기 기억</span>',
   },
@@ -5394,7 +5845,8 @@ const LANG_STRINGS = {
     menu_privacy: 'Politique de confidentialité',
     menu_login: 'Connexion',
     menu_logout: 'Déconnexion',
-    menu_api_keys: 'Gestion des clés API',
+    menu_api_keys: 'Gestion des clés',
+    menu_api_settings: 'Paramètres API',
     menu_team: 'Espace de travail d\'équipe',
     welcome_html: 'Bienvenue sur <strong>chatweb.ai — IA Multi-Agent</strong>.<br><br>Plusieurs agents IA spécialisés collaborent pour traiter vos demandes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navigateur</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Délégation A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Mémoire</span>',
   },
@@ -5450,7 +5902,8 @@ const LANG_STRINGS = {
     menu_privacy: 'Política de privacidad',
     menu_login: 'Iniciar sesión',
     menu_logout: 'Cerrar sesión',
-    menu_api_keys: 'Gestión de claves API',
+    menu_api_keys: 'Gestión de claves',
+    menu_api_settings: 'Configuración API',
     menu_team: 'Espacio de trabajo del equipo',
     welcome_html: 'Bienvenido a <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Múltiples agentes IA especializados colaboran para procesar tus solicitudes.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegación A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memoria</span>',
   },
@@ -5506,7 +5959,8 @@ const LANG_STRINGS = {
     menu_privacy: 'Datenschutzerklärung',
     menu_login: 'Anmelden',
     menu_logout: 'Abmelden',
-    menu_api_keys: 'API-Schlüsselverwaltung',
+    menu_api_keys: 'Schlüsselverwaltung',
+    menu_api_settings: 'API-Einstellungen',
     menu_team: 'Team-Arbeitsbereich',
     welcome_html: 'Willkommen bei <strong>chatweb.ai — Multi-Agent KI</strong>.<br><br>Mehrere spezialisierte KI-Agenten arbeiten zusammen, um Ihre Anfragen zu bearbeiten.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Browser</span>&ensp;·&ensp;<span style="color:#34d399">🔗 A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Gedächtnis</span>',
   },
@@ -5562,7 +6016,8 @@ const LANG_STRINGS = {
     menu_privacy: 'Política de privacidade',
     menu_login: 'Entrar',
     menu_logout: 'Sair',
-    menu_api_keys: 'Gerenciamento de chaves API',
+    menu_api_keys: 'Gerenciamento de chaves',
+    menu_api_settings: 'Configurações de API',
     menu_team: 'Espaço de trabalho da equipe',
     welcome_html: 'Bem-vindo ao <strong>chatweb.ai — IA Multi-Agente</strong>.<br><br>Vários agentes de IA especializados colaboram para processar seus pedidos.<br><br><span style="color:#a78bfa">⚡ Streaming</span>&ensp;·&ensp;<span style="color:#22d3ee">🌐 Navegador</span>&ensp;·&ensp;<span style="color:#34d399">🔗 Delegação A2A</span>&ensp;·&ensp;<span style="color:#f9a8d4">🧠 Memória</span>',
   },
@@ -5617,9 +6072,9 @@ function applyLanguage(code) {
   const input = document.getElementById('chatInput');
   if (input) input.placeholder = s.input_placeholder || s.placeholder || '';
 
-  // Welcome message
+  // Welcome message — re-init with new language (skip if personalized with AI name)
   const wb = document.getElementById('welcome-bubble');
-  if (wb && s.welcome_html) wb.innerHTML = s.welcome_html;
+  if (wb && !wb.dataset.personalized) initWelcome();
 
   // Quick chips — always use ALL_CHIPS with initQuickChips (ignore translation table)
   initQuickChips();
@@ -5733,73 +6188,77 @@ async function openBillingModal() {
   modal.setAttribute('hidden', '');
   modal.onclick = e => { if (e.target === modal) modal.setAttribute('hidden', ''); };
 
+  const _curPlan = currentUser?.plan || 'free';
   const PLANS = [
     {
       id: 'free', name: 'フリー', price: 0, period: '',
       badge: '', badgeColor: '',
-      desc: '個人利用・お試しに',
+      desc: '無料で始められる',
       requests: '$2/月のクレジット付き',
-      btnLabel: '現在のプラン', btnDisabled: true,
+      btnLabel: _curPlan === 'free' ? '現在のプラン' : 'フリーに変更',
+      btnDisabled: _curPlan === 'free',
       accentColor: '#64748b',
       features: [
-        '30以上のAIエージェント',
-        '高速モード（Qwen3-32B）',
-        '長期記憶',
-        'ファイルアップロード',
-        'サイト公開 3件',
+        '39種類のAIエージェント',
+        '高速モード（Llama 4 Scout）',
+        '12種類のAIモデル選択',
+        '長期記憶・ファイルアップロード',
+        'サイト公開（xxx.chatweb.ai）',
         'LINE / Telegram連携',
+        'E2Bコード実行',
+        '品質目標 7/10',
       ]
     },
     {
       id: 'pro', name: 'プロ', price: 2900, period: '/月',
-      badge: '🔥 最も人気', badgeColor: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
-      desc: 'ビジネス利用・本格活用に',
+      badge: '🔥 人気', badgeColor: 'linear-gradient(135deg,#8b5cf6,#6366f1)',
+      desc: '本格活用に',
       requests: '$19/月のクレジット付き',
-      btnLabel: 'プロにアップグレード', btnDisabled: false,
+      btnLabel: _curPlan === 'pro' ? '現在のプラン' : 'プロにアップグレード',
+      btnDisabled: _curPlan === 'pro',
       accentColor: '#8b5cf6',
       features: [
         'フリーの全機能',
-        'プロモード（Claude Sonnet）',
-        'Geminiモード',
-        '長期記憶 無制限',
-        'サイト公開 無制限',
-        'Google Workspace連携',
+        'Claude Sonnet 4.6（プロモード）',
+        'Claude Opus 4.6 / Gemini 2.5 Pro',
+        '品質目標 9/10（改善ループ5回）',
+        'Google Workspace連携（Gmail等）',
+        'スケジュール自動化（cron）',
+        '友達招待 $3リワード',
         '追加クレジットチャージ可',
-        '優先サポート',
       ]
     },
     {
       id: 'team', name: 'チーム', price: 9800, period: '/月',
-      badge: '🏢 法人向け', badgeColor: 'linear-gradient(135deg,#0ea5e9,#06b6d4)',
-      desc: 'チーム・企業での本格導入',
+      badge: '', badgeColor: '',
+      desc: 'チーム・法人向け',
       requests: '$65/月のクレジット付き',
-      btnLabel: 'チームプランを開始', btnDisabled: false,
+      btnLabel: _curPlan === 'team' ? '現在のプラン' : 'チームを開始',
+      btnDisabled: _curPlan === 'team',
       accentColor: '#0ea5e9',
       features: [
         'プロの全機能',
         'チームワークスペース共有',
         '管理者ダッシュボード',
-        '追加クレジットチャージ可',
+        'エージェント共有・フォーク',
         'SLAサポート（1営業日）',
         '請求書払い対応',
       ]
     },
     {
-      id: 'enterprise', name: 'エンタープライズ', price: 98000, period: '/月',
-      badge: '👑 専任サポート', badgeColor: 'linear-gradient(135deg,#f59e0b,#eab308)',
-      desc: '専任コンサル・カスタム開発',
-      requests: '$650/月のクレジット付き',
+      id: 'enterprise', name: 'エンタープライズ', price: 1000000, period: '/月',
+      badge: '👑 10社限定', badgeColor: 'linear-gradient(135deg,#f59e0b,#eab308)',
+      desc: '専任コンサル付き',
+      requests: 'クレジット別途相談',
       btnLabel: 'お問い合わせ', btnDisabled: false,
       accentColor: '#f59e0b',
       features: [
-        'チームの全機能',
-        '専任AIコンサルタント',
+        'チームの全機能 + 無制限クレジット',
+        '専任AIコンサルタント（週次MTG）',
         'カスタムエージェント開発代行',
-        '業務フロー自動化設計',
-        '専用Slackサポート',
-        'SLA 4時間対応',
-        '月次レビューMTG',
-        'API無制限',
+        '業務フロー自動化設計・導入支援',
+        '専用Slack/Teamsサポート',
+        'SLA 4時間対応・99.9%稼働保証',
       ]
     }
   ];
@@ -5927,6 +6386,113 @@ function openWebhookModal() {
   modal.removeAttribute('hidden');
 }
 
+// ── Welcome messages (random, multilingual, typewriter) ──────────────────────
+const _WELCOME_MSGS = {
+  ja: [
+    // 基本
+    {text: '何を手伝いましょうか？', sub: 'メール確認、コード実行、画像生成 — 何でもどうぞ'},
+    {text: '今日は何をしますか？', sub: '39のAIエージェントがあなたの指示を待っています'},
+    // 驚き系
+    {text: '「Gmailの未読を確認して」で本当にメールが読めます。', sub: 'Google連携済みなら、カレンダー・Drive・Sheetsも操作可能'},
+    {text: '「このサイトのスクショ撮って」→ 本当に撮ります。', sub: 'PlaywrightブラウザでどんなURLでもスクリーンショット取得'},
+    {text: '「QRコード生成ツール作って公開して」→ 5分で完了。', sub: 'HTMLを生成して xxx.chatweb.ai で即座に公開。サーバー不要'},
+    {text: '「毎朝9時にAIニュースをLINEに送って」→ 設定完了。', sub: 'cron定期実行 × LINE通知。一度設定すれば毎日届きます'},
+    {text: '「この契約書レビューして」→ 法務AIが条項分析。', sub: 'NDA・業務委託・利用規約のリスク分析。修正提案付き'},
+    {text: '「競合3社を調べてレポートにまとめてメールで送って」', sub: '→ リサーチAI → アナリストAI → 通知AI が自動連携して完了'},
+    {text: '「Pythonで素数判定書いて実行して」→ 本当に動きます。', sub: 'E2Bサンドボックスで安全にコード実行。pandas, numpy, matplotlib対応'},
+    {text: '「猫のイラスト描いて」→ AIが即座に画像生成。', sub: 'Pollinations.ai / DALL-Eで高品質画像。SNSバナーやロゴも'},
+    {text: '「英語に翻訳して」で終わらない。メールで送信まで。', sub: '翻訳AI → 通知AI → Gmail送信。ワンストップで完結'},
+    {text: '「今週の予定を整理して空き時間を教えて」', sub: 'Googleカレンダーから自動取得。会議の合間を見つけて提案'},
+    {text: 'LINEから「明日の天気は？」→ AIが即回答。', sub: 'LINE・Telegram連携で、スマホからいつでもAIにアクセス'},
+    {text: '「議事録作って」→ 会議メモAIが構造化。', sub: '決定事項・アクションアイテム・担当者を自動整理'},
+    {text: '「月々のローンいくら？」→ 計算AIが即算出。', sub: '複利計算、単位変換、統計分析もPython実行で正確に'},
+    {text: '「ポートフォリオサイト作って公開して」→ 即完成。', sub: 'デザイン・コーディング・ホスティングまで全自動'},
+    {text: '友達を招待すると、お互い$3もらえます。', sub: '招待リンクをシェアするだけ。メニューから「🎁 招待」をタップ'},
+    {text: '1つの指示で、複数のAIが協力して動きます。', sub: '調査→分析→グラフ作成→レポート→メール送信を一括実行'},
+    {text: 'あなたの名前を覚えて、次回から使います。', sub: '長期記憶で会話するほどパーソナライズ。好みも学習'},
+    {text: '10種類のAIモデルから選べます。', sub: 'Llama 4, Claude, GPT-4o, Gemini, DeepSeek — 用途で使い分け'},
+  ],
+  en: [
+    {text: 'What can I help you with?', sub: 'Email, code, research, images — just ask'},
+    {text: 'AI agents that actually do the work.', sub: '39 specialized agents ready to execute your tasks'},
+    {text: '"Check my Gmail" — it actually reads your email.', sub: 'Connected to Google Workspace: Gmail, Calendar, Drive, Sheets'},
+    {text: '"Build a QR code generator and publish it" — done in 5 min.', sub: 'Generates HTML and hosts it at xxx.chatweb.ai instantly'},
+    {text: '"Research competitors and email me a report" — fully automated.', sub: 'Research AI → Analyst AI → Notify AI chain automatically'},
+    {text: '"Write Python to check primes and run it" — it really runs.', sub: 'E2B sandbox executes code safely. pandas, numpy, matplotlib included'},
+    {text: '"Send AI news to my LINE every morning at 9am"', sub: 'Cron scheduling × LINE notification. Set once, get it daily'},
+    {text: '"Review this contract" — Legal AI analyzes every clause.', sub: 'Risk assessment with suggested modifications for NDAs, agreements'},
+    {text: 'One prompt, multiple AI agents working together.', sub: 'Research → Analysis → Chart → Report → Email — all in one go'},
+    {text: 'Your AI remembers you. Gets better over time.', sub: 'Long-term memory learns your preferences and past conversations'},
+    {text: '10 AI models to choose from.', sub: 'Llama 4, Claude, GPT-4o, Gemini, DeepSeek — pick the best for your task'},
+    {text: 'Invite a friend, both get $3 credits.', sub: 'Share your invite link from the menu'},
+  ],
+  zh: [
+    {text: '需要我帮忙做什么？', sub: '邮件、代码、调研、图片 — 尽管吩咐'},
+    {text: '不只是聊天，是真正的执行。', sub: '39个专业AI代理随时待命'},
+    {text: '"帮我查看Gmail未读邮件" — 真的能读取。', sub: '连接Google Workspace：Gmail、日历、Drive、Sheets'},
+    {text: '"做个二维码生成器并发布" — 5分钟搞定。', sub: '自动生成HTML并部署到 xxx.chatweb.ai'},
+    {text: '"调研竞争对手，写报告发邮件给我"', sub: '调研AI → 分析AI → 通知AI 自动协作完成'},
+    {text: '一个指令，多个AI协同工作。', sub: '调研→分析→图表→报告→发送，一气呵成'},
+  ],
+  ko: [
+    {text: '무엇을 도와드릴까요?', sub: '이메일, 코드, 리서치, 이미지 — 무엇이든 물어보세요'},
+    {text: '채팅만 하는 AI가 아닙니다.', sub: '39개 전문 에이전트가 실제로 작업을 수행합니다'},
+    {text: '"Gmail 확인해줘" — 정말로 이메일을 읽어줍니다.', sub: 'Google Workspace 연동: Gmail, 캘린더, Drive, Sheets'},
+    {text: '"경쟁사 조사해서 리포트 이메일로 보내줘"', sub: '리서치 AI → 분석 AI → 알림 AI가 자동 연계'},
+    {text: '하나의 명령, 여러 AI가 협력합니다.', sub: '조사→분석→차트→보고서→전송을 한번에'},
+  ],
+  fr: [
+    {text: 'Comment puis-je vous aider ?', sub: 'Email, code, recherche, images — demandez simplement'},
+    {text: '"Vérifie mon Gmail" — ça lit vraiment vos emails.', sub: 'Connecté à Google Workspace : Gmail, Agenda, Drive, Sheets'},
+    {text: '"Crée un site portfolio et publie-le" — en 5 minutes.', sub: 'Génère le HTML et héberge sur xxx.chatweb.ai instantanément'},
+    {text: 'Une instruction, plusieurs agents IA collaborent.', sub: 'Recherche → Analyse → Graphique → Rapport → Envoi'},
+  ],
+  es: [
+    {text: '¿En qué puedo ayudarte?', sub: 'Email, código, investigación, imágenes — solo pregunta'},
+    {text: '"Revisa mi Gmail" — realmente lee tus correos.', sub: 'Conectado a Google Workspace: Gmail, Calendar, Drive, Sheets'},
+    {text: '"Crea un sitio web y publícalo" — listo en 5 minutos.', sub: 'Genera HTML y lo publica en xxx.chatweb.ai al instante'},
+    {text: 'Una instrucción, múltiples agentes IA colaboran.', sub: 'Investigación → Análisis → Gráfico → Informe → Envío'},
+  ],
+  de: [
+    {text: 'Wie kann ich helfen?', sub: 'E-Mail, Code, Recherche, Bilder — einfach fragen'},
+    {text: '"Prüfe mein Gmail" — liest wirklich Ihre E-Mails.', sub: 'Verbunden mit Google Workspace: Gmail, Kalender, Drive, Sheets'},
+    {text: 'Ein Befehl, mehrere KI-Agenten arbeiten zusammen.', sub: 'Recherche → Analyse → Diagramm → Bericht → Versand'},
+  ],
+  pt: [
+    {text: 'Como posso ajudar?', sub: 'Email, código, pesquisa, imagens — é só pedir'},
+    {text: '"Verifica meu Gmail" — realmente lê seus emails.', sub: 'Conectado ao Google Workspace: Gmail, Agenda, Drive, Sheets'},
+    {text: 'Um comando, vários agentes IA colaboram.', sub: 'Pesquisa → Análise → Gráfico → Relatório → Envio'},
+  ],
+};
+
+async function initWelcome() {
+  const wb = document.getElementById('welcome-bubble');
+  if (!wb || wb.dataset.personalized === '1') return;
+  const typed = document.getElementById('welcome-typed');
+  if (!typed) return;
+  const lang = _currentLang || 'ja';
+  const msgs = _WELCOME_MSGS[lang] || _WELCOME_MSGS.en;
+  const pick = msgs[Math.floor(Math.random() * msgs.length)];
+  // Typewriter effect
+  typed.innerHTML = '';
+  const strong = document.createElement('strong');
+  typed.appendChild(strong);
+  for (let i = 0; i < pick.text.length; i++) {
+    strong.textContent += pick.text[i];
+    if (i % 2 === 0) await new Promise(r => setTimeout(r, 18));
+  }
+  const br = document.createElement('br');
+  typed.appendChild(br);
+  typed.appendChild(document.createElement('br'));
+  const sub = document.createElement('span');
+  sub.style.cssText = 'color:var(--muted);font-size:13px';
+  typed.appendChild(sub);
+  for (let i = 0; i < pick.sub.length; i++) {
+    sub.textContent += pick.sub[i];
+    if (i % 3 === 0) await new Promise(r => setTimeout(r, 10));
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadTheme();
 initVoice();
@@ -5938,6 +6504,25 @@ initTemplates();
 checkAuth();
 loadTier();
 applyLanguage(_currentLang);
+initWelcome();
+// Auto-retry after Google auth
+const _googleConnected = new URLSearchParams(location.search).get('google_connected');
+if (_googleConnected) {
+  history.replaceState({}, '', location.pathname);
+  setTimeout(() => {
+    if (_googleConnected === 'gmail') {
+      showToast('Google連携完了！Gmailを確認しています...');
+      document.getElementById('chatInput').value = 'Gmailの未読メールを確認して一覧で見せて';
+      sendMessage();
+    } else if (_googleConnected === 'calendar') {
+      showToast('Google連携完了！カレンダーを確認しています...');
+      document.getElementById('chatInput').value = '今日のカレンダーの予定を確認して教えて';
+      sendMessage();
+    } else {
+      showToast('Google連携が完了しました！');
+    }
+  }, 1500);
+}
 // Show upgrade success banner
 if (new URLSearchParams(location.search).get('upgraded') === '1') {
   history.replaceState({}, '', location.pathname);
@@ -7222,8 +7807,8 @@ updateAuthUI = function(user) {
   padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
   <div style="flex:1;min-width:200px;font-size:13px;color:#a1a1aa;line-height:1.5">
     🍪 このサービスはCookieおよびローカルストレージを使用して、会話履歴・設定・セッション情報を保存します。
-    <a href="/static/privacy.html" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a> ·
-    <a href="/static/about.html" style="color:#8b5cf6;text-decoration:none">About</a>
+    <a href="/privacy" style="color:#8b5cf6;text-decoration:none">プライバシーポリシー</a> ·
+    <a href="/about" style="color:#8b5cf6;text-decoration:none">About</a>
   </div>
   <div style="display:flex;gap:8px;flex-shrink:0">
     <button onclick="cookieDecline()" style="padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#71717a;cursor:pointer;font-size:13px">拒否</button>

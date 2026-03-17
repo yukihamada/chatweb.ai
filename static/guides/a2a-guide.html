@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A2A プロトコル連携ガイド — chatweb.ai</title>
+<meta name="description" content="chatweb.aiのA2A（Agent-to-Agent）プロトコル v1.0 連携ガイド。外部エージェントからchatweb.aiの39種類のAIエージェントを呼び出す方法を解説。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://chatweb.ai/guides/a2a-guide">
+<meta property="og:title" content="A2A プロトコル連携ガイド — chatweb.ai">
+<meta property="og:description" content="A2A v1.0でchatweb.aiの39種類のAIエージェントを外部から呼び出す方法">
+<meta property="og:image" content="https://chatweb.ai/static/og-image.png">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/static/favicon.ico" sizes="32x32">
+<meta name="theme-color" content="#7c6aff">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#09090b;--s2:#18181b;--card:#16161e;--border:rgba(255,255,255,0.07);--text:#fafafa;--muted:#71717a;--accent:#8b5cf6;--cyan:#06b6d4;--green:#10b981}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',monospace;background:var(--bg);color:var(--text);line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;margin-bottom:28px;padding:6px 12px;border:1px solid var(--border);border-radius:8px}.back:hover{color:var(--text);text-decoration:none}
+h1{font-size:28px;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:var(--muted);font-size:14px;margin-bottom:32px}
+h2{font-size:18px;font-weight:700;color:var(--text);margin:36px 0 12px;padding-top:16px;border-top:1px solid var(--border)}
+h3{font-size:14px;font-weight:600;color:#d4d4d8;margin:16px 0 6px}
+p{color:#a1a1aa;font-size:14px;margin-bottom:12px}
+pre{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;overflow-x:auto;margin:12px 0;color:#d4d4d8}
+code{font-family:'SF Mono',Menlo,monospace;font-size:12px}
+.method{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:monospace;margin-right:6px}
+.post{background:rgba(59,130,246,.15);color:#60a5fa}
+.get{background:rgba(16,185,129,.15);color:var(--green)}
+.ep-row{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin:6px 0;flex-wrap:wrap}
+.endpoint{font-family:monospace;font-size:13px;color:var(--text);font-weight:600}
+.ep-desc{font-size:12px;color:var(--muted);margin-left:auto}
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--border);font-size:12px;color:#52525b;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">&larr; chatweb.ai</a>
+
+  <h1>A2A プロトコル連携ガイド</h1>
+  <p class="subtitle">A2A v1.0 (Agent-to-Agent) で chatweb.ai の39エージェントを外部から呼び出す</p>
+
+  <h2>1. Agent Card の取得</h2>
+  <p>chatweb.aiのAgent Cardは以下のURLで公開されています：</p>
+  <div class="ep-row">
+    <span class="method get">GET</span>
+    <span class="endpoint">/.well-known/agent-card.json</span>
+    <span class="ep-desc">A2A v1.0 Agent Card</span>
+  </div>
+  <pre>curl https://chatweb.ai/.well-known/agent-card.json | jq .</pre>
+  <p>Agent Cardには、利用可能なスキル（エージェント）一覧、対応プロトコル、認証方式が含まれます。</p>
+
+  <h2>2. タスクの送信（SendMessage）</h2>
+  <p>JSON-RPC 2.0形式で <code>POST /a2a</code> にリクエストを送信します。</p>
+  <pre>{
+  "jsonrpc": "2.0",
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "role": "ROLE_USER",
+      "parts": [
+        {"text": "NVIDIAの最新株価と決算を分析して", "mediaType": "text/plain"}
+      ],
+      "contextId": "conv-12345"
+    }
+  },
+  "id": "req-001"
+}</pre>
+
+  <h3>cURL での例</h3>
+  <pre>curl -X POST https://chatweb.ai/a2a \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your_api_key" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "SendMessage",
+    "params": {
+      "message": {
+        "role": "ROLE_USER",
+        "parts": [{"text": "競合3社を調べてレポートにして"}]
+      }
+    },
+    "id": "1"
+  }'</pre>
+
+  <h3>レスポンス</h3>
+  <pre>{
+  "jsonrpc": "2.0",
+  "result": {
+    "id": "task-uuid",
+    "contextId": "conv-12345",
+    "status": {"state": "TASK_STATE_COMPLETED"},
+    "artifacts": [{
+      "parts": [{"text": "# 競合分析レポート\n...", "mediaType": "text/markdown"}],
+      "metadata": {
+        "agent_id": "research",
+        "agent_name": "🔍 リサーチAI",
+        "latency_ms": 3200,
+        "cost_usd": 0.0005
+      }
+    }]
+  },
+  "id": "req-001"
+}</pre>
+
+  <h2>3. ストリーミング（SendStreamingMessage）</h2>
+  <p>SSE（Server-Sent Events）でリアルタイムにレスポンスを受け取れます。</p>
+  <pre>curl -X POST https://chatweb.ai/a2a \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your_api_key" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "SendStreamingMessage",
+    "params": {
+      "message": {
+        "role": "ROLE_USER",
+        "parts": [{"text": "Pythonで素数判定プログラムを書いて実行して"}]
+      }
+    },
+    "id": "stream-1"
+  }'</pre>
+  <p>SSEイベント：</p>
+  <pre>data: {"jsonrpc":"2.0","result":{"taskStatusUpdate":{"taskId":"...","status":{"state":"TASK_STATE_WORKING"}}},"id":"stream-1"}
+
+data: {"jsonrpc":"2.0","result":{"taskArtifactUpdate":{"taskId":"...","artifact":{"parts":[{"text":"...","mediaType":"text/markdown"}]}}},"id":"stream-1"}
+
+data: {"jsonrpc":"2.0","result":{"taskStatusUpdate":{"taskId":"...","status":{"state":"TASK_STATE_COMPLETED"}}},"id":"stream-1"}</pre>
+
+  <h2>4. タスク管理</h2>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/a2a</span>
+    <span class="ep-desc">method: "GetTask"</span>
+  </div>
+  <pre>{"jsonrpc":"2.0","method":"GetTask","params":{"id":"task-uuid"},"id":"2"}</pre>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/a2a</span>
+    <span class="ep-desc">method: "ListTasks"</span>
+  </div>
+  <pre>{"jsonrpc":"2.0","method":"ListTasks","params":{"limit":10},"id":"3"}</pre>
+
+  <div class="ep-row">
+    <span class="method post">POST</span>
+    <span class="endpoint">/a2a</span>
+    <span class="ep-desc">method: "CancelTask"</span>
+  </div>
+  <pre>{"jsonrpc":"2.0","method":"CancelTask","params":{"id":"task-uuid"},"id":"4"}</pre>
+
+  <h2>5. Python SDK での使用例</h2>
+  <pre>import httpx, json
+
+API_KEY = "your_api_key"
+BASE = "https://chatweb.ai/a2a"
+
+def send_task(message: str) -> dict:
+    resp = httpx.post(BASE, json={
+        "jsonrpc": "2.0",
+        "method": "SendMessage",
+        "params": {
+            "message": {
+                "role": "ROLE_USER",
+                "parts": [{"text": message}],
+            }
+        },
+        "id": "1",
+    }, headers={
+        "X-API-Key": API_KEY,
+        "Content-Type": "application/json",
+    }, timeout=120)
+    return resp.json()
+
+# 使用例
+result = send_task("今日のAIニュースを3つ調べて要約して")
+task = result["result"]
+print(f"Agent: {task['artifacts'][0]['metadata']['agent_name']}")
+print(f"Response: {task['artifacts'][0]['parts'][0]['text']}")
+print(f"Cost: ${task['artifacts'][0]['metadata']['cost_usd']}")</pre>
+
+  <h2>6. タスク状態一覧</h2>
+  <pre>TASK_STATE_WORKING         — 処理中
+TASK_STATE_COMPLETED       — 完了
+TASK_STATE_FAILED          — 失敗
+TASK_STATE_CANCELED        — キャンセル済み
+TASK_STATE_INPUT_REQUIRED  — 追加入力が必要
+TASK_STATE_AUTH_REQUIRED   — 認証が必要</pre>
+
+  <h2>7. 認証</h2>
+  <p><code>X-API-Key</code> ヘッダーでAPIキーを送信します。APIキーは chatweb.ai の設定画面から発行できます。</p>
+  <pre>curl -H "X-API-Key: cw_xxxxxxxxxxxx" https://chatweb.ai/a2a ...</pre>
+
+  <h2>8. 利用可能なエージェント（スキル）</h2>
+  <p>Agent Cardの <code>skills</code> フィールドに全エージェントが列挙されています。主なもの：</p>
+  <pre>research    — Web検索・調査・レポート
+code        — コード生成・E2B実行
+gmail       — Gmail送受信
+calendar    — Googleカレンダー操作
+image       — AI画像生成
+translate   — 多言語翻訳
+legal       — 契約書レビュー・法務
+finance     — 株価・財務分析
+site_publisher — Webサイト公開
+schedule    — cron定期実行
+notify      — LINE/Telegram/メール通知</pre>
+
+  <h2>関連リンク</h2>
+  <ul style="color:var(--muted);font-size:14px;padding-left:20px">
+    <li><a href="https://chatweb.ai/.well-known/agent-card.json">Agent Card (JSON)</a></li>
+    <li><a href="/api-docs">REST API リファレンス</a></li>
+    <li><a href="/workflow">システムワークフロー図解</a></li>
+    <li><a href="https://a2a-protocol.org/">A2A Protocol 公式サイト</a></li>
+  </ul>
+
+  <div class="footer">
+    &copy; 2024-2026 chatweb.ai &middot;
+    <a href="/">ホーム</a> &middot;
+    <a href="/api-docs">API リファレンス</a> &middot;
+    <a href="/features">機能一覧</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn 長文投稿 — chatweb.ai ローンチキット</title>
+  <meta name="description" content="chatweb.aiローンチ用LinkedIn投稿テンプレート。日本語+英語バージョン。">
+  <meta property="og:title" content="LinkedIn 長文投稿 — chatweb.ai ローンチキット">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.7; min-height: 100vh;
+    }
+    .container { max-width: 750px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.3rem; font-weight: 600; margin: 2rem 0 1rem; color: #8b5cf6; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .post-block {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 1.5rem; margin-bottom: 1.5rem; position: relative;
+    }
+    .post-block pre {
+      white-space: pre-wrap; word-wrap: break-word; font-family: inherit;
+      font-size: 0.95rem; line-height: 1.7; color: #e4e4e7;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: 0.9rem; color: #a1a1aa; }
+    .lang-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .lang-tab {
+      padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; border: 1px solid #27272a; background: #18181b; color: #a1a1aa;
+      transition: all 0.2s;
+    }
+    .lang-tab.active { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .lang-content { display: none; }
+    .lang-content.active { display: block; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="twitter-threads.html">Twitter</a>
+      <span class="sep">|</span>
+      <a href="media-pitch.html">メディアピッチ</a>
+      <span class="sep">|</span>
+      <a href="product-hunt.html">Product Hunt</a>
+      <span class="sep">|</span>
+      <a href="hackernews.html">Hacker News</a>
+      <span class="sep">|</span>
+      <a href="tech-article.html">技術記事</a>
+    </nav>
+
+    <h1><span class="accent">LinkedIn</span> 長文投稿</h1>
+    <p class="subtitle">濱田優貴の視点で書いた創業ストーリー。日本語と英語の2バージョン。</p>
+
+    <div class="tip">LinkedIn投稿の最適な長さは1,300〜2,000文字。最初の3行で「もっと見る」をクリックさせるフックが重要です。</div>
+
+    <div class="lang-tabs">
+      <div class="lang-tab active" onclick="switchLang('ja')">日本語</div>
+      <div class="lang-tab" onclick="switchLang('en')">English</div>
+    </div>
+
+    <!-- Japanese Version -->
+    <div id="lang-ja" class="lang-content active">
+      <h2>日本語バージョン</h2>
+      <div class="post-block">
+        <button class="copy-btn" onclick="copyText(this)">コピー</button>
+        <pre>メルカリを辞めてから3年。
+NOT A HOTELを経て、今日、新しいプロダクトをローンチします。
+
+chatweb.ai — 39のAIエージェントがあなたの代わりにタスクを実行するプラットフォームです。
+
+---
+
+メルカリでCPO/取締役として「テクノロジーで個人をエンパワメントする」ことに注力していた頃、いつも考えていたことがあります。
+
+「なぜユーザーは、やりたいことを実現するために、こんなに多くのステップを踏まなければならないのか？」
+
+フリマアプリでも、出品するだけで写真撮影、説明文作成、価格設定、発送手配...と多くの作業が必要です。
+
+LLMの時代になり、AIは驚くほど賢くなりました。
+でも「賢い」と「実行できる」の間には、まだ大きなギャップがあります。
+
+ChatGPTに「メールを送って」と言っても、実際には送ってくれません。
+素晴らしい下書きを作ってくれますが、コピペして、Gmailを開いて、宛先を入力して、送信ボタンを押すのは人間です。
+
+---
+
+chatweb.aiは、このギャップを埋めるために作りました。
+
+39の専門AIエージェントが、実際にタスクを実行します:
+
+- GmailAgent: メールの送信・返信・整理
+- WebPublisher: Webサイトの生成・公開
+- CodeDeployer: コードのビルド・デプロイ
+- BrowserAgent: Webブラウジングと情報収集
+
+そして、これらのエージェントはGoogleのA2A (Agent-to-Agent) v1.0プロトコルで連携します。
+
+---
+
+技術的なこだわり:
+
+1. マルチモデル: 12のAIモデルをタスクに応じて最適配分。Llama 4 Scout、Claude Opus、GPT-4o、Gemini Proなど。
+
+2. 自己改善ループ: 6時間ごとにエージェントの品質を評価し、プロンプトを自動改善。Proプランでは品質9/10を目指し、最大5回の改善ループを回します。
+
+3. オープンプロトコル: A2A v1.0準拠のJSON-RPC 2.0通信。将来的にオープンソース化予定。
+
+---
+
+「AIの時代」と言われますが、まだほとんどの人はAIと「会話」しているだけです。
+
+chatweb.aiは「会話」から「実行」へのシフトを目指しています。
+
+無料プランもあるので、ぜひ試してみてください。
+
+https://chatweb.ai
+
+#AI #AIAgent #Startup #chatweb #メルカリ #起業</pre>
+      </div>
+    </div>
+
+    <!-- English Version -->
+    <div id="lang-en" class="lang-content">
+      <h2>English Version</h2>
+      <div class="post-block">
+        <button class="copy-btn" onclick="copyText(this)">コピー</button>
+        <pre>Three years after leaving Mercari (Japan's largest marketplace, IPO'd at $7B).
+After co-founding NOT A HOTEL, today I'm launching something new.
+
+chatweb.ai — A platform where 39 specialized AI agents actually execute tasks on your behalf.
+
+---
+
+As CPO/Director at Mercari, I was obsessed with one question:
+
+"Why do users need so many steps just to get things done?"
+
+The LLM era has made AI incredibly smart. But there's still a massive gap between "smart" and "capable of execution."
+
+Ask ChatGPT to "send an email" and it won't actually send one. It'll write a brilliant draft, but YOU still need to copy it, open Gmail, enter recipients, and hit send.
+
+---
+
+chatweb.ai was built to close this gap.
+
+39 specialized AI agents that actually execute tasks:
+
+- GmailAgent: Send, reply, and organize emails
+- WebPublisher: Generate and publish websites
+- CodeDeployer: Build and deploy code
+- BrowserAgent: Web browsing and information gathering
+
+These agents communicate via Google's A2A (Agent-to-Agent) v1.0 protocol.
+
+---
+
+Technical highlights:
+
+1. Multi-model orchestration: 12 AI models optimally allocated per task — Llama 4 Scout, Claude Opus, GPT-4o, Gemini Pro, and more.
+
+2. Self-improving feedback loop: Every 6 hours, agent quality is evaluated and prompts are auto-improved. Pro plan targets 9/10 quality with up to 5 improvement loops.
+
+3. Open protocol: A2A v1.0 compliant JSON-RPC 2.0 communication. Open-source release planned.
+
+---
+
+Pricing:
+
+- Free: $2/month credit included
+- Pro: $20/month (quality target 9/10)
+- Team: $70/month
+- Enterprise: Custom (limited to 10 companies)
+
+---
+
+Everyone talks about "the AI era," but most people are still just *talking* to AI.
+
+chatweb.ai shifts from "conversation" to "execution."
+
+Try it free: https://chatweb.ai
+
+#AI #AIAgents #Startup #ProductLaunch #Mercari #Founder</pre>
+      </div>
+    </div>
+
+    <div class="tip">投稿後のエンゲージメント戦略: 最初の1時間で10件以上のコメント返信を行うとアルゴリズム上有利です。投稿時間は火〜木の朝8:00-9:00が最適。</div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function switchLang(lang) {
+      document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.lang-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('lang-' + lang).classList.add('active');
+    }
+    function copyText(btn) {
+      const pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

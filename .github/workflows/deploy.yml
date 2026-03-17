@@ -1,4 +1,4 @@
-name: Deploy
+name: CI/CD Pipeline
 
 on:
   push:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test
+    name: Test & Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +25,46 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Syntax check
+      - name: Syntax check (main.py)
         run: python -m py_compile main.py
 
-      - name: Check for secrets in code
+      - name: Syntax check (all Python files)
+        run: find . -name "*.py" -exec python -m py_compile {} +
+
+      - name: Check for hardcoded secrets
         run: |
-          if grep -rE '(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36})' \
-            --include='*.py' --include='*.html' --include='*.js' .; then
+          if grep -rE '(sk-[a-zA-Z0-9]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{36}|password\s*=\s*["\x27][^"\x27]{8,})' \
+            --include='*.py' --include='*.html' --include='*.js' \
+            --exclude-dir='.git' --exclude-dir='node_modules' .; then
             echo "::error::Potential secrets found in code"
+            exit 1
+          fi
+
+      - name: Check HTML validity
+        run: |
+          for f in static/*.html static/guides/*.html static/en/*.html; do
+            if [ -f "$f" ]; then
+              python3 -c "
+          with open('$f') as fh:
+              content = fh.read()
+              if '<html' not in content:
+                  print(f'WARN: $f missing <html> tag')
+              if '</html>' not in content:
+                  print(f'WARN: $f missing </html> tag')
+          " || true
+            fi
+          done
+
+      - name: Check for common issues
+        run: |
+          # Check for "Synapse" references (old brand name)
+          SYNAPSE_COUNT=$(grep -ri "synapse" main.py --count 2>/dev/null || echo "0")
+          if [ "$SYNAPSE_COUNT" -gt "5" ]; then
+            echo "::warning::Found $SYNAPSE_COUNT 'Synapse' references — consider updating to 'chatweb.ai'"
+          fi
+          # Check for nanobot-ai references (deleted app)
+          if grep -q "nanobot-ai" fly.toml 2>/dev/null; then
+            echo "::error::fly.toml references deleted app 'nanobot-ai'"
             exit 1
           fi
 
@@ -52,15 +84,39 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Health check
+      - name: Health check (with retry)
         run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb-ai-staging.fly.dev/health)
-          if [ "$STATUS" != "200" ]; then
-            echo "::error::Staging health check failed (HTTP $STATUS)"
-            exit 1
+          for i in 1 2 3 4 5; do
+            sleep 8
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb-ai-staging.fly.dev/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Staging healthy (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying..."
+          done
+          echo "::error::Staging health check failed after 5 attempts"
+          exit 1
+
+      - name: Smoke test (A2A endpoint)
+        run: |
+          RESP=$(curl -s -X POST https://chatweb-ai-staging.fly.dev/a2a \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"GetExtendedAgentCard","params":{},"id":"smoke"}')
+          if echo "$RESP" | grep -q "chatweb-ai"; then
+            echo "✅ A2A endpoint responding"
+          else
+            echo "::warning::A2A endpoint returned unexpected response"
           fi
-          echo "Staging healthy (HTTP 200)"
+
+      - name: Smoke test (Agent Card)
+        run: |
+          CARD=$(curl -s https://chatweb-ai-staging.fly.dev/.well-known/agent-card.json)
+          SKILLS=$(echo "$CARD" | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('skills',[])))" 2>/dev/null || echo "0")
+          echo "Agent Card: $SKILLS skills"
+          if [ "$SKILLS" -lt "30" ]; then
+            echo "::warning::Agent Card has only $SKILLS skills (expected 30+)"
+          fi
 
   production:
     name: Deploy to Production
@@ -72,23 +128,49 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Get current version (for rollback)
+        id: prev
+        run: |
+          PREV=$(flyctl status -a chatweb-ai --json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('Machines',[{}])[0].get('config',{}).get('image',''))" 2>/dev/null || echo "unknown")
+          echo "image=$PREV" >> $GITHUB_OUTPUT
+          echo "Previous image: $PREV"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
       - name: Deploy to production
         run: flyctl deploy -a chatweb-ai --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Health check
+      - name: Health check (with retry)
+        id: health
         run: |
-          sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb.ai/health)
-          if [ "$STATUS" != "200" ]; then
-            echo "::error::Production health check failed (HTTP $STATUS)"
-            exit 1
-          fi
-          echo "Production healthy (HTTP 200)"
+          for i in 1 2 3 4 5; do
+            sleep 8
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://chatweb.ai/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Production healthy (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying..."
+          done
+          echo "::error::Production health check failed"
+          exit 1
 
-      - name: Notify success
-        if: success()
+      - name: Rollback on failure
+        if: failure() && steps.health.outcome == 'failure'
         run: |
-          echo "✅ Deployed to production: chatweb.ai"
-          echo "Commit: ${{ github.sha }}"
+          echo "🔴 Rolling back to previous version..."
+          flyctl deploy -a chatweb-ai --image ${{ steps.prev.outputs.image }} --remote-only || true
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Notify (Telegram)
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            MSG="✅ chatweb.ai デプロイ完了%0ACommit: ${{ github.sha }}%0ABranch: ${{ github.ref_name }}"
+          else
+            MSG="🔴 chatweb.ai デプロイ失敗%0ACommit: ${{ github.sha }}%0ABranch: ${{ github.ref_name }}%0ACheck: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+          curl -s "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}&text=$MSG" > /dev/null || true

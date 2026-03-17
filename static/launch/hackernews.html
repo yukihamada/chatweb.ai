@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hacker News Show HN — chatweb.ai ローンチキット</title>
+  <meta name="description" content="Hacker News Show HN submission template for chatweb.ai launch.">
+  <meta property="og:title" content="Hacker News Show HN — chatweb.ai Launch Kit">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #09090b; color: #fafafa; line-height: 1.7; min-height: 100vh;
+    }
+    .container { max-width: 750px; margin: 0 auto; padding: 2rem 1.5rem; }
+    nav { margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+    nav a { color: #8b5cf6; text-decoration: none; }
+    nav a:hover { text-decoration: underline; }
+    nav .sep { color: #3f3f46; }
+    h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.3rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 0.75rem; color: #8b5cf6; }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #d4d4d8; }
+    .subtitle { color: #a1a1aa; margin-bottom: 2rem; }
+    .accent { color: #8b5cf6; }
+    .content-block {
+      background: #18181b; border: 1px solid #27272a; border-radius: 12px;
+      padding: 1.25rem; margin-bottom: 1rem; position: relative;
+    }
+    .content-block pre {
+      white-space: pre-wrap; word-wrap: break-word; font-family: inherit;
+      font-size: 0.95rem; line-height: 1.6; color: #e4e4e7;
+    }
+    .content-block code {
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9rem;
+      background: #27272a; padding: 0.15rem 0.4rem; border-radius: 4px;
+    }
+    .copy-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: #27272a; border: 1px solid #3f3f46; color: #a1a1aa;
+      padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+    .copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+    .title-option {
+      background: #18181b; border: 1px solid #27272a; border-radius: 10px;
+      padding: 1rem 1.25rem; margin-bottom: 0.75rem; display: flex;
+      align-items: center; gap: 1rem;
+    }
+    .title-num {
+      background: #8b5cf6; color: #fff; width: 26px; height: 26px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .title-text { font-size: 1rem; font-weight: 500; }
+    .qa-block { margin-bottom: 1.5rem; }
+    .qa-q {
+      font-weight: 600; color: #fafafa; margin-bottom: 0.5rem;
+      padding-left: 1rem; border-left: 3px solid #8b5cf6;
+    }
+    .qa-a {
+      color: #d4d4d8; font-size: 0.93rem; padding-left: 1rem;
+      border-left: 3px solid #27272a; margin-left: 0;
+    }
+    .tip { background: #8b5cf610; border-left: 3px solid #8b5cf6; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: 0.9rem; color: #a1a1aa; }
+    .divider { border: none; border-top: 1px solid #27272a; margin: 2rem 0; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #27272a; color: #71717a; font-size: 0.85rem; text-align: center; }
+    footer a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="index.html">&larr; ローンチハブ</a>
+      <span class="sep">|</span>
+      <a href="twitter-threads.html">Twitter</a>
+      <span class="sep">|</span>
+      <a href="linkedin-post.html">LinkedIn</a>
+      <span class="sep">|</span>
+      <a href="media-pitch.html">メディアピッチ</a>
+      <span class="sep">|</span>
+      <a href="product-hunt.html">Product Hunt</a>
+      <span class="sep">|</span>
+      <a href="tech-article.html">技術記事</a>
+    </nav>
+
+    <h1><span class="accent">Hacker News</span> Show HN</h1>
+    <p class="subtitle">タイトル案、本文テンプレート、想定Q&A。</p>
+
+    <!-- Title Options -->
+    <h2>タイトル案（3パターン）</h2>
+    <div class="tip">HNのタイトルは80文字以内。技術的な具体性と「何が新しいか」が伝わることが重要。マーケティング用語は避ける。</div>
+
+    <div class="title-option">
+      <div class="title-num">1</div>
+      <div class="title-text">Show HN: chatweb.ai – 39 AI agents that execute tasks via A2A protocol (JSON-RPC 2.0)</div>
+    </div>
+    <div class="title-option">
+      <div class="title-num">2</div>
+      <div class="title-text">Show HN: chatweb.ai – Multi-agent platform with 12 LLMs and self-improving feedback loops</div>
+    </div>
+    <div class="title-option">
+      <div class="title-num">3</div>
+      <div class="title-text">Show HN: chatweb.ai – From chat to execution: agents that send emails, deploy code, publish sites</div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Body Template -->
+    <h2>本文テンプレート</h2>
+    <div class="content-block">
+      <button class="copy-btn" onclick="copyText(this)">コピー</button>
+      <pre>Hi HN, I'm Yuki. I built chatweb.ai, a multi-agent platform where 39 specialized AI agents execute real-world tasks.
+
+The problem: LLMs are great at generating text but can't actually *do* things. You still need to copy the email draft, open Gmail, paste, and send. Multiply this across dozens of daily tasks.
+
+chatweb.ai gives each task type a specialized agent that handles end-to-end execution:
+- GmailAgent sends/replies to emails
+- WebPublisher generates and deploys static sites
+- CodeDeployer builds and ships code
+- BrowserAgent navigates the web and extracts data
+
+Technical details:
+
+1. A2A v1.0 Protocol: Agents communicate via Google's Agent-to-Agent standard — JSON-RPC 2.0 requests with SSE streaming for real-time responses. Each agent publishes an Agent Card declaring its capabilities, input/output schemas, and constraints.
+
+2. Multi-model orchestration: 12 models (Llama 4 Scout, Claude Opus, GPT-4o, Gemini Pro, Qwen, etc.) allocated per task type based on cost/quality/latency tradeoffs. Not all tasks need the most expensive model.
+
+3. Self-improving loop: Every 6 hours, execution results are scored and prompts are auto-optimized. Pro tier targets 9/10 quality with up to 5 improvement iterations per task.
+
+4. Stack: Rust (axum) on AWS Lambda (ARM64, musl), DynamoDB, SSE streaming through API Gateway. Also runs on Fly.io with libSQL/SQLite.
+
+Free tier includes $2/month credit. Planning to open-source the core A2A implementation.
+
+https://chatweb.ai
+
+Happy to answer any technical questions about the architecture, agent design, or feedback loop implementation.</pre>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Expected Q&A -->
+    <h2>想定Q&A</h2>
+    <p style="color: #a1a1aa; margin-bottom: 1.5rem;">HNコメントで聞かれそうな質問と、推奨回答。</p>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: How is this different from AutoGPT / AgentGPT / CrewAI?</div>
+      <div class="qa-a">Those frameworks focus on autonomous planning loops with a single LLM. chatweb.ai uses specialized agents (not generic ones) with real tool integrations — each agent has actual OAuth credentials and API access to execute tasks. We also use 12 different models optimized per task rather than routing everything through one LLM. The A2A protocol means agents negotiate and delegate tasks based on declared capabilities, not just a planner assigning work.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: Why 12 models instead of just using Claude/GPT-4o for everything?</div>
+      <div class="qa-a">Cost and latency. Not every task needs a $15/M-token model. Simple email categorization works great with Llama 4 Scout at a fraction of the cost. Complex code generation routes to Claude Opus. We benchmark continuously and reassign models as the landscape shifts. The 6-hour feedback loop also catches model regressions — if a model update degrades quality on a specific task type, the system adapts.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: What's the A2A protocol and why not just use function calling?</div>
+      <div class="qa-a">A2A (Agent-to-Agent) is Google's proposed standard for inter-agent communication. Function calling works for single-model tool use, but breaks down when you need agent-to-agent delegation. With A2A, each agent publishes an Agent Card (JSON schema describing capabilities), and agents discover and negotiate with each other via JSON-RPC 2.0. SSE streaming gives real-time progress updates. It's a proper multi-agent protocol vs. bolting tools onto a single LLM.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: How do you handle security? Agents have access to my Gmail?</div>
+      <div class="qa-a">Each agent integration uses standard OAuth 2.0 with minimal scopes. You explicitly grant permissions per service. Agent actions are logged and auditable. We don't store email content — the GmailAgent uses the Gmail API directly with your token. Enterprise tier supports on-premise deployment for full data control. We're also working on granular permission policies (e.g., "can read but not delete emails").</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: How does the self-improving feedback loop work technically?</div>
+      <div class="qa-a">Every agent execution produces a result with metadata (success/failure, latency, user feedback if given). Every 6 hours, a meta-agent evaluates recent executions against quality targets (7/10 for Free, 9/10 for Pro). It identifies patterns — e.g., "GmailAgent fails 30% of the time on multi-recipient emails." Then it generates prompt modifications, tests them against a held-out set, and deploys if quality improves. Pro tier runs up to 5 iterations per cycle. It's essentially automated prompt engineering with a continuous evaluation harness.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: Why Rust + Lambda instead of Python/Node?</div>
+      <div class="qa-a">Cold start latency. Our P95 cold start on ARM64 Lambda with musl is under 50ms. A Python Lambda with dependencies is 500ms-2s. For agent orchestration with SSE streaming, every millisecond of overhead compounds. Rust + axum also gives us a single binary (~15MB) that runs identically on Lambda, Fly.io, and Docker. The same codebase serves both platforms.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: $1M/month Enterprise tier? Is that a joke?</div>
+      <div class="qa-a">It's a concierge tier for large organizations that want custom agent development, on-premise deployment, dedicated model instances, and SLA guarantees. Limited to 10 companies because each requires significant hands-on engineering. Think of it as "we build your custom AI workforce" rather than a SaaS subscription. The core product works on the Free and Pro tiers.</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Q: When will it be open-sourced?</div>
+      <div class="qa-a">We're planning to open-source the core A2A protocol implementation and the agent framework. Timeline is within the next few months — we want to stabilize the API first. The hosted platform (auth, billing, managed infrastructure) will remain proprietary, similar to how Supabase open-sources the core but offers a managed service.</div>
+    </div>
+
+    <div class="tip">HNでの注意点: 過度なマーケティング表現は避ける。技術的な質問には具体的なコード例やアーキテクチャで回答する。批判的なコメントにも丁寧に対応し、「good point, we're working on that」のスタンスで。</div>
+
+    <footer>
+      <a href="index.html">&larr; ローンチハブに戻る</a>
+      <p style="margin-top: 0.5rem;">&copy; Enabler, Inc.</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyText(btn) {
+      const pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピー済';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // chatweb.ai Service Worker — PWA support (v2: network-first for HTML)
-const CACHE = 'chatweb-v2';
+const CACHE = 'chatweb-v3';
 
 self.addEventListener('install', e => {
   self.skipWaiting();

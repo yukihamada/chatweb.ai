@@ -5,7 +5,8 @@
 <h1 align="center">chatweb.ai</h1>
 
 <p align="center">
-  <strong>Multi-Agent AI Platform — Agents that actually do the work.</strong>
+  <strong>Execute. Learn. Evolve. — Your AI Team.</strong><br>
+  <em>39 agents × 12 models × A2A v1.0 — Open Source</em>
 </p>
 
 <p align="center">
@@ -22,7 +23,9 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Claude-Anthropic-6B46C1?logo=anthropic&logoColor=white" alt="Claude">
   <img src="https://img.shields.io/badge/deploy-Fly.io-8B5CF6?logo=fly.io&logoColor=white" alt="Fly.io">
-  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License">
+  <img src="https://img.shields.io/badge/A2A-v1.0-8B5CF6" alt="A2A v1.0">
+  <img src="https://img.shields.io/badge/agents-39-10b981" alt="39 Agents">
 </p>
 
 ---
