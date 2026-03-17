@@ -2417,10 +2417,11 @@ async def tool_image_generate(prompt: str, width: int = 1024, height: int = 768)
     # Translate prompt to English if Japanese
     if re.search(r'[\u3040-\u9fff]', prompt):
         r = await aclient.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=200,
-            messages=[{"role": "user", "content": f"Translate to English for image generation (concise, descriptive): {prompt}"}]
+            model="claude-haiku-4-5-20251001", max_tokens=100,
+            system="Translate the user's image request to a concise English prompt for AI image generation. Output ONLY the prompt text, no markdown, no explanation, no quotes. Example: 'minimalist purple tech startup logo on dark background'",
+            messages=[{"role": "user", "content": prompt}]
         )
-        prompt_en = r.content[0].text.strip()
+        prompt_en = r.content[0].text.strip().strip('"\'')
     else:
         prompt_en = prompt
 
@@ -2511,10 +2512,11 @@ async def tool_video_generate(prompt: str, duration: int = 4, quality: str = "fa
     # Translate to English if Japanese
     if re.search(r'[\u3040-\u9fff]', prompt):
         r = await aclient.messages.create(
-            model="claude-haiku-4-5-20251001", max_tokens=200,
-            messages=[{"role": "user", "content": f"Translate to English for video generation (concise, cinematic): {prompt}"}]
+            model="claude-haiku-4-5-20251001", max_tokens=100,
+            system="Translate the user's video request to a concise English prompt for AI video generation. Output ONLY the prompt text, no markdown, no explanation, no quotes. Example: 'a cat playing with a ball in a sunny room, cinematic'",
+            messages=[{"role": "user", "content": prompt}]
         )
-        prompt_en = r.content[0].text.strip()
+        prompt_en = r.content[0].text.strip().strip('"\'')
     else:
         prompt_en = prompt
 
