@@ -8469,7 +8469,24 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
                         ev = await evaluate_draft(draft, req.message)
                         score, issues = ev.get("score", 8), ev.get("issues", [])
                         await queue.put({"type": "eval", "score": score, "needs_improve": score < 7})
-                        if score < 7 and issues:
+                        if score < 4:
+                            # Very low quality — retry with pro model (Claude Sonnet)
+                            await queue.put({"type": "step", "step": "reflect",
+                                             "label": f"🔁 品質スコア {score}/10 — プロモデルで再実行中..."})
+                            _old_tier = _session_tiers.get(session_id)
+                            _session_tiers[session_id] = "pro"
+                            retry_result = await execute_agent(agent_id, req.message, session_id, history,
+                                                              memory_context=memory_context,
+                                                              image_data=req.image_data,
+                                                              lang=_req_lang,
+                                                              user_email=_user_email_val)
+                            final = retry_result["response"]
+                            # Restore tier
+                            if _old_tier:
+                                _session_tiers[session_id] = _old_tier
+                            else:
+                                _session_tiers.pop(session_id, None)
+                        elif score < 7 and issues:
                             await queue.put({"type": "step", "step": "reflect",
                                              "label": f"🔁 品質スコア {score}/10 — 改善中..."})
                             final = await self_reflect(agent_id, draft, req.message, issues)
