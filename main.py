@@ -6618,7 +6618,8 @@ async def google_auth_callback(request: Request):
         # Save to DB and migrate session memories → user_id
         async with db_conn() as db:
             await db.execute(
-                "INSERT OR REPLACE INTO users (id, email, name, plan, created_at) VALUES (?,?,?,?,?)",
+                """INSERT INTO users (id, email, name, plan, created_at) VALUES (?,?,?,?,?)
+                   ON CONFLICT(id) DO UPDATE SET email=excluded.email, name=excluded.name""",
                 (user_id, email, name, "free", datetime.utcnow().isoformat())
             )
             # Migrate existing session memories to this user_id
@@ -6627,7 +6628,12 @@ async def google_auth_callback(request: Request):
                 (user_id, session_id)
             )
             await db.commit()
-        resp = JSONResponse({"ok": True, "user_id": user_id, "email": email, "name": name, "plan": "free"})
+        # Fetch actual plan (may be paid from previous signup)
+        async with db_conn() as db:
+            cur = await db.execute("SELECT plan FROM users WHERE id=?", (user_id,))
+            row = await cur.fetchone()
+            _actual_plan = row[0] if row else "free"
+        resp = JSONResponse({"ok": True, "user_id": user_id, "email": email, "name": name, "plan": _actual_plan})
         resp.set_cookie("session_id", session_id, max_age=86400 * 30, httponly=True, samesite="lax")
         return resp
     except Exception as e:
