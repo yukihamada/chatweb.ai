@@ -5727,7 +5727,7 @@ async def _get_user_from_session(token: str) -> dict | None:
         del _session_cache[token]
     async with db_conn() as db:
         async with db.execute(
-            """SELECT u.id, u.email FROM auth_tokens t
+            """SELECT u.id, u.email, u.plan, u.line_user_id, u.telegram_chat_id FROM auth_tokens t
                JOIN users u ON u.id=t.user_id
                WHERE t.token=? AND t.token_type='session' AND t.used=0
                  AND t.expires_at > ?""",
@@ -5847,10 +5847,12 @@ async def auth_me(request: Request):
         if us:
             return {"logged_in": True, **us}
         return {"logged_in": False}
-    # Include credit balance
+    # Include credit balance and linked status
     balance = await _get_credit_balance(user["id"])
     return {"logged_in": True, "email": user["email"], "user_id": user["id"],
-            "plan": user.get("plan", "free"), "credit_balance": round(balance, 4)}
+            "plan": user.get("plan", "free"), "credit_balance": round(balance, 4),
+            "line_linked": bool(user.get("line_user_id")),
+            "telegram_linked": bool(user.get("telegram_chat_id"))}
 
 
 @app.post("/auth/google/callback")

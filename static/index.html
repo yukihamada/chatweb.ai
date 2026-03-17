@@ -4131,9 +4131,12 @@ function updateAuthUI(user) {
       creditEl.style.display = '';
       creditEl.style.color = user.credit_balance < 1 ? 'var(--red)' : 'var(--muted)';
     }
-    // Trigger onboarding for first-time users
+    // Trigger onboarding for first-time users, or LINE/TG connect prompt
     if (!localStorage.getItem('onboarding_done')) {
       setTimeout(() => startOnboarding(user), 800);
+    } else if (!user.line_linked && !user.telegram_linked) {
+      // Onboarding done but no messenger linked — show connect prompt
+      setTimeout(() => onboardConnect(), 1500);
     }
   } else {
     lb.style.display = '';
