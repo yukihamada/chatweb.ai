@@ -756,11 +756,23 @@ async def process_telegram_message(chat_id: int | str, user_text: str, username:
         routing = await route_message(user_text)
         agent_id = routing["agent"] if routing["agent"] in AGENTS else "research"
         confidence = routing.get("confidence", 0.9)
+
+        # Group security: block admin agents, auth-required agents need linked account
+        _ADMIN_ONLY_IN_GROUP = {"code_editor", "coder", "self_healer", "agent_manager", "platform_ops", "deployer", "devops"}
+        _AUTH_REQUIRED_IN_GROUP = {"notify", "gmail", "calendar", "beds24"}
+        if _is_group:
+            if agent_id in _ADMIN_ONLY_IN_GROUP:
+                await tg_send(chat_id, "🔒 この操作はグループでは利用できません。")
+                return {"ok": True}
+            if agent_id in _AUTH_REQUIRED_IN_GROUP and not unified_uid:
+                await tg_send(chat_id, "🔒 この操作にはWeb連携が必要です。DMで /link コマンドを実行してください。")
+                return {"ok": True}
+
         agent_name = AGENTS.get(agent_id, {}).get("name", agent_id)
         agent_emoji = AGENTS.get(agent_id, {}).get("emoji", "")
 
-        # Channel context for AI (user wants AI to know the channel)
-        _channel_ctx = f"[Telegram channel"
+        # Channel context for AI
+        _channel_ctx = f"[Telegram {'group' if _is_group else 'DM'}"
         if username:
             _channel_ctx += f", user: @{username}"
         if unified_uid:
@@ -768,9 +780,9 @@ async def process_telegram_message(chat_id: int | str, user_text: str, username:
         _channel_ctx += "]"
         user_text_with_ctx = f"{_channel_ctx}\n{user_text}"
 
-        # Memory context from unified user_id if linked
+        # Memory context from unified user_id if linked (disabled in groups for privacy)
         mem_context = ""
-        if unified_uid:
+        if unified_uid and not _is_group:
             mems = await search_memories(user_text, limit=5, user_id=unified_uid)
             if mems:
                 mem_context = "【長期記憶】\n" + "\n".join(f"- {m['content']}" for m in mems)
@@ -1124,6 +1136,7 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
         return
 
     # ── AI message processing ──────────────────────────────────────────────
+    _is_line_group = session_id.startswith("line_C") or session_id.startswith("line_R")
     try:
         history = await get_history(session_id)
         await save_message(session_id, "user", text)
@@ -1131,6 +1144,18 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
         routing = await route_message(text)
         agent_id = routing["agent"] if routing["agent"] in AGENTS else "research"
         confidence = routing.get("confidence", 0.9)
+
+        # Group security: block admin/sensitive agents unless user is linked (authorized)
+        _ADMIN_ONLY_IN_GROUP = {"code_editor", "coder", "self_healer", "agent_manager", "platform_ops", "deployer", "devops"}
+        _AUTH_REQUIRED_IN_GROUP = {"notify", "gmail", "calendar", "beds24"}
+        if _is_line_group:
+            if agent_id in _ADMIN_ONLY_IN_GROUP:
+                await _reply("🔒 この操作はグループでは利用できません。")
+                return
+            if agent_id in _AUTH_REQUIRED_IN_GROUP and not unified_uid:
+                await _reply("🔒 この操作にはWeb連携が必要です。1対1チャットで /link コマンドを実行してください。")
+                return
+
         agent_name = AGENTS.get(agent_id, {}).get("name", agent_id)
         agent_emoji = AGENTS.get(agent_id, {}).get("emoji", "🤖")
 
@@ -1140,9 +1165,9 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
             _channel_ctx += f", linked web account: {unified_uid[:8]}"
         _channel_ctx += "]"
 
-        # Memory from unified user_id
+        # Memory from unified user_id (disabled in groups for privacy)
         mem_context = ""
-        if unified_uid:
+        if unified_uid and not _is_line_group:
             mems = await search_memories(text, limit=5, user_id=unified_uid)
             if mems:
                 mem_context = "【長期記憶】\n" + "\n".join(f"- {m['content']}" for m in mems)
@@ -9945,14 +9970,16 @@ async def telegram_webhook(request: Request):
     username = message.get("from", {}).get("username", "")
     text = (message.get("text") or message.get("caption") or "").strip()
 
+    _is_group = chat_type in ("group", "supergroup")
+
     # In groups: only respond to @mentions, /commands, or replies to bot
-    if chat_type in ("group", "supergroup"):
+    if _is_group:
         bot_username = TELEGRAM_BOT_USERNAME.lower()
         is_mention = f"@{bot_username}" in text.lower()
         is_command = text.startswith("/")
         is_reply_to_bot = message.get("reply_to_message", {}).get("from", {}).get("is_bot", False)
         if not (is_mention or is_command or is_reply_to_bot):
-            return {"ok": True}  # Ignore non-addressed messages in groups
+            return {"ok": True}
         # Strip bot mention from text
         text = re.sub(rf'@{re.escape(bot_username)}\s*', '', text, flags=re.IGNORECASE).strip()
 
