@@ -39,6 +39,7 @@ ANTHROPIC_API_KEY  = os.getenv("ANTHROPIC_API_KEY",  "")
 RESEND_API_KEY     = os.getenv("RESEND_API_KEY",     "")
 TELEGRAM_TOKEN     = os.getenv("TELEGRAM_TOKEN",     "")
 TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID",   "")
+_TG_WEBHOOK_SECRET = os.getenv("TG_WEBHOOK_SECRET", "")  # Set via setWebhook secret_token
 LINE_TOKEN         = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_USER_ID       = os.getenv("LINE_ADMIN_USER_ID", "")
 LINE_BOT_BASIC_ID  = os.getenv("LINE_BOT_BASIC_ID", "")   # e.g. @Abcdef12
@@ -946,11 +947,13 @@ async def setup_telegram_webhook(base_url: str) -> None:
         log.info("SYNAPSE_BOT_TOKEN not set — Telegram webhook skipped")
         return
     webhook_url = f"{base_url}/telegram/webhook"
-    r = await tg_api(
-        "setWebhook",
+    _sw_params = dict(
         url=webhook_url,
         allowed_updates=["message", "callback_query", "pre_checkout_query"],
     )
+    if _TG_WEBHOOK_SECRET:
+        _sw_params["secret_token"] = _TG_WEBHOOK_SECRET
+    r = await tg_api("setWebhook", **_sw_params)
     if r.get("ok"):
         log.info(f"Telegram webhook registered: {webhook_url}")
     else:
@@ -1383,6 +1386,9 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
 
     # ── AI message processing ──────────────────────────────────────────────
     _is_line_group = session_id.startswith("line_C") or session_id.startswith("line_R")
+    # Use reply token immediately (expires in ~30s) — actual response via push
+    if reply_token:
+        await line_reply(reply_token, "考え中...")
     try:
         history = await get_history(session_id)
         await save_message(session_id, "user", text)
@@ -1427,11 +1433,11 @@ async def process_line_message(user_id: str, text: str, reply_token: str = "") -
         # Clean up for messenger: remove <think> tags, shorten if too long
         clean = _clean_for_messenger(final)
         reply_text = f"{agent_emoji} {agent_name}\n\n{clean}"
-        await _reply(reply_text)
+        await line_push(user_id, reply_text)  # Push (reply token already used for "考え中...")
 
     except Exception as e:
         log.error(f"LINE message processing error: {e}")
-        await _reply(f"処理中に問題が発生しました: {e}", quick=False)
+        await line_push(user_id, f"処理中に問題が発生しました: {e}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1486,20 +1492,20 @@ async def tool_e2b_execute(code: str, language: str = "python") -> str:
             os.environ["E2B_API_KEY"] = E2B_API_KEY
             def _run():
                 sandbox = Sandbox.create()
-                execution = sandbox.run_code(code)
-                output_parts = []
-                # Collect stdout/stderr from logs
-                if hasattr(execution, 'logs') and execution.logs:
-                    for line in getattr(execution.logs, 'stdout', []) or []:
-                        output_parts.append(str(line).rstrip())
-                    for line in getattr(execution.logs, 'stderr', []) or []:
-                        output_parts.append(f"[stderr] {str(line).rstrip()}")
-                # Collect results (charts, dataframes, etc.)
-                if hasattr(execution, 'results') and execution.results:
-                    for r in execution.results:
-                        output_parts.append(str(r))
-                sandbox.kill()
-                return "\n".join(output_parts) or "(no output)"
+                try:
+                    execution = sandbox.run_code(code)
+                    output_parts = []
+                    if hasattr(execution, 'logs') and execution.logs:
+                        for line in getattr(execution.logs, 'stdout', []) or []:
+                            output_parts.append(str(line).rstrip())
+                        for line in getattr(execution.logs, 'stderr', []) or []:
+                            output_parts.append(f"[stderr] {str(line).rstrip()}")
+                    if hasattr(execution, 'results') and execution.results:
+                        for r in execution.results:
+                            output_parts.append(str(r))
+                    return "\n".join(output_parts) or "(no output)"
+                finally:
+                    sandbox.kill()
             return await asyncio.get_event_loop().run_in_executor(None, _run)
         except ImportError:
             log.warning("e2b-code-interpreter not installed, falling back to local exec")
@@ -10370,11 +10376,24 @@ async def stripe_webhook(request: Request):
                 await db.commit()
             log.info(f"Upgraded {customer_email} → {plan}")
     elif event["type"] == "customer.subscription.deleted":
-        customer_email = event["data"]["object"].get("customer_email", "")
+        # Subscription object has 'customer' (ID), not 'customer_email'
+        customer_id = event["data"]["object"].get("customer", "")
+        customer_email = ""
+        if customer_id:
+            try:
+                import stripe as _stripe2
+                _stripe2.api_key = STRIPE_SECRET_KEY
+                cust = _stripe2.Customer.retrieve(customer_id)
+                customer_email = cust.get("email", "")
+            except Exception as e:
+                log.warning(f"Stripe customer lookup failed: {e}")
         if customer_email:
             async with db_conn() as db:
                 await db.execute("UPDATE users SET plan='free' WHERE email=?", (customer_email,))
                 await db.commit()
+            log.info(f"Downgraded {customer_email} → free (subscription cancelled)")
+        else:
+            log.warning(f"Subscription deleted but could not resolve customer email (customer_id={customer_id})")
     return {"ok": True}
 
 
@@ -10984,6 +11003,11 @@ async def auth_google_status(session_id: str = "default"):
 @app.post("/telegram/webhook")
 async def telegram_webhook(request: Request):
     """Receive updates from Telegram and process them."""
+    # Verify secret token if configured
+    if _TG_WEBHOOK_SECRET:
+        header_secret = request.headers.get("x-telegram-bot-api-secret-token", "")
+        if not hmac.compare_digest(header_secret, _TG_WEBHOOK_SECRET):
+            raise HTTPException(status_code=403, detail="Invalid secret token")
     try:
         data = await request.json()
     except Exception:
