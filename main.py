@@ -2505,8 +2505,8 @@ async def tool_site_deploy(html: str, subdomain: str = "", title: str = "", sess
         await _cf_kv_put(f"meta:{subdomain}", json.dumps(metadata))
     return {"ok": ok, "url": site_url, "subdomain": subdomain}
 
-async def tool_video_generate(prompt: str, duration: int = 4) -> dict:
-    """Generate a short video via Pollinations.ai or Replicate."""
+async def tool_video_generate(prompt: str, duration: int = 4, quality: str = "fast") -> dict:
+    """Generate a short video. quality: 'fast' (Pollinations/free) or 'pro' (Google Veo)."""
     import urllib.parse
     # Translate to English if Japanese
     if re.search(r'[\u3040-\u9fff]', prompt):
@@ -2518,7 +2518,38 @@ async def tool_video_generate(prompt: str, duration: int = 4) -> dict:
     else:
         prompt_en = prompt
 
-    # Try Pollinations video API
+    # Try Google Veo first if API key available and pro quality requested
+    if GOOGLE_API_KEY and quality == "pro":
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=GOOGLE_API_KEY)
+            model = genai.GenerativeModel("veo-2.0-generate-001")
+            response = model.generate_content(
+                prompt_en,
+                generation_config={"response_modalities": ["VIDEO"]},
+            )
+            if response and hasattr(response, 'candidates') and response.candidates:
+                video_data = response.candidates[0].content.parts[0]
+                if hasattr(video_data, 'inline_data'):
+                    # Save video to file
+                    vid_id = uuid.uuid4().hex[:12]
+                    vid_path = f"/data/screenshots/veo_{vid_id}.mp4" if os.path.isdir("/data") else f"static/screenshots/veo_{vid_id}.mp4"
+                    os.makedirs(os.path.dirname(vid_path), exist_ok=True)
+                    with open(vid_path, "wb") as f:
+                        f.write(video_data.inline_data.data)
+                    return {
+                        "ok": True,
+                        "prompt_en": prompt_en,
+                        "video_url": f"/screenshots/veo_{vid_id}.mp4",
+                        "duration": duration,
+                        "provider": "google_veo",
+                        "cost_usd": duration * 0.15,
+                        "note": "Google Veo で生成しました",
+                    }
+        except Exception as e:
+            log.warning(f"Veo generation failed: {e}, falling back to Pollinations")
+
+    # Fallback: Pollinations video API (free)
     encoded = urllib.parse.quote(prompt_en)
     video_url = f"https://video.pollinations.ai/prompt/{encoded}?duration={duration}"
 
