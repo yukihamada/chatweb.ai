@@ -5056,11 +5056,12 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 必ず完成形のHTMLを生成して即座に公開してください。確認の質問はしないでください。ユーザーの要件から最善の推測でデザイン・構成を決めて実行してください。""",
     },
     "coder": {
-        "name": "💻 コーダーエージェント",
+        "name": "💻 管理者開発ツール",
         "color": "#0ea5e9",
-        "description": "Claude Code スタイル: ファイル操作・シェル実行・Git・コード検索",
+        "description": "ファイル操作・シェル実行・Git（管理者専用）",
         "mcp_tools": ["file_read", "file_write", "file_list", "shell", "git", "grep"],
         "real_tools": ["file_read", "file_write", "shell", "git", "grep"],
+        "admin_only": True,
         "system": """あなたはClaude Code スタイルの高度なコーディングエージェントです。
 
 利用可能なツール結果が提供されます:
@@ -5210,9 +5211,9 @@ fetch('/api/kv/count', {method:'POST', body: JSON.stringify({value: 42})})
 
     # ── Admin-only agents ──────────────────────────────────────────────────
     "code_editor": {
-        "name": "🛠️ コードエディタ",
+        "name": "🛠️ chatweb.ai開発",
         "color": "#f59e0b",
-        "description": "chatweb.ai のソースコードを読み書き・git操作・Fly.ioデプロイ（管理者専用）",
+        "description": "chatweb.aiのソース編集・Git・デプロイ・設定変更（管理者専用）",
         "mcp_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self", "admin_settings"],
         "real_tools": ["source_read", "source_write", "source_list", "git_source", "deploy_self", "admin_settings"],
         "admin_only": True,
