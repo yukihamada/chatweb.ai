@@ -102,6 +102,7 @@ MODEL_COSTS = {
     "llama3-8b-8192":            {"input": 0.005, "output": 0.008},  # Groq fast
     "gpt-4o":                    {"input": 2.5,   "output": 10.0},
     "gpt-4o-mini":               {"input": 0.15,  "output": 0.60},
+    "qwen/qwen3-32b":            {"input": 0.20,  "output": 0.20},  # Groq
 }
 
 def calculate_cost(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -4294,9 +4295,16 @@ check_element: セレクタ""",
 
 【重要: 送信先の決定ルール】
 1. ユーザーが宛先を指定した場合 → その宛先に送る
-2. 「自分に送って」「メールで送って」等、宛先が不明な場合 → ユーザー自身のメールアドレスに送る
-3. ユーザーのメールアドレスは【長期記憶】または会話コンテキストから取得する
-4. どうしても宛先が不明な場合は「どなたに送りますか？」と確認する。架空の名前を使わない。
+2. 「LINEに送って」「自分に送って」等 → ユーザー自身のLINEアカウントに送る（連携済みなら自動で届く）
+3. 「メールで送って」→ ユーザー自身のメールアドレスに送る
+4. 宛先未指定 → LINE連携があればLINE、なければメールで送る
+5. ユーザー情報は【長期記憶】【ユーザーコンテキスト】から取得する
+6. 架空の名前や宛先を使わない。不明な場合のみ確認する。
+
+【LINE送信について】
+- LINE連携済みの場合、送信先は「ユーザー本人のLINE」とする
+- 👤 送信先: には「ユーザー本人（LINE連携済み）」と記載する
+- 実際のLINE user_idはシステムが自動で解決するため、IDの入力は不要
 
 【必須フォーマット】
 📧 送信チャネル: [Gmail / Slack / LINE]
@@ -7180,6 +7188,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                 messages=oai_messages,
                 max_tokens=_max_tok_groq,
                 stream=True,
+                stream_options={"include_usage": True},
             )
             async for chunk in stream:
                 delta = chunk.choices[0].delta.content or ""
@@ -7187,8 +7196,16 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
                     draft_parts.append(delta)
                     if queue:
                         await queue.put({"type": "token", "text": delta})
+                # Capture usage from final chunk
+                if hasattr(chunk, 'usage') and chunk.usage:
+                    input_tokens = getattr(chunk.usage, 'prompt_tokens', 0) or 0
+                    output_tokens = getattr(chunk.usage, 'completion_tokens', 0) or 0
             draft = "".join(draft_parts)
             _groq_used = _groq_model
+            # Estimate tokens if not provided by stream
+            if input_tokens == 0 and output_tokens == 0:
+                input_tokens = len(str(oai_messages)) // 4  # rough estimate
+                output_tokens = len(draft) // 4
         except Exception as _ge:
             log.warning(f"Groq error ({_groq_model}): {_ge} — falling back to Haiku")
             if queue:
