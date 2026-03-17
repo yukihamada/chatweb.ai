@@ -7432,8 +7432,9 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         else:
             _effective_lang = "ja"
     _lang_instruction = f"\n\n[必須] 回答は必ず {_lang_names.get(_effective_lang, _effective_lang)} で返してください。" if _effective_lang != "ja" else ""
-    _clarify_instruction = "\n\n曖昧な場合でもまず最善の推測で回答を実行してください。本当に情報が足りない場合のみ、1つだけ質問してください。"
-    _system_with_lang = agent["system"] + _clarify_instruction + _lang_instruction
+    _date_instruction = f"\n\n[現在の日時: {datetime.utcnow().strftime('%Y年%m月%d日 %H:%M UTC')}]"
+    _clarify_instruction = "\n曖昧な場合でもまず最善の推測で回答を実行してください。本当に情報が足りない場合のみ、1つだけ質問してください。"
+    _system_with_lang = agent["system"] + _date_instruction + _clarify_instruction + _lang_instruction
 
     # Build user_content AFTER model selection so vision block is added correctly
     if active_image_b64 and model_provider == "claude":
@@ -8709,7 +8710,8 @@ async def chat_stream(session_id: str, req: ChatRequest, request: Request):
 
                         t0 = _time.monotonic()
                         result = await execute_agent(aid, task, session_id, history,
-                                                     memory_context=memory_context if i == 0 else "")
+                                                     memory_context=memory_context if i == 0 else "",
+                                                     user_email=_user_email_val)
                         latency = int((_time.monotonic() - t0) * 1000)
                         step_response = result["response"]
                         context = step_response
