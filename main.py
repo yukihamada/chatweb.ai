@@ -8223,6 +8223,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
     _lang_instruction = f"\n\n[必須] 回答は必ず {_lang_names.get(_effective_lang, _effective_lang)} で返してください。" if _effective_lang != "ja" else ""
     _date_instruction = f"\n\n[現在の日時: {datetime.utcnow().strftime('%Y年%m月%d日 %H:%M UTC')}]"
     _clarify_instruction = "\n曖昧な場合でもまず最善の推測で回答を実行してください。本当に情報が足りない場合のみ、1つだけ質問してください。"
+    _quality_instruction = "\n\n[回答品質ガイド] 回答は構造化してください: 見出し(##)で区切り、要点はリスト(-)で整理、比較は表(|)を使用。結論→詳細→補足の順で書く。数値には根拠・出典を付記。"
     # Inject AI persona name if user set one
     _ai_name_instruction = ""
     if user_email:
@@ -8244,7 +8245,7 @@ async def _execute_agent_inner(agent_id: str, agent: dict, message: str, session
         except Exception:
             pass
     _preset_instruction = f"\n\n{preset_instruction}" if preset_instruction else ""
-    _system_with_lang = agent["system"] + _preset_instruction + _date_instruction + _clarify_instruction + _ai_name_instruction + _lang_instruction
+    _system_with_lang = agent["system"] + _preset_instruction + _date_instruction + _quality_instruction + _clarify_instruction + _ai_name_instruction + _lang_instruction
 
     # Build user_content AFTER model selection so vision block is added correctly
     if active_image_b64 and model_provider == "claude":
