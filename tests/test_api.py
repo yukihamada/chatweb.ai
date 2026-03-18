@@ -250,3 +250,69 @@ class TestIsUrlSafe:
         from main import _is_url_safe
         assert _is_url_safe("http://10.0.0.1") == False
         assert _is_url_safe("http://192.168.1.1") == False
+
+
+class TestStripeWebhook:
+    """Test Stripe webhook handling."""
+
+    def test_webhook_rejects_without_signature(self, client):
+        r = client.post("/billing/webhook", content=b'{}',
+                        headers={"Content-Type": "application/json"})
+        assert r.status_code == 400
+
+    def test_billing_plans_returns_all(self, client):
+        r = client.get("/billing/plans")
+        assert r.status_code == 200
+        d = r.json()
+        plans = d if isinstance(d, list) else d.get("plans", [])
+        plan_names = [p.get("name", p.get("id", "")) for p in plans] if isinstance(plans, list) else []
+        assert len(plans) >= 3  # free, pro, team at minimum
+
+
+class TestNewAgents:
+    """Test newly added agents exist and are configured."""
+
+    def test_data_viz_agent(self, client):
+        r = client.get("/agents")
+        d = r.json()
+        assert "data_viz" in d, "data_viz agent missing"
+        assert "可視化" in d["data_viz"]["name"] or "データ" in d["data_viz"]["description"]
+
+    def test_tutor_agent(self, client):
+        r = client.get("/agents")
+        d = r.json()
+        assert "tutor" in d, "tutor agent missing"
+
+    def test_health_agent(self, client):
+        r = client.get("/agents")
+        d = r.json()
+        assert "health" in d, "health agent missing"
+
+    def test_agent_count_increased(self, client):
+        r = client.get("/agents")
+        d = r.json()
+        assert len(d) >= 38, f"Only {len(d)} visible agents, expected 38+"
+
+
+class TestCompressHistory:
+    """Test conversation compression."""
+
+    def test_short_history_unchanged(self):
+        import asyncio
+        from main import compress_history
+        msgs = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there"},
+        ]
+        result, summary = asyncio.get_event_loop().run_until_complete(
+            compress_history(msgs, "test_session"))
+        assert result == msgs
+        assert summary is None
+
+    def test_empty_history(self):
+        import asyncio
+        from main import compress_history
+        result, summary = asyncio.get_event_loop().run_until_complete(
+            compress_history([], "test_session"))
+        assert result == []
+        assert summary is None

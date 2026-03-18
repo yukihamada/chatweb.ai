@@ -5975,6 +5975,74 @@ PUT /user/settings {"default_agent_id": "research"}
 ## 例
 「月々の住宅ローンはいくら？」→ 元利均等返済の計算をPythonで実行して具体的な金額を提示""",
     },
+    "data_viz": {
+        "name": "📈 データ可視化AI",
+        "color": "#06b6d4",
+        "description": "データからグラフ・チャート・ダッシュボードを自動生成",
+        "mcp_tools": ["code_executor", "e2b_execute", "file_read"],
+        "real_tools": ["code_executor", "e2b_execute", "file_read"],
+        "system": """あなたはデータ可視化の専門AIです。データを美しく分かりやすいグラフに変換します。
+
+## できること
+- 棒グラフ、折れ線グラフ、円グラフ、散布図、ヒートマップ
+- CSVやJSONデータの自動パース・可視化
+- ダッシュボード風の複数グラフレイアウト
+- トレンド分析、相関関係の可視化
+- 日本語対応のmatplotlibチャート
+
+## ルール
+- 必ずPython（matplotlib / plotly）でグラフを生成
+- 日本語フォント対応（plt.rcParams['font.family'] = 'sans-serif'）
+- データの傾向や特徴を3行以内で解説
+- カラーパレットは見やすく、色覚多様性に配慮
+- ```python ブロック``` で自動実行""",
+    },
+    "tutor": {
+        "name": "🎓 教育AI",
+        "color": "#8b5cf6",
+        "description": "学習支援・概念説明・クイズ・試験対策",
+        "mcp_tools": ["web_search"],
+        "real_tools": ["web_search"],
+        "system": """あなたは優秀な教育AIチューターです。あらゆる科目の学習を支援します。
+
+## できること
+- 概念の分かりやすい説明（例え話・図解を活用）
+- 段階的な問題解説（ステップバイステップ）
+- クイズ・練習問題の生成
+- 試験対策（出題傾向分析、模擬問題）
+- プログラミング学習支援
+
+## 教え方のルール
+- まず学習者のレベルを把握してから説明する
+- 抽象的な概念は必ず具体例で説明
+- 間違いを責めず、正しい理解への道筋を示す
+- 「なぜそうなるか」の理由を必ず説明
+- 1回の回答で情報を詰め込みすぎない
+- 理解を確認する質問を最後に1つ入れる""",
+    },
+    "health": {
+        "name": "🏥 ヘルスケアAI",
+        "color": "#10b981",
+        "description": "健康情報・栄養管理・運動プラン・症状チェック",
+        "mcp_tools": ["web_search"],
+        "real_tools": ["web_search"],
+        "system": """あなたは健康・ウェルネスの情報提供AIです。医療診断は行いません。
+
+## できること
+- 栄養素の説明、食事プランの提案
+- 運動メニューの作成（初心者〜上級者）
+- BMI・基礎代謝の計算
+- 一般的な症状の情報提供
+- 睡眠改善のアドバイス
+- ストレス管理テクニック
+
+## 重要なルール
+- ⚠️ 医療診断や処方は絶対に行わない
+- 深刻な症状には必ず「医師に相談してください」と案内
+- エビデンスに基づく情報のみ提供
+- 個人の体調に合わせた注意事項を記載
+- サプリメントの推奨は控え、食事からの栄養摂取を優先""",
+    },
 }
 
 sse_queues: dict[str, asyncio.Queue] = {}
@@ -6312,6 +6380,18 @@ async def init_db():
                 created_at TEXT DEFAULT (datetime('now','localtime'))
             )""")
         await db.execute("CREATE INDEX IF NOT EXISTS idx_analytics_event_created ON analytics(event, created_at)")
+        # Saved workflows
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS workflows (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                steps TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now','localtime')),
+                updated_at TEXT DEFAULT (datetime('now','localtime'))
+            )""")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_workflows_user ON workflows(user_id)")
         await db.commit()
 
 
@@ -10657,6 +10737,73 @@ async def get_usage(session_id: str, request: Request):
 async def workflow_page():
     with open("static/workflow.html", encoding="utf-8") as f:
         return f.read()
+
+
+# ── Workflow CRUD API ─────────────────────────────────────────────────────────
+
+class WorkflowCreate(BaseModel):
+    name: str
+    description: str = ""
+    steps: list  # [{agent_id: str, task: str}, ...]
+
+@app.post("/workflows")
+async def create_workflow(req: WorkflowCreate, request: Request):
+    user = await _require_auth(request)
+    wf_id = str(uuid.uuid4())
+    async with db_conn() as db:
+        await db.execute(
+            "INSERT INTO workflows (id, user_id, name, description, steps) VALUES (?,?,?,?,?)",
+            (wf_id, user["id"], req.name, req.description, json.dumps(req.steps))
+        )
+        await db.commit()
+    return {"ok": True, "id": wf_id}
+
+@app.get("/workflows")
+async def list_workflows(request: Request):
+    user = await _require_auth(request)
+    async with db_conn() as db:
+        db.row_factory = aiosqlite.Row
+        rows = await db.execute_fetchall(
+            "SELECT * FROM workflows WHERE user_id=? ORDER BY updated_at DESC", (user["id"],))
+    return {"workflows": [
+        {**dict(r), "steps": json.loads(r["steps"])} for r in rows
+    ]}
+
+@app.delete("/workflows/{wf_id}")
+async def delete_workflow(wf_id: str, request: Request):
+    user = await _require_auth(request)
+    async with db_conn() as db:
+        await db.execute("DELETE FROM workflows WHERE id=? AND user_id=?", (wf_id, user["id"]))
+        await db.commit()
+    return {"ok": True}
+
+@app.post("/workflows/{wf_id}/run")
+async def run_workflow(wf_id: str, request: Request):
+    """Execute a saved workflow."""
+    user = await _require_auth(request)
+    async with db_conn() as db:
+        db.row_factory = aiosqlite.Row
+        rows = await db.execute_fetchall(
+            "SELECT * FROM workflows WHERE id=? AND user_id=?", (wf_id, user["id"]))
+    if not rows:
+        raise HTTPException(404, "Workflow not found")
+    wf = dict(rows[0])
+    steps = json.loads(wf["steps"])
+    body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    message = body.get("message", wf.get("description", "Execute workflow"))
+    session_id = body.get("session_id", f"wf_{wf_id[:8]}")
+    # Execute steps sequentially
+    results = []
+    context = ""
+    for step in steps:
+        aid = step.get("agent_id", "research")
+        task = step.get("task", message)
+        if context:
+            task += f"\n\n[前のステップの結果]\n{context[:800]}"
+        result = await execute_agent(aid, task, session_id)
+        context = result.get("response", "")
+        results.append({"agent_id": aid, "response": context[:1000]})
+    return {"ok": True, "results": results, "workflow": wf["name"]}
 
 
 # ── Memory endpoints ──────────────────────────────────────────────────────────
