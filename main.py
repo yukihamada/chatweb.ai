@@ -12745,9 +12745,9 @@ async def register_device(req: DeviceRegisterRequest):
             "INSERT OR IGNORE INTO users(id, email, plan, credit_balance) VALUES(?,?,?,?)",
             (uid, f"{req.device_id[:12]}@device.chatweb.ai", "free", 2.0))
         # Generate API key
-        raw_key = "cw_" + secrets.token_hex(20)
+        raw_key = "cw_" + _secrets.token_hex(20)
         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-        key_id = secrets.token_hex(8)
+        key_id = _secrets.token_hex(8)
         await db.execute(
             "INSERT INTO api_keys(id, user_id, key_hash, name) VALUES(?,?,?,?)",
             (key_id, uid, key_hash, f"device:{req.device_name} ({req.platform})"))
