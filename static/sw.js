@@ -1,5 +1,5 @@
-// chatweb.ai Service Worker — PWA support (v2: network-first for HTML)
-const CACHE = 'chatweb-v3';
+// chatweb.ai Service Worker — v4: network-first for all assets
+const CACHE = 'chatweb-v4';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -9,7 +9,7 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  // Delete all old caches
+  // Delete ALL old caches (forces re-download of everything)
   e.waitUntil(caches.keys().then(keys =>
     Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
   ));
@@ -28,29 +28,15 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Network-first for HTML pages (always get latest)
-  if (e.request.headers.get('accept')?.includes('text/html') ||
-      url.pathname === '/' || url.pathname.endsWith('.html')) {
-    e.respondWith(
-      fetch(e.request).then(resp => {
-        if (resp.ok) {
-          const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return resp;
-      }).catch(() => caches.match(e.request))  // offline fallback
-    );
-    return;
-  }
-
-  // Cache-first for static assets (images, fonts, JS libs)
+  // Network-first for EVERYTHING (HTML, CSS, JS, images)
+  // Cache is only used as offline fallback
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+    fetch(e.request).then(resp => {
       if (resp.ok) {
         const clone = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, clone));
       }
       return resp;
-    }))
+    }).catch(() => caches.match(e.request))
   );
 });
