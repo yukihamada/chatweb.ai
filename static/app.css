@@ -81,4 +81,29 @@ body,html{height:100dvh}
 #scroll-to-bottom{bottom:80px;right:12px;width:36px;height:36px;font-size:15px}
 #install-banner{font-size:12px;padding:8px 12px;flex-wrap:wrap;gap:6px}
 .dashboard-stat-cards{grid-template-columns:1fr 1fr!important}
+
+
+/* Hide suggestion chips after 2nd one on mobile */
+.quick-chips .chip:nth-child(n+3){display:none}
+
+/* Tighter message footer */
+.msg-ai-footer{gap:2px;margin-top:4px}
+.msg-ai-footer button{font-size:12px;padding:4px 6px!important;min-width:28px;min-height:28px}
+.rating-btns{gap:2px;margin-top:3px}
+.rating-btns button{font-size:11px;padding:3px 6px}
+
+/* Hide placeholder hint on mobile */
+#chatInput::placeholder{font-size:14px}
+
+/* Compact trace/plan cards */
+.trace-wrap,.cot-box{margin:2px 0}
+.trace-toggle{font-size:10px;padding:3px 8px}
+.plan-card{margin:4px 0}
+
+/* Memory/HITL items compact */
+.mem-recall{font-size:9px;max-width:200px}
+
+/* Ensure status bar doesn't take space when empty */
+#statusBar{min-height:0;padding:0 10px}
+#statusBar:empty{display:none}
 }@media (min-width:641px) and (max-width:1024px){.topbar-center{position:static;transform:none;flex:1;display:flex;justify-content:center}.quick-chips{padding:8px 16px 0}.input-row{padding:8px 16px 12px}#agent-pill-name{max-width:200px}}
