@@ -12716,6 +12716,46 @@ async def create_api_key(request: Request):
     return {"id": key_id, "key": raw_key, "name": name}
 
 
+class DeviceRegisterRequest(BaseModel):
+    device_id: str
+    device_name: str = "Unknown Device"
+    platform: str = "ios"  # ios, android, web
+
+@app.post("/api/v1/devices/register")
+async def register_device(req: DeviceRegisterRequest):
+    """Auto-register a device and issue an API key with free credits.
+    Each device_id gets one key. Re-registering returns the existing key status."""
+    if not req.device_id or len(req.device_id) < 8:
+        raise HTTPException(400, "device_id must be at least 8 characters")
+    # Create deterministic user_id from device_id
+    uid = "dev_" + hashlib.sha256(req.device_id.encode()).hexdigest()[:20]
+    async with db_conn() as db:
+        # Check if device already registered
+        cur = await db.execute("SELECT key_hash FROM api_keys WHERE user_id=? AND name LIKE 'device:%'", (uid,))
+        existing = await cur.fetchone()
+        if existing:
+            # Already registered — return status (not the key itself for security)
+            cur2 = await db.execute("SELECT credit_balance, plan FROM users WHERE id=?", (uid,))
+            user_row = await cur2.fetchone()
+            return {"ok": True, "status": "already_registered",
+                    "credit_balance": user_row[0] if user_row else 0,
+                    "plan": user_row[1] if user_row else "free"}
+        # Create user with $2 free credits
+        await db.execute(
+            "INSERT OR IGNORE INTO users(id, email, plan, credit_balance) VALUES(?,?,?,?)",
+            (uid, f"{req.device_id[:12]}@device.chatweb.ai", "free", 2.0))
+        # Generate API key
+        raw_key = "cw_" + secrets.token_hex(20)
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+        key_id = secrets.token_hex(8)
+        await db.execute(
+            "INSERT INTO api_keys(id, user_id, key_hash, name) VALUES(?,?,?,?)",
+            (key_id, uid, key_hash, f"device:{req.device_name} ({req.platform})"))
+        await db.commit()
+    return {"ok": True, "status": "registered", "api_key": raw_key,
+            "credit_balance": 2.0, "plan": "free"}
+
+
 @app.get("/api/keys")
 async def list_api_keys(request: Request):
     user = await _require_auth(request)
