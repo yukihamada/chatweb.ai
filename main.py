@@ -9099,6 +9099,7 @@ async def robots_txt():
 
 @app.get("/favicon.ico")
 async def favicon_ico():
+    from fastapi.responses import RedirectResponse
     return RedirectResponse("/static/favicon.svg", status_code=301)
 
 
