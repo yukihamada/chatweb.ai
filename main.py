@@ -518,6 +518,10 @@ async def security_headers_middleware(request: Request, call_next):
     )
     if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # Cache static assets (JS/CSS/images) for 1 day, HTML for 5 min
+    path = request.url.path
+    if path.startswith("/static/") and any(path.endswith(ext) for ext in (".js", ".css", ".svg", ".png", ".ico", ".woff2")):
+        response.headers["Cache-Control"] = "public, max-age=86400, immutable"
     return response
 
 
