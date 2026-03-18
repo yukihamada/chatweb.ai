@@ -9097,6 +9097,11 @@ async def robots_txt():
         return Response(content="User-agent: *\nAllow: /\n", media_type="text/plain")
 
 
+@app.get("/favicon.ico")
+async def favicon_ico():
+    return RedirectResponse("/static/favicon.svg", status_code=301)
+
+
 @app.get("/sitemap.xml", response_class=Response)
 async def sitemap_xml():
     try:
