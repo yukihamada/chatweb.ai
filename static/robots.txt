@@ -8,5 +8,10 @@ Disallow: /auth/
 Disallow: /user/
 Disallow: /screenshots/
 Disallow: /static/admin.html
+Disallow: /billing/
+Disallow: /hitl/
+Disallow: /webhook/
+Disallow: /export/
+Disallow: /upload
 
 Sitemap: https://chatweb.ai/sitemap.xml
