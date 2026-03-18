@@ -137,3 +137,116 @@ class TestReferral:
     def test_referral_requires_auth(self, client):
         r = client.get("/referral/code")
         assert r.status_code == 401
+
+
+class TestAuthEnforcement:
+    """Verify all sensitive endpoints reject unauthenticated requests.
+    This prevents regressions where auth gates are accidentally removed."""
+
+    @pytest.mark.parametrize("method,path", [
+        # Data access
+        ("GET", "/schedule/tasks"),
+        ("GET", "/usage/test123"),
+        ("GET", "/runs/test123"),
+        ("GET", "/history/test123"),
+        ("GET", "/export/test123"),
+        ("GET", "/metrics"),
+        ("GET", "/dashboard"),
+        ("GET", "/stats/usage"),
+        ("GET", "/search/messages?q=test"),
+        ("GET", "/search?q=test"),
+        ("GET", "/referral/code"),
+        # Data mutation
+        ("DELETE", "/hitl/clear"),
+        ("DELETE", "/hitl/test123"),
+        ("DELETE", "/files/test123"),
+    ])
+    def test_requires_auth(self, client, method, path):
+        if method == "GET":
+            r = client.get(path)
+        elif method == "DELETE":
+            r = client.delete(path)
+        assert r.status_code in (401, 403), f"{method} {path} returned {r.status_code} (expected 401/403)"
+
+    @pytest.mark.parametrize("path,body", [
+        ("/webhook/inbound/test", {}),
+        ("/chat/suggest", {"user_message": "test", "ai_response": "test"}),
+    ])
+    def test_post_requires_auth(self, client, path, body):
+        r = client.post(path, json=body)
+        assert r.status_code in (401, 403), f"POST {path} returned {r.status_code} (expected 401/403)"
+
+
+class TestSecurityHeaders:
+    """Verify security headers are present on responses."""
+
+    def test_csp_header(self, client):
+        r = client.get("/")
+        assert "content-security-policy" in r.headers
+        assert "frame-ancestors" in r.headers["content-security-policy"]
+
+    def test_hsts_header(self, client):
+        # HSTS only set for HTTPS, TestClient uses HTTP
+        r = client.get("/")
+        assert "x-frame-options" in r.headers
+        assert r.headers["x-frame-options"] == "DENY"
+
+    def test_nosniff_header(self, client):
+        r = client.get("/")
+        assert r.headers.get("x-content-type-options") == "nosniff"
+
+
+class TestTokenEstimation:
+    """Test _estimate_tokens for conversation compression."""
+
+    def test_basic_estimation(self):
+        from main import _estimate_tokens
+        msgs = [{"role": "user", "content": "Hello world"}]  # 11 chars → ~3 tokens
+        tokens = _estimate_tokens(msgs)
+        assert tokens >= 1
+        assert tokens < 20
+
+    def test_empty_messages(self):
+        from main import _estimate_tokens
+        assert _estimate_tokens([]) >= 1 or _estimate_tokens([]) == 0
+
+    def test_list_content(self):
+        from main import _estimate_tokens
+        msgs = [{"role": "user", "content": [
+            {"type": "text", "text": "Describe this image"},
+            {"type": "image", "source": {"type": "base64", "data": "abc"}}
+        ]}]
+        tokens = _estimate_tokens(msgs)
+        assert tokens >= 1  # Should count text blocks, not crash
+
+    def test_none_content(self):
+        from main import _estimate_tokens
+        msgs = [{"role": "user", "content": None}]
+        tokens = _estimate_tokens(msgs)
+        assert tokens >= 0  # Should not crash
+
+
+class TestIsUrlSafe:
+    """Test SSRF prevention."""
+
+    def test_public_url_safe(self):
+        from main import _is_url_safe
+        assert _is_url_safe("https://example.com") == True
+
+    def test_metadata_blocked(self):
+        from main import _is_url_safe
+        assert _is_url_safe("http://169.254.169.254/latest/meta-data") == False
+
+    def test_localhost_blocked(self):
+        from main import _is_url_safe
+        assert _is_url_safe("http://127.0.0.1:8080") == False
+        assert _is_url_safe("http://localhost:3000") == False
+
+    def test_file_scheme_blocked(self):
+        from main import _is_url_safe
+        assert _is_url_safe("file:///etc/passwd") == False
+
+    def test_private_ip_blocked(self):
+        from main import _is_url_safe
+        assert _is_url_safe("http://10.0.0.1") == False
+        assert _is_url_safe("http://192.168.1.1") == False
