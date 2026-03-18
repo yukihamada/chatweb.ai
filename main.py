@@ -11905,8 +11905,9 @@ class CustomAgentCreate(BaseModel):
 
 
 @app.post("/agents/custom")
-async def create_custom_agent(req: CustomAgentCreate):
+async def create_custom_agent(req: CustomAgentCreate, request: Request):
     """Create a custom agent stored in DB."""
+    await _require_auth(request)
     agent_db_id = str(uuid.uuid4())
     async with db_conn() as db:
         await db.execute(
@@ -11943,8 +11944,9 @@ async def list_custom_agents():
 
 
 @app.delete("/agents/custom/{agent_db_id}")
-async def delete_custom_agent(agent_db_id: str):
+async def delete_custom_agent(agent_db_id: str, request: Request):
     """Delete a custom agent."""
+    await _require_auth(request)
     async with db_conn() as db:
         await db.execute("DELETE FROM custom_agents WHERE id=?", (agent_db_id,))
         await db.commit()
@@ -11971,8 +11973,11 @@ class AgentPatchRequest(BaseModel):
     model_name: str = ""
 
 @app.patch("/agents/{agent_id}")
-async def patch_agent(agent_id: str, req: AgentPatchRequest):
+async def patch_agent(agent_id: str, req: AgentPatchRequest, request: Request):
     """Update agent properties at runtime (custom agents or any agent)."""
+    user = await _require_auth(request)
+    if not _is_admin(user.get("email", "")):
+        raise HTTPException(403, "Admin only")
     if agent_id not in AGENTS:
         raise HTTPException(404, f"Agent '{agent_id}' not found")
     if req.name:
@@ -11998,8 +12003,11 @@ async def patch_agent(agent_id: str, req: AgentPatchRequest):
     return {"ok": True, "agent_id": agent_id, "agent": {k:v for k,v in AGENTS[agent_id].items() if k != "system"}}
 
 @app.post("/agents/{agent_id}/model")
-async def switch_agent_model(agent_id: str, req: ModelSwitchRequest):
+async def switch_agent_model(agent_id: str, req: ModelSwitchRequest, request: Request):
     """Switch an agent's model provider and model name at runtime."""
+    user = await _require_auth(request)
+    if not _is_admin(user.get("email", "")):
+        raise HTTPException(403, "Admin only")
     if agent_id not in AGENTS:
         raise HTTPException(404, f"Agent '{agent_id}' not found")
     valid_providers = {"claude", "openai", "gemini", "ollama", "groq"}
@@ -12289,8 +12297,9 @@ class TTSRequest(BaseModel):
     model_id: str = "eleven_multilingual_v2"
 
 @app.post("/tts")
-async def tts_endpoint(req: TTSRequest):
+async def tts_endpoint(req: TTSRequest, request: Request):
     """Generate speech using ElevenLabs API."""
+    await _require_auth(request)
     if ELEVENLABS_API_KEY:
         voice_id = req.voice_id or "21m00Tcm4TlvDq8ikWAM"  # Rachel (works for Japanese)
         async with httpx.AsyncClient(timeout=30) as hc:
@@ -12313,8 +12322,10 @@ async def tts_endpoint(req: TTSRequest):
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+async def transcribe_audio(file: UploadFile = File(...), request: Request = None):
     """Transcribe audio using OpenAI Whisper API."""
+    if request:
+        await _require_auth(request)
     audio_bytes = await file.read()
     if OPENAI_API_KEY:
         try:
@@ -13076,6 +13087,7 @@ async def list_files(request: Request):
 @app.delete("/files/{file_id}")
 async def delete_file(file_id: str, request: Request):
     """Delete an uploaded file by file_id."""
+    await _require_auth(request)
     info = _uploaded_files.get(file_id)
     if not info:
         raise HTTPException(404, "File not found")

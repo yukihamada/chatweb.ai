@@ -895,15 +895,19 @@ body {
   @media (pointer: coarse) { .msg-ai-footer button, .tts-btn { min-width: 44px; min-height: 44px; } }
 
   /* ── Input area ── */
-  .quick-chips { padding: 6px 10px 0; gap: 5px; -webkit-overflow-scrolling: touch; }
-  .chip { font-size: 11.5px; padding: 5px 11px; }
-  .input-row { padding: 8px 10px 10px; gap: 4px; }
-  #chatInput { font-size: 16px; padding: 10px 14px; min-height: 44px; max-height: 120px; border-radius: 12px; }
-  #plus-btn  { width: 38px; height: 44px; font-size: 20px; flex-shrink: 0; }
-  #send-btn  { width: 38px; height: 44px; font-size: 17px; border-radius: 12px; flex-shrink: 0; }
-  #mic-btn   { width: 36px; height: 44px; flex-shrink: 0; font-size: 16px; }
-  #input-tier-btn { padding: 4px 8px !important; font-size: 10px !important; height: 38px !important; }
+  .quick-chips { padding: 4px 8px 0; gap: 4px; -webkit-overflow-scrolling: touch; }
+  .chip { font-size: 11px; padding: 4px 10px; min-height: 32px; }
+  .input-row { padding: 6px 8px 8px; gap: 3px; }
+  #chatInput { font-size: 16px; padding: 10px 12px; min-height: 44px; max-height: 120px; border-radius: 12px; }
+  #plus-btn  { width: 36px; height: 44px; font-size: 18px; flex-shrink: 0; }
+  #send-btn  { width: 42px; height: 44px; font-size: 17px; border-radius: 12px; flex-shrink: 0; }
+  #mic-btn   { width: 34px; height: 44px; flex-shrink: 0; font-size: 15px; }
+  #input-tier-btn { padding: 2px 6px !important; font-size: 9px !important; height: 34px !important; }
   #plus-popup { left: 8px; min-width: 160px; bottom: calc(100% + 4px); }
+
+  /* Tool chips: compact on mobile */
+  .tool-chips { gap: 3px; }
+  .tool-chip { font-size: 9px; padding: 1px 5px; }
 
   /* Safe area (notch / home indicator) */
   #inputAreaOuter { padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px); }
